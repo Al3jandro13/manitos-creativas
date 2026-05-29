@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Crear Actividad — Manitos Creativas{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/teacher.css' %}">{% endblock %}
+
+{% block body_content %}
+<div class="teacher-layout">
+  {% include 'teacher/_sidebar.html' %}
+  <main class="teacher-main">
+    <div class="teacher-topbar">
+      <div style="display:flex;align-items:center;gap:.85rem;">
+        <button id="sidebar-toggle"
+          style="display:none;background:none;border:none;cursor:pointer;font-size:1.2rem;color:var(--t-text-mid);padding:.25rem;"
+          onclick="document.querySelector('.sidebar').classList.toggle('open')">
+          <i class="bi bi-list"></i>
+        </button>
+        <div class="teacher-topbar-title"><i class="bi bi-plus-circle"></i> Crear Actividad</div>
+      </div>
+    </div>
+    <div class="teacher-content">
+      <div class="teacher-form">
+        <div class="form-title"><i class="bi bi-clipboard2"></i> Datos de la Actividad</div>
+        <form method="post" enctype="multipart/form-data" novalidate>
+          {% csrf_token %}
+
+          <div class="form-group">
+            <label class="form-label"><i class="bi bi-pin"></i> Título de la actividad *</label>
+            <input type="text" name="title" class="form-input" placeholder="ej: Colorear el arcoíris" required value="{{ request.POST.title }}">
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label"><i class="bi bi-tag"></i> Categoría *</label>
+              <select name="category" class="form-select" required>
+                <option value="">Seleccionar...</option>
+                {% for cat in categories %}
+                <option value="{{ cat.id }}" {% if request.POST.category == cat.id|stringformat:"s" %}selected{% endif %}>
+                  {{ cat }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label"><i class="bi bi-toggles"></i> Estado</label>
+              <select name="status" class="form-select">
+                <option value="draft" {% if request.POST.status == 'draft' or not request.POST.status %}selected{% endif %}>Borrador</option>
+                <option value="published" {% if request.POST.status == 'published' %}selected{% endif %}>Publicada</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label"><i class="bi bi-text-paragraph"></i> Descripción / Instrucciones</label>
+            <textarea name="description" class="form-textarea" rows="4" placeholder="Explica qué deben hacer los estudiantes...">{{ request.POST.description }}</textarea>
+          </div>
+
+          <div class="form-row-3">
+            <div class="form-group">
+              <label class="form-label"><i class="bi bi-star"></i> Estrellas de recompensa</label>
+              <input type="number" name="reward_stars" class="form-input" min="0" max="20" value="{{ request.POST.reward_stars|default:'5' }}">
+            </div>
+            <div class="form-group">
+              <label class="form-label"><i class="bi bi-lightning"></i> Dificultad (1–5)</label>
+              <input type="number" name="difficulty" class="form-input" min="1" max="5" value="{{ request.POST.difficulty|default:'2' }}">
+            </div>
+            <div class="form-group">
+              <label class="form-label"><i class="bi bi-calendar3"></i> Fecha límite</label>
+              <input type="date" name="due_date" class="form-input" value="{{ request.POST.due_date }}">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label style="display:flex;align-items:center;gap:.55rem;cursor:pointer;font-family:var(--t-font-sans);font-weight:500;font-size:.875rem;color:var(--t-text-mid);">
+              <input type="checkbox" name="assigned_to_all" {% if request.POST.assigned_to_all %}checked{% endif %}
+                style="width:16px;height:16px;accent-color:var(--t-indigo);border-radius:4px;cursor:pointer;">
+              Asignar a todos los estudiantes
+            </label>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle"></i> Guardar Actividad</button>
+            <a href="{% url 'activities_list' %}" class="btn btn-outline">Cancelar</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+</div>
+<script>
+if (window.innerWidth <= 768) document.getElementById('sidebar-toggle').style.display = 'block';
+window.addEventListener('resize', () => {
+  const tog = document.getElementById('sidebar-toggle');
+  if (tog) tog.style.display = window.innerWidth <= 768 ? 'block' : 'none';
+});
+</script>
+{% endblock %}

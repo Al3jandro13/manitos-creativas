@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Consonantes — Manitos Creativas{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/student.css' %}">{% endblock %}
+
+{% block body_content %}
+<div class="student-layout">
+
+  {% include 'student/_sidebar.html' with active_page='games' %}
+
+  <div class="student-main">
+    <header class="student-topbar">
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Abrir menú"><i class="bi bi-list"></i></button>
+      <div class="topbar-breadcrumb">
+        <a href="{% url 'games_home' %}" class="breadcrumb-link">Mis Juegos</a>
+        <i class="bi bi-chevron-right" style="font-size:.7rem;color:#9CA3AF;"></i>
+        <span class="bc-current">Consonantes</span>
+      </div>
+      <div class="topbar-actions">
+        <div class="topbar-date"><i class="bi bi-calendar3"></i><span id="topbarDate"></span></div>
+        <div class="topbar-stars-chip"><i class="bi bi-star-fill"></i><span>{{ profile.total_stars|default:"0" }} estrellas</span></div>
+        <button class="dark-mode-toggle" id="darkModeToggle" aria-label="Cambiar modo"><i class="bi bi-moon-fill" id="darkModeIcon"></i></button>
+      </div>
+    </header>
+
+    <div class="student-scroll">
+      <div style="max-width:850px;margin:0 auto;">
+
+        <div class="game-page-header" style="background:linear-gradient(135deg,#4338CA,#3730A3);">
+          <div style="font-size:3rem;margin-bottom:.5rem;"><i class="bi bi-alphabet-uppercase"></i></div>
+          <div class="game-page-title">¡Las Consonantes!</div>
+          <div class="game-page-sub">Toca una letra para ver palabras y escucharla <i class="bi bi-volume-up-fill"></i></div>
+        </div>
+
+        <div class="game-score-display">
+          <div class="score-item"><span class="score-value" id="letters-count">0</span><span class="score-label">Letras exploradas</span></div>
+          <div class="score-item"><span class="score-value" id="session-stars">0</span><span class="score-label"><i class="bi bi-star-fill" style="color:var(--accent-yellow);"></i> Estrellas</span></div>
+        </div>
+
+        <div class="game-area">
+          <div id="letter-display" style="text-align:center;margin-bottom:1.5rem;min-height:120px;">
+            <div style="font-family:var(--font-display);font-size:1rem;color:var(--text-light);">Selecciona una consonante</div>
+          </div>
+          <div class="consonants-grid" id="consonants-grid"></div>
+          <div style="text-align:center;margin-top:1.5rem;">
+            <button id="save-btn" class="btn btn-primary" onclick="saveScore()" style="display:none;">
+              <i class="bi bi-floppy-fill"></i> ¡Guardar mis estrellas!
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /student-scroll -->
+  </div><!-- /student-main -->
+</div><!-- /student-layout -->
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<script>
+const CONSONANTS = {
+  B: { words: ['Bola', 'Burro', 'Barco'], color: '#7C3AED' },
+  C: { words: ['Casa', 'Carro', 'Cama'], color: '#EC4899' },
+  D: { words: ['Dedo', 'Dado', 'Delfín'], color: '#F97316' },
+  F: { words: ['Flor', 'Fresa', 'Foca'], color: '#10B981' },
+  G: { words: ['Gato', 'Globo', 'Gallo'], color: '#3B82F6' },
+  H: { words: ['Hoja', 'Huevo', 'Hada'], color: '#FBBF24' },
+  J: { words: ['Jirafa', 'Jugo', 'Jabón'], color: '#7C3AED' },
+  K: { words: ['Koala', 'Kiwi', 'Kayak'], color: '#EC4899' },
+  L: { words: ['Luna', 'Lápiz', 'León'], color: '#F97316' },
+  M: { words: ['Mano', 'Mariposa', 'Manzana'], color: '#10B981' },
+  N: { words: ['Nube', 'Naranja', 'Ñoño'], color: '#3B82F6' },
+  Ñ: { words: ['Ñame', 'Niña'], color: '#FBBF24' },
+  P: { words: ['Pelota', 'Pato', 'Perro'], color: '#7C3AED' },
+  Q: { words: ['Queso', 'Quetzal'], color: '#EC4899' },
+  R: { words: ['Rana', 'Ratón', 'Rosa'], color: '#F97316' },
+  S: { words: ['Sol', 'Sapo', 'Silla'], color: '#10B981' },
+  T: { words: ['Tigre', 'Tortuga', 'Taza'], color: '#3B82F6' },
+  V: { words: ['Vaca', 'Violín', 'Volcán'], color: '#FBBF24' },
+  W: { words: ['Wifi', 'Waffle'], color: '#7C3AED' },
+  X: { words: ['Xilófono', 'Xenon'], color: '#EC4899' },
+  Y: { words: ['Yoyo', 'Yogurt', 'Yate'], color: '#F97316' },
+  Z: { words: ['Zapato', 'Zorro', 'Zanahoria'], color: '#10B981' },
+};
+
+const grid = document.getElementById('consonants-grid');
+const display = document.getElementById('letter-display');
+let explored = new Set();
+
+Object.entries(CONSONANTS).forEach(([letter, data]) => {
+  const btn = document.createElement('button');
+  btn.className = 'consonant-btn';
+  btn.textContent = letter;
+  btn.style.color = data.color;
+  btn.style.borderColor = data.color + '60';
+  btn.addEventListener('click', () => showLetter(btn, letter, data));
+  grid.appendChild(btn);
+});
+
+function showLetter(btn, letter, data) {
+  if ('speechSynthesis' in window) {
+    speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(letter);
+    utter.lang = 'es-CO'; utter.rate = 0.7;
+    speechSynthesis.speak(utter);
+  }
+  btn.style.background = data.color;
+  btn.style.color = '#fff';
+  btn.style.borderColor = data.color;
+  explored.add(letter);
+  document.getElementById('letters-count').textContent = explored.size;
+  document.getElementById('session-stars').textContent = Math.floor(explored.size / 3);
+  if (explored.size >= 3) document.getElementById('save-btn').style.display = 'inline-flex';
+  display.innerHTML = `
+    <div style="font-family:var(--font-display);font-size:5rem;color:${data.color};line-height:1;">${letter}</div>
+    <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-top:.75rem;">
+      ${data.words.map(w => `<span style="font-family:var(--font-accent);font-weight:700;font-size:1.1rem;background:rgba(0,0,0,.05);padding:.4rem .9rem;border-radius:999px;">${w}</span>`).join('')}
+    </div>
+  `;
+}
+
+function getCookie(name) {
+  for (let c of document.cookie.split(';')) {
+    const [k,v] = c.trim().split('=');
+    if (k === name) return decodeURIComponent(v);
+  }
+  return '';
+}
+function saveScore() {
+  const stars = Math.floor(explored.size / 3);
+  fetch('{% url "save_game_score" %}', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+    body: JSON.stringify({ game_type: 'consonants', score: explored.size, stars_earned: stars }),
+  })
+  .then(r => r.json())
+  .then(() => {
+    if (window.Confetti) Confetti.fire();
+    if (window.Toast) Toast.show(`¡Ganaste ${stars} estrellas!`, 'success');
+    document.getElementById('save-btn').disabled = true;
+    document.getElementById('save-btn').innerHTML = '<i class="bi bi-check-circle-fill"></i> ¡Guardado!';
+  });
+}
+
+// Layout init
+(function(){
+  var d=document.getElementById('topbarDate');
+  if(d)d.textContent=new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long'});
+  var pb=document.getElementById('sidebarProfileBtn'),pd=document.getElementById('profileDropdown'),pc=document.getElementById('profileChevron');
+  if(pb&&pd){pb.addEventListener('click',function(e){e.stopPropagation();var o=pd.classList.toggle('open');pc.style.transform=o?'rotate(180deg)':'';});document.addEventListener('click',function(){pd.classList.remove('open');pc.style.transform='';});}
+  var t=document.getElementById('sidebarToggle'),s=document.getElementById('studentSidebar'),ov=document.getElementById('sidebarOverlay');
+  if(t&&s&&ov){t.addEventListener('click',function(){s.classList.toggle('open');ov.classList.toggle('open');});ov.addEventListener('click',function(){s.classList.remove('open');ov.classList.remove('open');});}
+  var dt=document.getElementById('darkModeToggle'),di=document.getElementById('darkModeIcon');
+  function sd(on){document.body.classList.toggle('student-dark',on);if(di)di.className=on?'bi bi-sun-fill':'bi bi-moon-fill';}
+  sd(localStorage.getItem('student_dark')==='1');
+  if(dt)dt.addEventListener('click',function(){var on=!document.body.classList.contains('student-dark');sd(on);localStorage.setItem('student_dark',on?'1':'0');});
+})();
+</script>
+{% endblock %}

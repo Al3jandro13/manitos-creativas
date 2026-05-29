@@ -1,0 +1,713 @@
+﻿{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Registrar Estudiante — Manitos Creativas{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Reset body ── */
+body {
+  margin: 0;
+  padding: 0;
+  background: #1E1B4B;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── Layout split ── */
+.reg-split {
+  display: grid;
+  grid-template-columns: 42% 58%;
+  min-height: 100vh;
+}
+
+/* ════════════════════════════════════════
+   PANEL IZQUIERDO
+   ════════════════════════════════════════ */
+.reg-deco {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+  background: linear-gradient(155deg, #9D174D 0%, #BE185D 25%, #EC4899 60%, #F9A8D4 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2.5rem;
+  clip-path: polygon(0 0, 93% 0, 100% 50%, 93% 100%, 0 100%);
+}
+
+.reg-deco::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 300px 200px at 20% 15%, rgba(251,191,36,.2) 0%, transparent 70%),
+    radial-gradient(ellipse 260px 260px at 75% 80%, rgba(124,58,237,.22) 0%, transparent 70%),
+    radial-gradient(ellipse 180px 180px at 55% 8%, rgba(16,185,129,.15) 0%, transparent 70%),
+    radial-gradient(ellipse 220px 160px at 15% 88%, rgba(59,130,246,.14) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.reg-deco::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(255,255,255,.07) 1px, transparent 1px);
+  background-size: 28px 28px;
+  pointer-events: none;
+}
+
+/* Manchas SVG */
+.rd-blob {
+  position: absolute;
+  pointer-events: none;
+  opacity: .22;
+  animation: blob-spin ease-in-out infinite;
+}
+@keyframes blob-spin {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  50%       { transform: scale(1.06) rotate(15deg); }
+}
+
+/* Iconos flotantes */
+.rd-float {
+  position: absolute;
+  pointer-events: none;
+  font-size: 1.7rem;
+  color: rgba(255,255,255,.85);
+  opacity: .3;
+  animation: rd-anim ease-in-out infinite;
+}
+@keyframes rd-anim {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  40%       { transform: translateY(-12px) rotate(6deg); }
+  70%       { transform: translateY(6px) rotate(-4deg); }
+}
+
+/* Contenido */
+.rd-brand {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  animation: rd-enter .85s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes rd-enter {
+  from { opacity: 0; transform: translateY(36px) scale(.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.rd-logo-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 160px;
+  height: 160px;
+  background: rgba(255,255,255,.18);
+  backdrop-filter: blur(12px);
+  border-radius: 44px;
+  border: 2px solid rgba(255,255,255,.3);
+  margin-bottom: 1.4rem;
+  box-shadow: 0 16px 50px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.3);
+  animation: breathe 3.2s ease-in-out infinite;
+}
+@keyframes breathe {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.04); }
+}
+.rd-logo-wrap img { width: 110px; height: auto; filter: drop-shadow(0 4px 14px rgba(0,0,0,.25)); }
+
+.rd-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: 2.4rem;
+  color: #fff;
+  line-height: 1.1;
+  margin-bottom: .5rem;
+  text-shadow: 0 3px 16px rgba(0,0,0,.18);
+}
+
+.rd-subtitle {
+  font-family: 'Nunito', sans-serif;
+  font-size: .95rem;
+  color: rgba(255,255,255,.8);
+  max-width: 260px;
+  line-height: 1.55;
+  margin-bottom: 2.2rem;
+}
+
+/* Paleta */
+.rd-palette {
+  display: flex;
+  gap: .65rem;
+  justify-content: center;
+  margin-bottom: 2.2rem;
+  position: relative;
+  z-index: 2;
+}
+.rd-dot {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2.5px solid rgba(255,255,255,.45);
+  box-shadow: 0 5px 16px rgba(0,0,0,.18);
+  transition: transform .25s cubic-bezier(.34,1.56,.64,1);
+  animation: dot-in .55s cubic-bezier(.34,1.56,.64,1) both;
+}
+.rd-dot:hover { transform: scale(1.22) translateY(-4px); }
+.rd-dot:nth-child(1) { background:#FBBF24; animation-delay:.1s; }
+.rd-dot:nth-child(2) { background:#10B981; animation-delay:.2s; }
+.rd-dot:nth-child(3) { background:#3B82F6; animation-delay:.3s; }
+.rd-dot:nth-child(4) { background:#F97316; animation-delay:.4s; }
+.rd-dot:nth-child(5) { background:#A78BFA; animation-delay:.5s; }
+@keyframes dot-in {
+  from { opacity:0; transform: scale(0); }
+  to   { opacity:1; transform: scale(1); }
+}
+
+/* Tarjetas de características */
+.rd-features {
+  display: flex;
+  flex-direction: column;
+  gap: .65rem;
+  width: 100%;
+  max-width: 270px;
+  position: relative;
+  z-index: 2;
+}
+.rd-feat {
+  display: flex;
+  align-items: center;
+  gap: .85rem;
+  background: rgba(255,255,255,.13);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 14px;
+  padding: .7rem .9rem;
+  animation: feat-in .65s cubic-bezier(.34,1.56,.64,1) both;
+}
+.rd-feat:nth-child(1) { animation-delay:.2s; }
+.rd-feat:nth-child(2) { animation-delay:.35s; }
+.rd-feat:nth-child(3) { animation-delay:.5s; }
+@keyframes feat-in {
+  from { opacity:0; transform: translateX(-22px); }
+  to   { opacity:1; transform: translateX(0); }
+}
+.rd-feat-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  color: #fff;
+  flex-shrink: 0;
+}
+.rd-feat-text {
+  font-family: 'Nunito', sans-serif;
+  font-size: .83rem;
+  font-weight: 700;
+  color: rgba(255,255,255,.9);
+  line-height: 1.3;
+}
+
+/* ════════════════════════════════════════
+   PANEL DERECHO — formulario
+   ════════════════════════════════════════ */
+.reg-form-panel {
+  background: #FAFAFA;
+  overflow-y: auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 3.5rem 3rem 3.5rem 3.5rem;
+  position: relative;
+}
+
+.reg-form-panel::before {
+  content: '';
+  position: absolute;
+  top: -80px;
+  right: -80px;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(236,72,153,.1) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.reg-form-inner {
+  width: 100%;
+  max-width: 480px;
+  animation: rp-enter .8s cubic-bezier(.34,1.56,.64,1) .1s both;
+}
+@keyframes rp-enter {
+  from { opacity:0; transform: translateX(28px); }
+  to   { opacity:1; transform: translateX(0); }
+}
+
+/* Cabecera */
+.rf-head { margin-bottom: 2rem; }
+.rf-eyebrow {
+  font-family: 'Baloo 2', cursive;
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #EC4899;
+  margin-bottom: .4rem;
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+}
+.rf-eyebrow::before {
+  content: '';
+  display: inline-block;
+  width: 22px;
+  height: 2px;
+  background: linear-gradient(90deg, #EC4899, #F9A8D4);
+  border-radius: 2px;
+}
+.rf-main-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: 2rem;
+  color: #1E1B4B;
+  line-height: 1.1;
+  margin-bottom: .4rem;
+}
+.rf-desc {
+  font-family: 'Nunito', sans-serif;
+  font-size: .9rem;
+  color: #6B7280;
+}
+
+/* Alerta */
+.rf-error {
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+  background: #FEF2F2;
+  border: 1.5px solid #FECACA;
+  border-radius: 12px;
+  padding: .8rem 1rem;
+  margin-bottom: 1.5rem;
+  font-family: 'Nunito', sans-serif;
+  font-size: .86rem;
+  color: #DC2626;
+  font-weight: 600;
+}
+
+/* Sección de formulario */
+.rf-section {
+  margin-bottom: 1.75rem;
+  padding-bottom: 1.75rem;
+  border-bottom: 1.5px solid #F3F0FF;
+}
+.rf-section:last-of-type { border-bottom: none; }
+
+.rf-section-label {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  font-family: 'Baloo 2', cursive;
+  font-weight: 700;
+  font-size: .78rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #EC4899;
+  margin-bottom: 1rem;
+}
+.rf-section-label i { font-size: .9rem; }
+
+/* Inputs */
+.rf-group { margin-bottom: 1rem; }
+.rf-label {
+  display: flex;
+  align-items: center;
+  gap: .3rem;
+  font-family: 'Baloo 2', cursive;
+  font-weight: 700;
+  font-size: .83rem;
+  color: #374151;
+  margin-bottom: .4rem;
+}
+.rf-label i { color: #EC4899; font-size: .85rem; }
+.rf-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+.rf-input {
+  width: 100%;
+  padding: .8rem 1rem;
+  font-family: 'Nunito', sans-serif;
+  font-size: .92rem;
+  color: #1E1B4B;
+  background: #fff;
+  border: 2px solid #E5E7EB;
+  border-radius: 12px;
+  outline: none;
+  transition: border-color .2s, box-shadow .2s;
+  box-sizing: border-box;
+}
+.rf-input:focus {
+  border-color: #EC4899;
+  box-shadow: 0 0 0 4px rgba(236,72,153,.1);
+}
+.rf-input::placeholder { color: #D1D5DB; }
+
+.rf-error-msg {
+  color: #EF4444;
+  font-size: .78rem;
+  margin-top: .28rem;
+  font-weight: 600;
+  font-family: 'Nunito', sans-serif;
+}
+.rf-hint {
+  color: #9CA3AF;
+  font-size: .75rem;
+  margin-top: .22rem;
+  font-family: 'Nunito', sans-serif;
+}
+
+/* Selector de nivel */
+.level-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .65rem; margin-top: .5rem; }
+.level-option { display: none; }
+.level-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .4rem;
+  padding: .8rem;
+  border: 2px solid #E5E7EB;
+  border-radius: 12px;
+  cursor: pointer;
+  font-family: 'Baloo 2', cursive;
+  font-weight: 700;
+  font-size: .88rem;
+  color: #6B7280;
+  transition: all .2s;
+  text-align: center;
+}
+.level-option:checked + .level-label {
+  border-color: #7C3AED;
+  background: rgba(124,58,237,.07);
+  color: #7C3AED;
+}
+
+/* Selector de avatar */
+.avatar-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: .65rem;
+  margin-top: .5rem;
+}
+.avatar-option { display: none; }
+.avatar-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .3rem;
+  padding: .65rem .4rem;
+  border: 2px solid #E5E7EB;
+  border-radius: 12px;
+  cursor: pointer;
+  font-family: 'Baloo 2', cursive;
+  font-weight: 700;
+  font-size: .72rem;
+  color: #6B7280;
+  transition: all .22s;
+}
+.avatar-label .av-icon {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+.avatar-option:checked + .avatar-label {
+  border-color: #EC4899;
+  background: rgba(236,72,153,.07);
+  color: #EC4899;
+}
+
+/* Botón submit */
+.rf-submit {
+  width: 100%;
+  padding: .95rem 1.5rem;
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.08rem;
+  letter-spacing: .4px;
+  color: #fff;
+  background: linear-gradient(135deg, #BE185D 0%, #EC4899 60%, #F9A8D4 100%);
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: transform .2s cubic-bezier(.34,1.56,.64,1), box-shadow .2s;
+  box-shadow: 0 8px 28px rgba(236,72,153,.38);
+  margin-top: .25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+}
+.rf-submit::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,.15) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity .2s;
+}
+.rf-submit:hover { transform: translateY(-2px) scale(1.015); box-shadow: 0 14px 36px rgba(236,72,153,.45); }
+.rf-submit:hover::before { opacity: 1; }
+.rf-submit:active { transform: translateY(0) scale(.99); }
+
+/* Link al login */
+.rf-back-login {
+  text-align: center;
+  margin-top: 1.25rem;
+}
+.rf-back-login a {
+  font-family: 'Nunito', sans-serif;
+  font-size: .88rem;
+  color: #6B7280;
+  font-weight: 700;
+  text-decoration: none;
+}
+.rf-back-login a span { color: #7C3AED; transition: color .2s; }
+.rf-back-login a:hover span { color: #EC4899; }
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .reg-split { grid-template-columns: 1fr; }
+  .reg-deco {
+    position: relative;
+    height: auto;
+    clip-path: polygon(0 0, 100% 0, 100% 82%, 50% 100%, 0 82%);
+    padding: 2.5rem 2rem 4rem;
+  }
+  .rd-subtitle { display: none; }
+  .rd-features { display: none; }
+  .rd-logo-wrap { width: 110px; height: 110px; border-radius: 32px; }
+  .rd-logo-wrap img { width: 75px; }
+  .rd-title { font-size: 1.8rem; }
+  .rd-palette { margin-bottom: .75rem; }
+  .reg-form-panel { padding: 2.5rem 1.5rem; }
+  .rf-row { grid-template-columns: 1fr; }
+  .avatar-grid { grid-template-columns: repeat(4, 1fr); }
+}
+</style>
+{% endblock %}
+
+{% block body_content %}
+<div class="reg-split">
+
+  <!-- ══════ PANEL IZQUIERDO ══════ -->
+  <div class="reg-deco">
+
+    <!-- Blobs SVG -->
+    <svg class="rd-blob" style="top:-8%;left:-12%;width:200px;height:200px;animation-duration:10s;" viewBox="0 0 200 200"><path fill="#FBBF24" d="M44,-57C56.3,-46.8,64.9,-31.8,68.4,-15.6C71.9,.6,70.2,18,63.1,32.3C55.9,46.7,43.3,58,28.7,64.4C14.1,70.7,-2.4,72.1,-18.6,68.3C-34.8,64.4,-50.7,55.2,-60.5,41.4C-70.3,27.7,-74,9.4,-71.4,-7.8C-68.7,-25,-59.7,-41.1,-46.8,-51.3C-34,-61.6,-17,-65.9,-.4,-65.5C16.2,-65.1,31.6,-67.1,44,-57Z" transform="translate(100 100)"/></svg>
+    <svg class="rd-blob" style="bottom:0%;right:4%;width:160px;height:160px;animation-duration:8s;animation-delay:3s;" viewBox="0 0 200 200"><path fill="#A78BFA" d="M40,-52.4C52.5,-43.5,63.4,-31.5,67.4,-17.3C71.4,-3.2,68.5,13.1,61.1,26.9C53.6,40.7,41.5,52,27.4,58.5C13.4,65,-2.6,66.8,-18.5,63.2C-34.4,59.5,-50.3,50.4,-59.4,37C-68.5,23.7,-70.8,6,-67.4,-10.2C-64,-26.3,-54.9,-41,-42.5,-50C-30,-59,-15,-62.3,-.3,-62C15.4,-61.7,27.5,-61.3,40,-52.4Z" transform="translate(100 100)"/></svg>
+
+    <!-- Iconos flotantes -->
+    <div class="rd-float" style="top:6%;left:7%;animation-duration:5.5s;"><i class="bi bi-palette2"></i></div>
+    <div class="rd-float" style="top:14%;right:9%;font-size:1.4rem;animation-duration:6.5s;animation-delay:1s;"><i class="bi bi-stars"></i></div>
+    <div class="rd-float" style="top:68%;left:4%;font-size:1.5rem;animation-duration:4.8s;animation-delay:.7s;"><i class="bi bi-pencil"></i></div>
+    <div class="rd-float" style="top:78%;right:8%;font-size:1.4rem;animation-duration:7s;animation-delay:2s;"><i class="bi bi-brush"></i></div>
+    <div class="rd-float" style="top:42%;left:2%;font-size:1.3rem;animation-duration:5.2s;animation-delay:1.5s;"><i class="bi bi-pen"></i></div>
+
+    <!-- Marca -->
+    <div class="rd-brand">
+      <div class="rd-logo-wrap">
+        <img src="{% static 'images/logo.png' %}" alt="Manitos Creativas">
+      </div>
+      <h2 class="rd-title">¡Crea tu<br>cuenta!</h2>
+      <p class="rd-subtitle">Registra al pequeño/a artista y comienza su aventura creativa.</p>
+    </div>
+
+    <!-- Paleta -->
+    <div class="rd-palette">
+      <div class="rd-dot"></div>
+      <div class="rd-dot"></div>
+      <div class="rd-dot"></div>
+      <div class="rd-dot"></div>
+      <div class="rd-dot"></div>
+    </div>
+
+    <!-- Características -->
+    <div class="rd-features">
+      <div class="rd-feat">
+        <div class="rd-feat-icon"><i class="bi bi-palette-fill"></i></div>
+        <span class="rd-feat-text">Actividades artísticas diseñadas para su edad</span>
+      </div>
+      <div class="rd-feat">
+        <div class="rd-feat-icon"><i class="bi bi-award-fill"></i></div>
+        <span class="rd-feat-text">Sistema de logros y recompensas motivadoras</span>
+      </div>
+      <div class="rd-feat">
+        <div class="rd-feat-icon"><i class="bi bi-shield-check-fill"></i></div>
+        <span class="rd-feat-text">Entorno seguro y supervisado por docentes</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══════ PANEL DERECHO ══════ -->
+  <div class="reg-form-panel">
+    <div class="reg-form-inner">
+
+      <div class="rf-head">
+        <div class="rf-eyebrow">Nuevo estudiante</div>
+        <h1 class="rf-main-title">Registrar Estudiante</h1>
+        <p class="rf-desc">Crea la cuenta de tu pequeño/a artista en Manitos Creativas.</p>
+      </div>
+
+      {% if form.errors %}
+      <div class="rf-error">
+        <i class="bi bi-x-circle-fill" style="font-size:1rem;flex-shrink:0;"></i>
+        <span>Por favor corrige los errores marcados abajo.</span>
+      </div>
+      {% endif %}
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+
+        <!-- Sección 1: Información del niño -->
+        <div class="rf-section">
+          <div class="rf-section-label"><i class="bi bi-person-fill"></i> Información del Niño/a</div>
+
+          <div class="rf-row">
+            <div class="rf-group">
+              <label class="rf-label" for="{{ form.first_name.id_for_label }}">Nombre</label>
+              <input type="text" id="{{ form.first_name.id_for_label }}" name="{{ form.first_name.html_name }}"
+                class="rf-input" placeholder="Nombre del niño/a"
+                value="{{ form.first_name.value|default:'' }}" required>
+              {% if form.first_name.errors %}<div class="rf-error-msg">{{ form.first_name.errors|first }}</div>{% endif %}
+            </div>
+            <div class="rf-group">
+              <label class="rf-label" for="{{ form.last_name.id_for_label }}">Apellido</label>
+              <input type="text" id="{{ form.last_name.id_for_label }}" name="{{ form.last_name.html_name }}"
+                class="rf-input" placeholder="Apellido"
+                value="{{ form.last_name.value|default:'' }}" required>
+              {% if form.last_name.errors %}<div class="rf-error-msg">{{ form.last_name.errors|first }}</div>{% endif %}
+            </div>
+          </div>
+
+          <div class="rf-row">
+            <div class="rf-group">
+              <label class="rf-label" for="{{ form.username.id_for_label }}">Nombre de usuario</label>
+              <input type="text" id="{{ form.username.id_for_label }}" name="{{ form.username.html_name }}"
+                class="rf-input" placeholder="ej: juanito2019"
+                value="{{ form.username.value|default:'' }}" required autocomplete="username">
+              {% if form.username.errors %}<div class="rf-error-msg">{{ form.username.errors|first }}</div>{% endif %}
+            </div>
+            <div class="rf-group">
+              <label class="rf-label" for="{{ form.age.id_for_label }}">Edad</label>
+              <input type="number" id="{{ form.age.id_for_label }}" name="{{ form.age.html_name }}"
+                class="rf-input" placeholder="3 — 7" min="3" max="7"
+                value="{{ form.age.value|default:'' }}" required>
+              {% if form.age.errors %}<div class="rf-error-msg">{{ form.age.errors|first }}</div>{% endif %}
+            </div>
+          </div>
+
+          <!-- Nivel -->
+          <div class="rf-group">
+            <label class="rf-label">Nivel escolar</label>
+            <div class="level-grid">
+              <input type="radio" id="level_a" name="{{ form.level.html_name }}" value="A" class="level-option"
+                {% if form.level.value == 'A' %}checked{% endif %}>
+              <label for="level_a" class="level-label">A — Transición A</label>
+              <input type="radio" id="level_b" name="{{ form.level.html_name }}" value="B" class="level-option"
+                {% if form.level.value == 'B' %}checked{% endif %}>
+              <label for="level_b" class="level-label">B — Transición B</label>
+            </div>
+            {% if form.level.errors %}<div class="rf-error-msg">{{ form.level.errors|first }}</div>{% endif %}
+          </div>
+
+          <!-- Avatar -->
+          <div class="rf-group">
+            <label class="rf-label">Avatar favorito</label>
+            <div class="avatar-grid">
+              <input type="radio" id="av_mochi" name="{{ form.selected_avatar.html_name }}" value="mochi" class="avatar-option"
+                {% if form.selected_avatar.value == 'mochi' or not form.selected_avatar.value %}checked{% endif %}>
+              <label for="av_mochi" class="avatar-label">
+                <span class="av-icon" style="color:#EC4899;"><i class="bi bi-heart-fill"></i></span>Mochi
+              </label>
+              <input type="radio" id="av_kiko" name="{{ form.selected_avatar.html_name }}" value="kiko" class="avatar-option"
+                {% if form.selected_avatar.value == 'kiko' %}checked{% endif %}>
+              <label for="av_kiko" class="avatar-label">
+                <span class="av-icon" style="color:#F97316;"><i class="bi bi-sun-fill"></i></span>Kiko
+              </label>
+              <input type="radio" id="av_star" name="{{ form.selected_avatar.html_name }}" value="star" class="avatar-option"
+                {% if form.selected_avatar.value == 'star' %}checked{% endif %}>
+              <label for="av_star" class="avatar-label">
+                <span class="av-icon" style="color:#FBBF24;"><i class="bi bi-star-fill"></i></span>Estrella
+              </label>
+              <input type="radio" id="av_cloud" name="{{ form.selected_avatar.html_name }}" value="cloud" class="avatar-option"
+                {% if form.selected_avatar.value == 'cloud' %}checked{% endif %}>
+              <label for="av_cloud" class="avatar-label">
+                <span class="av-icon" style="color:#3B82F6;"><i class="bi bi-cloud-fill"></i></span>Nube
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sección 2: Contraseña -->
+        <div class="rf-section">
+          <div class="rf-section-label"><i class="bi bi-lock-fill"></i> Contraseña</div>
+          <div class="rf-row">
+            <div class="rf-group">
+              <label class="rf-label" for="{{ form.password1.id_for_label }}">Contraseña</label>
+              <input type="password" id="{{ form.password1.id_for_label }}" name="{{ form.password1.html_name }}"
+                class="rf-input" placeholder="••••••••" required autocomplete="new-password">
+              {% if form.password1.errors %}<div class="rf-error-msg">{{ form.password1.errors|first }}</div>{% endif %}
+            </div>
+            <div class="rf-group">
+              <label class="rf-label" for="{{ form.password2.id_for_label }}">Confirmar</label>
+              <input type="password" id="{{ form.password2.id_for_label }}" name="{{ form.password2.html_name }}"
+                class="rf-input" placeholder="••••••••" required autocomplete="new-password">
+              {% if form.password2.errors %}<div class="rf-error-msg">{{ form.password2.errors|first }}</div>{% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Sección 3: Acudiente -->
+        <div class="rf-section">
+          <div class="rf-section-label"><i class="bi bi-people-fill"></i> Información del Acudiente</div>
+          <div class="rf-group">
+            <label class="rf-label" for="{{ form.parent_name.id_for_label }}">Nombre del acudiente</label>
+            <input type="text" id="{{ form.parent_name.id_for_label }}" name="{{ form.parent_name.html_name }}"
+              class="rf-input" placeholder="Nombre completo del padre/madre"
+              value="{{ form.parent_name.value|default:'' }}" required>
+            {% if form.parent_name.errors %}<div class="rf-error-msg">{{ form.parent_name.errors|first }}</div>{% endif %}
+          </div>
+          <div class="rf-row">
+            <div class="rf-group">
+              <label class="rf-label" for="{{ form.parent_email.id_for_label }}">Correo electrónico</label>
+              <input type="email" id="{{ form.parent_email.id_for_label }}" name="{{ form.parent_email.html_name }}"
+                class="rf-input" placeholder="correo@ejemplo.com"
+                value="{{ form.parent_email.value|default:'' }}">
+              {% if form.parent_email.errors %}<div class="rf-error-msg">{{ form.parent_email.errors|first }}</div>{% endif %}
+            </div>
+            <div class="rf-group">
+              <label class="rf-label" for="{{ form.parent_phone.id_for_label }}">Teléfono (opcional)</label>
+              <input type="tel" id="{{ form.parent_phone.id_for_label }}" name="{{ form.parent_phone.html_name }}"
+                class="rf-input" placeholder="300 123 4567"
+                value="{{ form.parent_phone.value|default:'' }}">
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="rf-submit">
+          <i class="bi bi-person-check-fill"></i>
+          Crear cuenta del estudiante
+        </button>
+
+        <div class="rf-back-login">
+          <a href="{% url 'login' %}">¿Ya tienes cuenta? <span>Ingresar →</span></a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

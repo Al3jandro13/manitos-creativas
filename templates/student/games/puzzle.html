@@ -1,0 +1,705 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Rompecabezas — Manitos Creativas{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/student.css' %}">{% endblock %}
+
+{% block body_content %}
+<div class="student-layout">
+
+  {% include 'student/_sidebar.html' with active_page='games' %}
+
+  <div class="student-main">
+    <header class="student-topbar">
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Abrir menú"><i class="bi bi-list"></i></button>
+      <div class="topbar-breadcrumb">
+        <a href="{% url 'games_home' %}" class="breadcrumb-link">Mis Juegos</a>
+        <i class="bi bi-chevron-right" style="font-size:.7rem;color:#9CA3AF;"></i>
+        <span class="bc-current">Rompecabezas</span>
+      </div>
+      <div class="topbar-actions">
+        <div class="topbar-date"><i class="bi bi-calendar3"></i><span id="topbarDate"></span></div>
+        <div class="topbar-stars-chip"><i class="bi bi-star-fill"></i><span>{{ profile.total_stars|default:"0" }} estrellas</span></div>
+        <button class="dark-mode-toggle" id="darkModeToggle" aria-label="Cambiar modo"><i class="bi bi-moon-fill" id="darkModeIcon"></i></button>
+      </div>
+    </header>
+
+    <div class="student-scroll">
+      <div class="pz-wrap">
+
+        <!-- ══ SETUP ══════════════════════════════════════════ -->
+        <div id="setup-panel">
+          <div class="pz-hero">
+            <div class="pz-hero-icon"><i class="bi bi-puzzle-fill"></i></div>
+            <h1 class="pz-hero-title">¡Rompecabezas!</h1>
+            <p class="pz-hero-sub">Elige una imagen y arma el rompecabezas</p>
+          </div>
+
+          <div class="pz-section">
+            <div class="pz-section-title"><i class="bi bi-images"></i> Elige tu imagen</div>
+            {% if puzzle_images %}
+            <div class="pz-images-grid">
+              {% for img in puzzle_images %}
+              <button type="button" class="pz-img-card" onclick="selectImage(this,'{{ img.image.url }}')">
+                <div class="pz-img-thumb-wrap">
+                  <img src="{{ img.image.url }}" alt="{{ img.title }}" class="pz-img-thumb">
+                  <div class="pz-img-check"><i class="bi bi-check-circle-fill"></i></div>
+                </div>
+                <span class="pz-img-label">{{ img.title }}</span>
+              </button>
+              {% endfor %}
+            </div>
+            {% else %}
+            <div class="pz-empty-images">
+              <i class="bi bi-image"></i>
+              <div>La profe aún no ha subido imágenes.</div>
+              <small>¡Espera a que suba algunas para jugar!</small>
+            </div>
+            {% endif %}
+          </div>
+
+          <div class="pz-section">
+            <div class="pz-section-title"><i class="bi bi-sliders"></i> ¿Cuántas piezas?</div>
+            <div class="pz-diff-grid">
+              <button class="pz-diff-btn" onclick="setDiff(this,2,2)">
+                <span class="pz-diff-num">4</span>
+                <span class="pz-diff-stars" style="color:#FBBF24;">★</span>
+                <span class="pz-diff-label">Muy fácil</span>
+              </button>
+              <button class="pz-diff-btn pz-diff-active" onclick="setDiff(this,3,3)">
+                <span class="pz-diff-num">9</span>
+                <span class="pz-diff-stars" style="color:#FBBF24;">★★</span>
+                <span class="pz-diff-label">Fácil</span>
+              </button>
+              <button class="pz-diff-btn" onclick="setDiff(this,4,3)">
+                <span class="pz-diff-num">12</span>
+                <span class="pz-diff-stars" style="color:#FBBF24;">★★★</span>
+                <span class="pz-diff-label">Normal</span>
+              </button>
+              <button class="pz-diff-btn" onclick="setDiff(this,4,4)">
+                <span class="pz-diff-num">16</span>
+                <span class="pz-diff-stars" style="color:#FBBF24;">★★★★</span>
+                <span class="pz-diff-label">Difícil</span>
+              </button>
+              <button class="pz-diff-btn" onclick="setDiff(this,5,4)">
+                <span class="pz-diff-num">20</span>
+                <span class="pz-diff-stars" style="color:#FBBF24;">★★★★★</span>
+                <span class="pz-diff-label">Experto</span>
+              </button>
+            </div>
+          </div>
+
+          <div style="text-align:center;padding-bottom:1rem;">
+            <button onclick="startPuzzle()" class="pz-start-btn">
+              <i class="bi bi-play-fill"></i> ¡Jugar!
+            </button>
+          </div>
+        </div><!-- /setup-panel -->
+
+        <!-- ══ GAME ════════════════════════════════════════════ -->
+        <div id="game-area" style="display:none;">
+
+          <div class="pz-stats-bar">
+            <div class="pz-stat">
+              <i class="bi bi-arrows-move"></i>
+              <span id="stat-moves">0</span>
+              <small>movimientos</small>
+            </div>
+            <div class="pz-stat">
+              <i class="bi bi-clock"></i>
+              <span id="stat-timer">0:00</span>
+              <small>tiempo</small>
+            </div>
+            <div class="pz-stat">
+              <i class="bi bi-check2-circle" style="color:#10B981;"></i>
+              <span id="stat-correct">0</span>/<span id="stat-total">0</span>
+              <small>en su lugar</small>
+            </div>
+            <div class="pz-stat">
+              <i class="bi bi-star-fill" style="color:var(--accent-yellow);"></i>
+              <span id="stat-stars">0</span>
+              <small>estrellas</small>
+            </div>
+          </div>
+
+          <div class="pz-game-layout">
+            <div class="pz-sidebar">
+              <div class="pz-ref-wrap">
+                <div class="pz-ref-label">Imagen completa</div>
+                <img id="ref-img" src="" alt="" class="pz-ref-img">
+              </div>
+              <div class="pz-actions">
+                <button onclick="showHint()" class="pz-action-btn pz-hint-btn">
+                  <i class="bi bi-lightbulb-fill"></i><span>Pista</span>
+                </button>
+                <button onclick="shufflePieces()" class="pz-action-btn pz-shuffle-btn">
+                  <i class="bi bi-shuffle"></i><span>Mezclar</span>
+                </button>
+                <button onclick="resetPuzzle()" class="pz-action-btn pz-reset-btn">
+                  <i class="bi bi-arrow-counterclockwise"></i><span>Reiniciar</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="pz-board-wrap">
+              <div id="puzzle-board" class="pz-board"></div>
+            </div>
+          </div>
+
+          <div class="pz-tray-section">
+            <div class="pz-tray-header">
+              <span><i class="bi bi-collection"></i> Piezas disponibles</span>
+              <span class="pz-tray-badge" id="tray-count">0</span>
+            </div>
+            <div id="piece-tray" class="pz-tray"
+                 ondragover="event.preventDefault();this.classList.add('tray-dragover')"
+                 ondragleave="this.classList.remove('tray-dragover')"
+                 ondrop="dropOnTray(event)">
+            </div>
+          </div>
+
+          <!-- Win overlay -->
+          <div id="win-panel" class="pz-win-panel" style="display:none;">
+            <div class="pz-win-card">
+              <div class="pz-win-icon"><i class="bi bi-trophy-fill"></i></div>
+              <div class="pz-win-title">¡Lo lograste!</div>
+              <div class="pz-win-sub" id="win-sub"></div>
+              <div class="pz-win-stars" id="win-stars"></div>
+              <button id="save-btn" onclick="saveScore()" class="pz-save-btn">
+                <i class="bi bi-star-fill"></i> ¡Guardar estrellas!
+              </button>
+              <button onclick="resetPuzzle()" class="pz-again-btn">
+                Jugar otra vez <i class="bi bi-arrow-repeat"></i>
+              </button>
+            </div>
+          </div>
+
+        </div><!-- /game-area -->
+      </div><!-- /pz-wrap -->
+    </div><!-- /student-scroll -->
+  </div><!-- /student-main -->
+</div><!-- /student-layout -->
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<style>
+/* ── Page ───────────────────────────────────────────────── */
+.pz-wrap { max-width:900px; padding-bottom:3rem; margin:0 auto; }
+
+/* ── Hero ───────────────────────────────────────────────── */
+.pz-hero { text-align:center; padding:1.5rem 0 .5rem; }
+.pz-hero-icon {
+  font-size:3.5rem; color:var(--primary);
+  display:inline-block; margin-bottom:.3rem;
+  animation:floatIcon 3s ease-in-out infinite;
+}
+@keyframes floatIcon {
+  0%,100%{transform:translateY(0) rotate(-6deg);}
+  50%    {transform:translateY(-12px) rotate(6deg);}
+}
+.pz-hero-title{font-family:var(--font-display);font-size:2.4rem;color:var(--primary);margin:0;}
+.pz-hero-sub  {font-family:var(--font-accent);font-size:1rem;color:var(--text-mid);margin:.3rem 0 0;}
+
+/* ── Section card ───────────────────────────────────────── */
+.pz-section{background:white;border-radius:var(--radius-lg);padding:1.5rem;
+  box-shadow:0 4px 24px rgba(124,58,237,.07);margin-bottom:1.25rem;}
+.pz-section-title{font-family:var(--font-accent);font-weight:800;font-size:1rem;
+  color:var(--primary);margin-bottom:1rem;display:flex;align-items:center;gap:.5rem;}
+
+/* ── Image grid ─────────────────────────────────────────── */
+.pz-images-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:.8rem;}
+.pz-img-card{background:white;border:3px solid #E5E7EB;border-radius:var(--radius-md);
+  padding:0;overflow:hidden;cursor:pointer;transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,.04);}
+.pz-img-card:hover{border-color:var(--primary);transform:translateY(-3px) scale(1.03);
+  box-shadow:0 8px 20px rgba(124,58,237,.2);}
+.pz-img-card.selected{border-color:var(--primary);
+  box-shadow:0 0 0 5px rgba(124,58,237,.3),0 8px 20px rgba(124,58,237,.15);}
+.pz-img-card.selected .pz-img-check{opacity:1;transform:scale(1);}
+.pz-img-thumb-wrap{position:relative;aspect-ratio:1;overflow:hidden;}
+.pz-img-thumb{width:100%;height:100%;object-fit:cover;display:block;transition:transform .2s;}
+.pz-img-card:hover .pz-img-thumb{transform:scale(1.08);}
+.pz-img-check{position:absolute;top:5px;right:5px;font-size:1.4rem;color:#10B981;
+  opacity:0;transform:scale(.4);transition:all .2s;filter:drop-shadow(0 1px 3px rgba(0,0,0,.3));}
+.pz-img-label{font-family:var(--font-accent);font-weight:700;font-size:.78rem;
+  color:var(--text-dark);padding:.4rem .5rem;display:block;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pz-empty-images{text-align:center;padding:2.5rem 1rem;background:#F8F5FF;
+  border-radius:var(--radius-md);border:2px dashed rgba(124,58,237,.2);color:var(--text-mid);}
+.pz-empty-images i{font-size:3rem;color:var(--primary);opacity:.4;display:block;margin-bottom:.5rem;}
+.pz-empty-images div{font-family:var(--font-accent);font-weight:700;}
+.pz-empty-images small{color:var(--text-light);}
+
+/* ── Difficulty ─────────────────────────────────────────── */
+.pz-diff-grid{display:flex;gap:.75rem;flex-wrap:wrap;}
+.pz-diff-btn{flex:1;min-width:76px;display:flex;flex-direction:column;align-items:center;
+  gap:.1rem;padding:.9rem .4rem;border-radius:var(--radius-md);border:3px solid #E5E7EB;
+  background:white;cursor:pointer;transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,.04);}
+.pz-diff-btn:hover{border-color:var(--primary);background:#F3F0FF;transform:translateY(-2px);}
+.pz-diff-active{border-color:var(--primary)!important;background:var(--primary)!important;
+  transform:translateY(-3px)!important;box-shadow:0 6px 18px rgba(124,58,237,.35)!important;}
+.pz-diff-num{font-family:var(--font-display);font-size:1.9rem;color:var(--primary);line-height:1;}
+.pz-diff-active .pz-diff-num,.pz-diff-active .pz-diff-label{color:white;}
+.pz-diff-label{font-family:var(--font-accent);font-size:.72rem;font-weight:700;color:var(--text-mid);}
+
+/* ── Start button ───────────────────────────────────────── */
+.pz-start-btn{font-family:var(--font-accent);font-weight:800;font-size:1.2rem;
+  padding:.9rem 3.5rem;border-radius:50px;border:none;
+  background:linear-gradient(135deg,var(--primary),var(--secondary));color:white;cursor:pointer;
+  box-shadow:0 6px 22px rgba(124,58,237,.4);transition:all .2s;
+  animation:startPulse 2s ease-in-out infinite;}
+.pz-start-btn:hover{transform:translateY(-3px) scale(1.05);
+  box-shadow:0 12px 30px rgba(124,58,237,.5);animation:none;}
+@keyframes startPulse{0%,100%{box-shadow:0 6px 22px rgba(124,58,237,.4);}
+  50%{box-shadow:0 6px 30px rgba(236,72,153,.55);}}
+
+/* ── Stats bar ──────────────────────────────────────────── */
+.pz-stats-bar{display:flex;gap:.75rem;margin-bottom:1.25rem;flex-wrap:wrap;}
+.pz-stat{flex:1;min-width:72px;background:white;border-radius:var(--radius-md);padding:.7rem .8rem;
+  display:flex;flex-direction:column;align-items:center;gap:.1rem;
+  box-shadow:0 2px 10px rgba(0,0,0,.05);font-family:var(--font-accent);}
+.pz-stat i{font-size:1.1rem;color:var(--primary);}
+.pz-stat span{font-size:1.35rem;font-weight:800;color:var(--text-dark);line-height:1.1;}
+.pz-stat small{font-size:.66rem;color:var(--text-light);font-weight:600;}
+
+/* ── Game layout ────────────────────────────────────────── */
+.pz-game-layout{display:flex;gap:1.25rem;align-items:flex-start;flex-wrap:wrap;margin-bottom:1.25rem;}
+.pz-sidebar{flex:0 0 auto;width:128px;display:flex;flex-direction:column;gap:.75rem;}
+.pz-ref-wrap{background:white;border-radius:var(--radius-md);padding:.6rem;
+  box-shadow:0 2px 10px rgba(0,0,0,.06);}
+.pz-ref-label{font-family:var(--font-accent);font-weight:700;font-size:.7rem;
+  color:var(--text-mid);margin-bottom:.4rem;text-align:center;}
+.pz-ref-img{width:116px;height:116px;object-fit:cover;border-radius:8px;
+  border:3px solid var(--primary);display:block;}
+.pz-actions{display:flex;flex-direction:column;gap:.5rem;}
+.pz-action-btn{display:flex;align-items:center;justify-content:center;gap:.4rem;
+  padding:.55rem .5rem;border-radius:var(--radius-sm);border:2.5px solid;cursor:pointer;
+  font-family:var(--font-accent);font-size:.78rem;font-weight:700;transition:all .15s;
+  background:white;width:100%;}
+.pz-hint-btn  {border-color:#F59E0B;color:#92400E;} .pz-hint-btn:hover  {background:#FEF3C7;}
+.pz-shuffle-btn{border-color:var(--primary);color:var(--primary);} .pz-shuffle-btn:hover{background:#F3F0FF;}
+.pz-reset-btn {border-color:#EF4444;color:#DC2626;} .pz-reset-btn:hover {background:#FEE2E2;}
+
+/* ── Board ──────────────────────────────────────────────── */
+.pz-board-wrap{flex:1;min-width:260px;}
+.pz-board{display:inline-grid;gap:4px;padding:10px;
+  background:rgba(124,58,237,.1);border-radius:var(--radius-md);
+  box-shadow:inset 0 2px 8px rgba(124,58,237,.08);}
+
+/* ── Drop cell ──────────────────────────────────────────── */
+.pz-cell{border-radius:5px;background:rgba(255,255,255,.55);
+  border:2.5px dashed rgba(124,58,237,.2);
+  transition:background .13s,border-color .13s,box-shadow .13s;
+  position:relative;overflow:hidden;cursor:pointer;}
+.pz-cell.drag-over{background:rgba(124,58,237,.15);border-style:solid;
+  border-color:var(--primary);box-shadow:inset 0 0 0 3px rgba(124,58,237,.2);}
+.pz-cell.has-piece{border-style:solid;border-color:rgba(124,58,237,.15);background:white;}
+.pz-cell.correct-cell{border-color:#10B981!important;border-style:solid!important;
+  background:rgba(16,185,129,.05)!important;}
+
+/* ── Piece ──────────────────────────────────────────────── */
+.pz-piece{cursor:grab;border-radius:3px;border:3px solid transparent;
+  transition:border-color .15s,box-shadow .15s,opacity .15s;
+  user-select:none;-webkit-user-select:none;touch-action:none;overflow:hidden;display:block;}
+.pz-piece:hover{box-shadow:0 4px 14px rgba(0,0,0,.2);}
+.pz-piece.selected{border-color:#FBBF24!important;
+  box-shadow:0 0 0 5px rgba(251,191,36,.55)!important;
+  animation:piecePulse 1s ease-in-out infinite;}
+@keyframes piecePulse{
+  0%,100%{box-shadow:0 0 0 5px rgba(251,191,36,.55);}
+  50%    {box-shadow:0 0 0 8px rgba(251,191,36,.3);}
+}
+.pz-piece.correct{border-color:#10B981!important;
+  box-shadow:0 0 0 4px rgba(16,185,129,.4)!important;}
+.pz-piece.bounce{animation:correctBounce .5s cubic-bezier(.36,.07,.19,.97) both!important;}
+@keyframes correctBounce{
+  0%  {transform:scale(1);}
+  35% {transform:scale(1.18);}
+  65% {transform:scale(.93);}
+  85% {transform:scale(1.07);}
+  100%{transform:scale(1);}
+}
+.pz-piece.hint-hi{border-color:#F59E0B!important;
+  box-shadow:0 0 0 4px rgba(245,158,11,.5)!important;}
+.pz-piece.dragging{opacity:.45;}
+
+/* ── Tray ───────────────────────────────────────────────── */
+.pz-tray-section{background:white;border-radius:var(--radius-lg);padding:1rem 1.25rem;
+  box-shadow:0 4px 24px rgba(124,58,237,.07);margin-bottom:1.25rem;}
+.pz-tray-header{font-family:var(--font-accent);font-weight:800;font-size:.9rem;
+  color:var(--primary);margin-bottom:.75rem;display:flex;align-items:center;
+  justify-content:space-between;}
+.pz-tray-badge{background:var(--primary);color:white;border-radius:50px;
+  padding:.1rem .6rem;font-size:.78rem;font-weight:800;}
+.pz-tray{display:flex;flex-wrap:wrap;gap:8px;min-height:80px;padding:.6rem;
+  background:#F8F5FF;border-radius:var(--radius-md);border:2px dashed rgba(124,58,237,.2);
+  transition:background .13s,border-color .13s;align-content:flex-start;}
+.pz-tray.tray-dragover{background:rgba(124,58,237,.1);border-color:var(--primary);border-style:solid;}
+
+/* ── Win overlay ────────────────────────────────────────── */
+.pz-win-panel{position:fixed;inset:0;background:rgba(10,10,24,.65);
+  backdrop-filter:blur(5px);z-index:400;display:flex;align-items:center;
+  justify-content:center;padding:1rem;animation:fadeIn .35s ease;}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+.pz-win-card{background:white;border-radius:24px;padding:2.5rem 2rem;max-width:400px;width:100%;
+  text-align:center;box-shadow:0 28px 70px rgba(0,0,0,.3);
+  animation:popIn .4s cubic-bezier(.34,1.56,.64,1);}
+@keyframes popIn{from{transform:scale(.6);opacity:0;}to{transform:scale(1);opacity:1;}}
+.pz-win-icon{font-size:4.5rem;color:var(--accent-yellow);display:inline-block;
+  animation:trophySwing 1.2s ease-in-out infinite;margin-bottom:.4rem;}
+@keyframes trophySwing{
+  0%,100%{transform:rotate(-10deg) scale(1);}
+  50%    {transform:rotate(10deg) scale(1.1);}
+}
+.pz-win-title{font-family:var(--font-display);font-size:2.4rem;color:var(--primary);margin-bottom:.3rem;}
+.pz-win-sub{font-family:var(--font-accent);font-size:.95rem;color:var(--text-mid);margin-bottom:.9rem;}
+.pz-win-stars{font-size:2.2rem;margin-bottom:1.25rem;color:var(--accent-yellow);letter-spacing:.1em;}
+.pz-win-stars i{display:inline-block;animation:starPop .3s cubic-bezier(.34,1.56,.64,1) both;}
+@keyframes starPop{from{transform:scale(0) rotate(-30deg);}to{transform:scale(1) rotate(0);}}
+.pz-save-btn{width:100%;font-family:var(--font-accent);font-weight:800;font-size:1.05rem;
+  padding:.8rem 1rem;border-radius:50px;border:none;
+  background:linear-gradient(135deg,var(--primary),var(--secondary));color:white;
+  cursor:pointer;box-shadow:0 4px 16px rgba(124,58,237,.35);
+  margin-bottom:.65rem;transition:all .2s;display:block;}
+.pz-save-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(124,58,237,.45);}
+.pz-save-btn:disabled{opacity:.6;cursor:not-allowed;transform:none;}
+.pz-again-btn{background:none;border:none;font-family:var(--font-accent);font-weight:700;
+  font-size:.9rem;color:var(--text-mid);cursor:pointer;padding:.3rem;transition:color .15s;}
+.pz-again-btn:hover{color:var(--primary);}
+
+/* ── Confetti ────────────────────────────────────────────── */
+@keyframes confettiFall{to{transform:translateY(110vh) rotate(720deg);opacity:0;}}
+
+/* ── DARK MODE ──────────────────────────────────────────── */
+body.student-dark .pz-hero-title { color: #A78BFA; }
+body.student-dark .pz-hero-sub   { color: #4B5563; }
+body.student-dark .pz-section {
+  background: #0E1E30;
+  box-shadow: 0 4px 24px rgba(0,0,0,.3);
+}
+body.student-dark .pz-section-title { color: #A78BFA; }
+body.student-dark .pz-img-card {
+  background: #0C1624;
+  border-color: rgba(255,255,255,.09);
+}
+body.student-dark .pz-img-card:hover { border-color: #7C3AED; }
+body.student-dark .pz-img-label { color: #CBD5E1; }
+body.student-dark .pz-empty-images {
+  background: #071525;
+  border-color: rgba(124,58,237,.2);
+  color: #4B5563;
+}
+body.student-dark .pz-diff-btn {
+  background: #0C1624;
+  border-color: rgba(255,255,255,.09);
+  color: #9CA3AF;
+}
+body.student-dark .pz-diff-btn:hover {
+  border-color: #7C3AED;
+  background: rgba(124,58,237,.1);
+}
+body.student-dark .pz-diff-num  { color: #A78BFA; }
+body.student-dark .pz-diff-label { color: #6B7280; }
+body.student-dark .pz-stat {
+  background: #0E1E30;
+  box-shadow: 0 2px 10px rgba(0,0,0,.3);
+}
+body.student-dark .pz-stat span  { color: #E2E8F0; }
+body.student-dark .pz-stat small { color: #374151; }
+body.student-dark .pz-ref-wrap {
+  background: #0C1624;
+  box-shadow: 0 2px 10px rgba(0,0,0,.3);
+}
+body.student-dark .pz-ref-label { color: #4B5563; }
+body.student-dark .pz-action-btn { background: #0C1624; }
+body.student-dark .pz-hint-btn   { border-color: #B45309; color: #FCD34D; }
+body.student-dark .pz-hint-btn:hover   { background: #2D1A00; }
+body.student-dark .pz-shuffle-btn { border-color: #7C3AED; color: #A78BFA; }
+body.student-dark .pz-shuffle-btn:hover { background: rgba(124,58,237,.15); }
+body.student-dark .pz-reset-btn  { border-color: #DC2626; color: #FCA5A5; }
+body.student-dark .pz-reset-btn:hover  { background: #2D0A0A; }
+body.student-dark .pz-board      { background: rgba(124,58,237,.12); }
+body.student-dark .pz-cell       { background: rgba(255,255,255,.04); border-color: rgba(124,58,237,.15); }
+body.student-dark .pz-cell.has-piece { background: #0C1624; }
+body.student-dark .pz-tray-section {
+  background: #0E1E30;
+  box-shadow: 0 4px 24px rgba(0,0,0,.3);
+}
+body.student-dark .pz-tray       { background: #071525; border-color: rgba(124,58,237,.18); }
+body.student-dark .pz-tray-header { color: #A78BFA; }
+body.student-dark .pz-win-card   { background: #0E1E30; }
+body.student-dark .pz-win-title  { color: #A78BFA; }
+body.student-dark .pz-win-sub    { color: #4B5563; }
+body.student-dark .pz-again-btn  { color: #4B5563; }
+body.student-dark .pz-again-btn:hover { color: #A78BFA; }
+</style>
+
+<script>
+let currentImageSrc = null;
+let currentCols = 3, currentRows = 3;
+let boardCells  = [];
+let trayPieces  = [];
+let selectedPieceIdx = null;
+let selectedFromCell = null;
+let moves = 0, stars = 0, hintUsed = 0;
+let timerInterval = null, timerSecs = 0;
+let completedCount = 0;
+
+function selectImage(cardEl, url) {
+  currentImageSrc = url;
+  document.querySelectorAll('.pz-img-card').forEach(c => c.classList.remove('selected'));
+  cardEl.classList.add('selected');
+}
+function setDiff(btn, cols, rows) {
+  currentCols = cols; currentRows = rows;
+  document.querySelectorAll('.pz-diff-btn').forEach(b => b.classList.remove('pz-diff-active'));
+  btn.classList.add('pz-diff-active');
+}
+
+function startPuzzle() {
+  if (!currentImageSrc) { alert('¡Elige una imagen primero!'); return; }
+  moves = 0; stars = 0; hintUsed = 0; timerSecs = 0; completedCount = 0;
+  selectedPieceIdx = null; selectedFromCell = null;
+  document.getElementById('stat-moves').textContent  = '0';
+  document.getElementById('stat-timer').textContent  = '0:00';
+  document.getElementById('stat-stars').textContent  = '0';
+  document.getElementById('stat-correct').textContent= '0';
+  document.getElementById('stat-total').textContent  = currentCols * currentRows;
+  document.getElementById('win-panel').style.display = 'none';
+
+  buildImage(src => {
+    document.getElementById('ref-img').src = src;
+    sliceImg(src, currentCols, currentRows, (pieces, pw, ph) => {
+      buildBoard(pieces, pw, ph);
+      document.getElementById('setup-panel').style.display = 'none';
+      document.getElementById('game-area').style.display   = 'block';
+      startTimer();
+    });
+  });
+}
+
+function buildImage(cb) {
+  const S = 480, cv = document.createElement('canvas');
+  cv.width = cv.height = S;
+  const ctx = cv.getContext('2d'), img = new Image();
+  img.onload = () => {
+    const a = img.width/img.height;
+    let sx=0,sy=0,sw=img.width,sh=img.height;
+    if (a>1){sw=img.height;sx=(img.width-sw)/2;}else{sh=img.width;sy=(img.height-sh)/2;}
+    ctx.drawImage(img,sx,sy,sw,sh,0,0,S,S);
+    cb(cv.toDataURL());
+  };
+  img.src = currentImageSrc;
+}
+function sliceImg(src, cols, rows, cb) {
+  const img = new Image();
+  img.onload = () => {
+    const pw = Math.floor(img.width/cols), ph = Math.floor(img.height/rows), pieces = [];
+    for (let r=0;r<rows;r++) for (let c=0;c<cols;c++) {
+      const cv = document.createElement('canvas');
+      cv.width=pw; cv.height=ph;
+      cv.getContext('2d').drawImage(img,c*pw,r*ph,pw,ph,0,0,pw,ph);
+      pieces.push({src:cv.toDataURL(),idx:r*cols+c});
+    }
+    cb(pieces,pw,ph);
+  };
+  img.src = src;
+}
+
+function buildBoard(pieces, pw, ph) {
+  const maxW  = Math.min(480, window.innerWidth - 190);
+  const cellW = Math.floor(maxW/currentCols);
+  const cellH = Math.floor(cellW*ph/pw);
+  const board = document.getElementById('puzzle-board');
+  board.style.gridTemplateColumns = `repeat(${currentCols},${cellW}px)`;
+  board.innerHTML = '';
+  boardCells = [];
+  for (let i=0; i<currentCols*currentRows; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'pz-cell';
+    cell.style.width = cellW+'px'; cell.style.height = cellH+'px';
+    cell.addEventListener('dragover',  e=>{e.preventDefault();cell.classList.add('drag-over');});
+    cell.addEventListener('dragleave', ()=>cell.classList.remove('drag-over'));
+    cell.addEventListener('drop',      e=>{e.preventDefault();cell.classList.remove('drag-over');handleCellDrop(e,i);});
+    cell.addEventListener('click',     ()=>clickCell(i));
+    board.appendChild(cell);
+    boardCells.push({el:cell, pieceIdx:null});
+  }
+  const shuffled = [...pieces].sort(()=>Math.random()-.5);
+  const tray = document.getElementById('piece-tray');
+  tray.innerHTML = '';
+  trayPieces = [];
+  shuffled.forEach(piece => {
+    const img = document.createElement('img');
+    img.src = piece.src;
+    img.style.cssText = `display:block;width:100%;height:100%;object-fit:cover;`;
+    img.draggable = false;
+    const wp = document.createElement('div');
+    wp.className = 'pz-piece';
+    wp.style.width = cellW+'px'; wp.style.height = cellH+'px';
+    wp.draggable = true;
+    wp.addEventListener('dragstart', e=>{
+      selectedPieceIdx = piece.idx;
+      selectedFromCell = getPieceCell(piece.idx);
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', JSON.stringify({pi:piece.idx, fc:getPieceCell(piece.idx)}));
+      wp.classList.add('dragging');
+    });
+    wp.addEventListener('dragend',   ()=>wp.classList.remove('dragging'));
+    wp.addEventListener('click',     e=>{e.stopPropagation();clickPiece(piece.idx);});
+    wp.appendChild(img);
+    tray.appendChild(wp);
+    trayPieces.push({el:wp, idx:piece.idx, placed:false});
+  });
+  updateTrayCount();
+}
+
+function getPieceCell(pi) { for(let i=0;i<boardCells.length;i++) if(boardCells[i].pieceIdx===pi) return i; return null; }
+function getTp(pi) { return trayPieces.find(p=>p.idx===pi); }
+function updateTrayCount() { document.getElementById('tray-count').textContent = trayPieces.filter(p=>!p.placed).length; }
+function updateProgress() { const c=boardCells.filter((cell,i)=>cell.pieceIdx===i).length; document.getElementById('stat-correct').textContent=c; }
+function deselectAll() { selectedPieceIdx=null;selectedFromCell=null;trayPieces.forEach(p=>p.el.classList.remove('selected')); }
+
+function clickPiece(pi) {
+  if (selectedPieceIdx===pi){deselectAll();return;}
+  deselectAll(); selectedPieceIdx=pi; selectedFromCell=getPieceCell(pi);
+  const tp=getTp(pi); if(tp) tp.el.classList.add('selected');
+}
+function clickCell(ci) {
+  if (selectedPieceIdx===null) { if(boardCells[ci].pieceIdx!==null) clickPiece(boardCells[ci].pieceIdx); return; }
+  placePiece(selectedPieceIdx, selectedFromCell, ci);
+}
+function handleCellDrop(e, toCi) {
+  let pi=selectedPieceIdx,fc=selectedFromCell;
+  try{const d=JSON.parse(e.dataTransfer.getData('text/plain'));pi=d.pi;fc=d.fc;}catch(_){}
+  if(pi!==null) placePiece(pi,fc,toCi);
+}
+function dropOnTray(e) {
+  e.preventDefault();
+  document.getElementById('piece-tray').classList.remove('tray-dragover');
+  let pi=selectedPieceIdx,fc=selectedFromCell;
+  try{const d=JSON.parse(e.dataTransfer.getData('text/plain'));pi=d.pi;fc=d.fc;}catch(_){}
+  if(pi!==null&&fc!==null) returnToTray(pi,fc); else deselectAll();
+}
+function returnToTray(pi,fromCi) {
+  const tp=getTp(pi);if(!tp)return;
+  const fc=boardCells[fromCi];
+  fc.el.innerHTML='';fc.el.classList.remove('has-piece','correct-cell');fc.pieceIdx=null;
+  tp.placed=false;tp.el.classList.remove('correct','selected','bounce');tp.el.style.opacity='1';
+  document.getElementById('piece-tray').appendChild(tp.el);
+  moves++;document.getElementById('stat-moves').textContent=moves;
+  updateProgress();updateTrayCount();deselectAll();
+}
+function placePiece(pi,fromCi,toCi) {
+  if(toCi===fromCi){deselectAll();return;}
+  const tp=getTp(pi);if(!tp)return;
+  const toCell=boardCells[toCi];
+  let sourceHandled=false;
+  if(toCell.pieceIdx!==null&&toCell.pieceIdx!==pi) {
+    const dispPi=toCell.pieceIdx,dispTp=getTp(dispPi);
+    if(fromCi!==null){
+      const srcCell=boardCells[fromCi];
+      srcCell.el.innerHTML='';srcCell.el.classList.remove('has-piece','correct-cell');
+      srcCell.el.appendChild(dispTp.el);srcCell.el.classList.add('has-piece');srcCell.pieceIdx=dispPi;
+      dispTp.el.classList.remove('correct','selected','bounce');
+      if(dispPi===fromCi){srcCell.el.classList.add('correct-cell');dispTp.el.classList.add('correct');}
+      sourceHandled=true;
+    } else {
+      dispTp.placed=false;dispTp.el.classList.remove('correct','selected','bounce');
+      document.getElementById('piece-tray').appendChild(dispTp.el);
+    }
+    toCell.el.innerHTML='';toCell.el.classList.remove('has-piece','correct-cell');toCell.pieceIdx=null;
+  }
+  if(fromCi!==null&&!sourceHandled){boardCells[fromCi].el.innerHTML='';boardCells[fromCi].el.classList.remove('has-piece','correct-cell');boardCells[fromCi].pieceIdx=null;}
+  tp.placed=true;tp.el.classList.remove('selected','correct','bounce');tp.el.style.opacity='1';
+  toCell.el.appendChild(tp.el);toCell.el.classList.add('has-piece');toCell.pieceIdx=pi;
+  moves++;document.getElementById('stat-moves').textContent=moves;
+  if(pi===toCi){toCell.el.classList.add('correct-cell');tp.el.classList.add('correct');void tp.el.offsetWidth;tp.el.classList.add('bounce');setTimeout(()=>tp.el.classList.remove('bounce'),550);}
+  updateProgress();updateTrayCount();deselectAll();checkWin();
+}
+
+function checkWin() {
+  const total=currentCols*currentRows;
+  if(boardCells.filter((c,i)=>c.pieceIdx===i).length!==total) return;
+  stopTimer();completedCount++;
+  const bases={4:3,9:5,12:7,16:9,20:12};
+  const base=bases[total]||5;
+  const tb=timerSecs<60?2:timerSecs<120?1:0;
+  stars=Math.max(1,base+tb-hintUsed*2);
+  document.getElementById('stat-stars').textContent=stars;
+  document.getElementById('win-sub').textContent=`¡En ${moves} movimientos y ${formatTime(timerSecs)}!`;
+  const sr=document.getElementById('win-stars');sr.innerHTML='';
+  for(let i=0;i<stars;i++){const s=document.createElement('i');s.className='bi bi-star-fill';s.style.animationDelay=(i*.09)+'s';sr.appendChild(s);}
+  document.getElementById('save-btn').disabled=false;
+  document.getElementById('win-panel').style.display='flex';
+  launchConfetti();
+}
+
+function launchConfetti() {
+  const colors=['#7C3AED','#EC4899','#F59E0B','#10B981','#60A5FA','#F97316'];
+  for(let i=0;i<80;i++){
+    const el=document.createElement('div');const sz=Math.random()*12+6;
+    el.style.cssText=`position:fixed;left:${Math.random()*100}vw;top:-20px;width:${sz}px;height:${sz}px;background:${colors[Math.floor(Math.random()*colors.length)]};border-radius:${Math.random()>.5?'50%':'3px'};transform:rotate(${Math.random()*360}deg);animation:confettiFall ${1.5+Math.random()*2}s linear ${Math.random()*.6}s forwards;z-index:9999;pointer-events:none;`;
+    document.body.appendChild(el);setTimeout(()=>el.remove(),4000);
+  }
+}
+
+function shufflePieces() {
+  boardCells.forEach(c=>{c.el.innerHTML='';c.el.classList.remove('has-piece','correct-cell');c.pieceIdx=null;});
+  trayPieces.forEach(tp=>{tp.placed=false;tp.el.classList.remove('selected','correct','bounce','hint-hi');tp.el.style.opacity='1';document.getElementById('piece-tray').appendChild(tp.el);});
+  const tray=document.getElementById('piece-tray');
+  [...tray.children].sort(()=>Math.random()-.5).forEach(c=>tray.appendChild(c));
+  updateProgress();updateTrayCount();deselectAll();
+}
+
+function showHint() {
+  hintUsed++;
+  const unplaced=trayPieces.filter(p=>!p.placed);if(!unplaced.length) return;
+  const target=unplaced[Math.floor(Math.random()*unplaced.length)];
+  target.el.classList.add('hint-hi');
+  const cell=boardCells[target.idx];
+  cell.el.style.cssText+=';background:rgba(245,158,11,.2)!important;border-color:#F59E0B!important;border-style:solid!important;';
+  setTimeout(()=>{target.el.classList.remove('hint-hi');cell.el.style.cssText=cell.el.style.cssText.replace(/background:[^;]+important;/,'').replace(/border-color:[^;]+important;/,'').replace(/border-style:[^;]+important;/,'');},2500);
+}
+
+function startTimer(){stopTimer();timerSecs=0;timerInterval=setInterval(()=>{timerSecs++;document.getElementById('stat-timer').textContent=formatTime(timerSecs);},1000);}
+function stopTimer(){if(timerInterval){clearInterval(timerInterval);timerInterval=null;}}
+function formatTime(s){return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;}
+
+function resetPuzzle() {
+  stopTimer();
+  document.getElementById('win-panel').style.display='none';
+  document.getElementById('game-area').style.display='none';
+  document.getElementById('setup-panel').style.display='block';
+  moves=0;stars=0;hintUsed=0;timerSecs=0;
+  ['stat-moves','stat-stars','stat-correct','stat-total'].forEach(id=>document.getElementById(id).textContent='0');
+  document.getElementById('stat-timer').textContent='0:00';
+}
+
+function getCookie(n){for(let c of document.cookie.split(';')){const[k,v]=c.trim().split('=');if(k===n)return decodeURIComponent(v);}return '';}
+function saveScore() {
+  const btn=document.getElementById('save-btn');
+  btn.disabled=true;btn.innerHTML='<i class="bi bi-hourglass-split"></i> Guardando…';
+  fetch('{% url "save_game_score" %}',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},
+    body:JSON.stringify({game_type:'puzzle',score:completedCount,stars_earned:stars}),
+  })
+  .then(r=>r.json())
+  .then(d=>{btn.innerHTML=`<i class="bi bi-check-circle-fill"></i> ¡+${d.stars_earned} estrellas guardadas!`;if(window.Toast)Toast.show(`¡+${d.stars_earned} estrellas!`,'success');})
+  .catch(()=>{btn.disabled=false;btn.innerHTML='<i class="bi bi-star-fill"></i> ¡Guardar estrellas!';});
+}
+
+// Layout init
+(function(){
+  var d=document.getElementById('topbarDate');
+  if(d)d.textContent=new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long'});
+  var pb=document.getElementById('sidebarProfileBtn'),pd=document.getElementById('profileDropdown'),pc=document.getElementById('profileChevron');
+  if(pb&&pd){pb.addEventListener('click',function(e){e.stopPropagation();var o=pd.classList.toggle('open');pc.style.transform=o?'rotate(180deg)':'';});document.addEventListener('click',function(){pd.classList.remove('open');pc.style.transform='';});}
+  var t=document.getElementById('sidebarToggle'),s=document.getElementById('studentSidebar'),ov=document.getElementById('sidebarOverlay');
+  if(t&&s&&ov){t.addEventListener('click',function(){s.classList.toggle('open');ov.classList.toggle('open');});ov.addEventListener('click',function(){s.classList.remove('open');ov.classList.remove('open');});}
+  var dt=document.getElementById('darkModeToggle'),di=document.getElementById('darkModeIcon');
+  function sd(on){document.body.classList.toggle('student-dark',on);if(di)di.className=on?'bi bi-sun-fill':'bi bi-moon-fill';}
+  sd(localStorage.getItem('student_dark')==='1');
+  if(dt)dt.addEventListener('click',function(){var on=!document.body.classList.contains('student-dark');sd(on);localStorage.setItem('student_dark',on?'1':'0');});
+})();
+</script>
+{% endblock %}

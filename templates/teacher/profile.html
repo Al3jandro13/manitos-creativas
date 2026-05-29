@@ -1,0 +1,459 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mi Perfil — Manitos Creativas{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/teacher.css' %}">
+{% endblock %}
+
+{% block body_content %}
+<div class="teacher-layout">
+
+  {% include 'teacher/_sidebar.html' %}
+
+  <main class="teacher-main">
+
+    <!-- Topbar -->
+    <div class="teacher-topbar">
+      <div style="display:flex;align-items:center;gap:.85rem;">
+        <button id="sidebar-toggle"
+          style="display:none;background:none;border:none;cursor:pointer;font-size:1.2rem;color:var(--t-text-mid);padding:.25rem;"
+          onclick="document.querySelector('.sidebar').classList.toggle('open')">
+          <i class="bi bi-list"></i>
+        </button>
+        <div class="teacher-topbar-title">
+          <i class="bi bi-person-circle"></i>
+          Mi Perfil
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-primary" onclick="openEditModal()">
+          <i class="bi bi-pencil"></i> Editar perfil
+        </button>
+        <a href="{% url 'teacher_dashboard' %}" class="btn btn-outline">
+          <i class="bi bi-arrow-left"></i> Volver al panel
+        </a>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="teacher-content">
+
+      <!-- Profile hero -->
+      <div class="profile-hero">
+        <div class="profile-avatar-lg">
+          {{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}
+        </div>
+        <div class="profile-hero-info">
+          <div class="profile-name">{{ request.user.get_full_name|default:request.user.username }}</div>
+          <div class="profile-role-tag">
+            <i class="bi bi-mortarboard-fill"></i>
+            Profesora / Profesor
+          </div>
+          <div class="profile-email">
+            <i class="bi bi-envelope"></i>
+            {{ request.user.email|default:"Sin correo registrado" }}
+          </div>
+          <div class="profile-stats-row">
+            <div class="profile-stat-pill">
+              <i class="bi bi-clipboard2-fill" style="color:var(--t-indigo);"></i>
+              {{ total_activities }} actividad{{ total_activities|pluralize:"es" }}
+            </div>
+            <div class="profile-stat-pill">
+              <i class="bi bi-people-fill" style="color:var(--t-teal);"></i>
+              {{ total_students }} estudiante{{ total_students|pluralize:"s" }}
+            </div>
+            <div class="profile-stat-pill">
+              <i class="bi bi-calendar3" style="color:var(--t-amber);"></i>
+              Miembro desde {{ request.user.date_joined|date:"M Y" }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Profile grid -->
+      <div class="profile-grid">
+
+        <!-- Información personal -->
+        <div class="profile-section">
+          <div class="profile-section-header">
+            <i class="bi bi-person-fill" style="color:var(--t-indigo);font-size:.9rem;"></i>
+            <div class="profile-section-title">Información Personal</div>
+          </div>
+          <div class="profile-section-body">
+            <div class="profile-field">
+              <div class="profile-field-label">Nombre completo</div>
+              <div class="profile-field-value">
+                {{ request.user.get_full_name|default:"—" }}
+              </div>
+            </div>
+            <div class="profile-field">
+              <div class="profile-field-label">Nombre de usuario</div>
+              <div class="profile-field-value">@{{ request.user.username }}</div>
+            </div>
+            <div class="profile-field">
+              <div class="profile-field-label">Correo electrónico</div>
+              <div class="profile-field-value {% if not request.user.email %}empty{% endif %}">
+                {{ request.user.email|default:"Sin correo registrado" }}
+              </div>
+            </div>
+            <div class="profile-field">
+              <div class="profile-field-label">Rol</div>
+              <div class="profile-field-value">
+                <span class="badge badge-purple">
+                  <i class="bi bi-mortarboard-fill"></i>&nbsp;Profesora / Profesor
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Perfil docente -->
+        <div class="profile-section">
+          <div class="profile-section-header">
+            <i class="bi bi-award-fill" style="color:var(--t-teal);font-size:.9rem;"></i>
+            <div class="profile-section-title">Perfil Docente</div>
+          </div>
+          <div class="profile-section-body">
+            <div class="profile-field">
+              <div class="profile-field-label">Especialidad</div>
+              <div class="profile-field-value {% if not profile or not profile.subject_specialty %}empty{% endif %}">
+                {% if profile and profile.subject_specialty %}
+                  {{ profile.subject_specialty }}
+                {% else %}
+                  Sin especificar
+                {% endif %}
+              </div>
+            </div>
+            <div class="profile-field">
+              <div class="profile-field-label">Años de experiencia</div>
+              <div class="profile-field-value {% if not profile %}empty{% endif %}">
+                {% if profile %}
+                  {{ profile.years_experience }} año{{ profile.years_experience|pluralize:"s" }}
+                {% else %}
+                  Sin especificar
+                {% endif %}
+              </div>
+            </div>
+            <div class="profile-field">
+              <div class="profile-field-label">Descripción / Bio</div>
+              <div class="profile-field-value {% if not profile or not profile.bio %}empty{% endif %}" style="line-height:1.55;">
+                {% if profile and profile.bio %}
+                  {{ profile.bio }}
+                {% else %}
+                  Sin descripción
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actividad en la plataforma -->
+        <div class="profile-section">
+          <div class="profile-section-header">
+            <i class="bi bi-bar-chart-fill" style="color:var(--t-amber);font-size:.9rem;"></i>
+            <div class="profile-section-title">Actividad en la plataforma</div>
+          </div>
+          <div class="profile-section-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:.9rem;">
+              <div style="background:var(--t-indigo-light);border-radius:var(--t-radius-md);padding:1rem;text-align:center;">
+                <div style="font-family:var(--t-font-serif);font-size:1.85rem;font-weight:700;color:var(--t-indigo);line-height:1;">{{ total_activities }}</div>
+                <div style="font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--t-indigo);opacity:.75;margin-top:.3rem;">Actividades</div>
+              </div>
+              <div style="background:var(--t-teal-light);border-radius:var(--t-radius-md);padding:1rem;text-align:center;">
+                <div style="font-family:var(--t-font-serif);font-size:1.85rem;font-weight:700;color:var(--t-teal);line-height:1;">{{ total_students }}</div>
+                <div style="font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--t-teal);opacity:.75;margin-top:.3rem;">Estudiantes</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cuenta -->
+        <div class="profile-section">
+          <div class="profile-section-header">
+            <i class="bi bi-shield-check-fill" style="color:var(--t-rose);font-size:.9rem;"></i>
+            <div class="profile-section-title">Cuenta</div>
+          </div>
+          <div class="profile-section-body">
+            <div class="profile-field">
+              <div class="profile-field-label">Miembro desde</div>
+              <div class="profile-field-value">{{ request.user.date_joined|date:"d \d\e F \d\e Y" }}</div>
+            </div>
+            <div class="profile-field">
+              <div class="profile-field-label">Último acceso</div>
+              <div class="profile-field-value {% if not request.user.last_login %}empty{% endif %}">
+                {% if request.user.last_login %}
+                  {{ request.user.last_login|date:"d \d\e F \d\e Y, H:i" }}
+                {% else %}
+                  Sin registro
+                {% endif %}
+              </div>
+            </div>
+            <div class="profile-field" style="margin-top:1.1rem;padding-top:1rem;border-top:1px solid var(--t-border-light);">
+              <a href="{% url 'logout' %}" class="btn btn-outline" style="font-size:.82rem;width:100%;justify-content:center;display:flex;align-items:center;gap:.5rem;">
+                <i class="bi bi-box-arrow-left"></i> Cerrar sesión
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Integración con Google / Gmail -->
+        <div class="profile-section" style="grid-column: 1 / -1;">
+          <div class="profile-section-header">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;">
+              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+            </svg>
+            <div class="profile-section-title">Integración con Google</div>
+          </div>
+          <div class="profile-section-body">
+            {% if google_linked %}
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
+              <div>
+                <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.85rem;padding:.75rem 1rem;background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.2);border-radius:10px;max-width:420px;">
+                  <div style="width:34px;height:34px;border-radius:50%;background:rgba(16,185,129,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <i class="bi bi-check-lg" style="color:#10B981;font-size:1rem;"></i>
+                  </div>
+                  <div>
+                    <div style="font-size:.82rem;font-weight:700;color:#10B981;line-height:1.2;">Cuenta vinculada</div>
+                    <div style="font-size:.78rem;color:var(--t-text-muted);margin-top:.15rem;">{{ google_email }}</div>
+                  </div>
+                </div>
+                <div style="font-size:.82rem;color:var(--t-text-mid);display:flex;align-items:center;gap:.4rem;">
+                  <i class="bi bi-envelope-check-fill" style="color:#10B981;"></i>
+                  Los correos se enviarán directamente desde tu Gmail.
+                </div>
+              </div>
+              <form method="post" action="{% url 'disconnect_google' %}"
+                    onsubmit="return confirm('¿Desvincular tu cuenta de Google? Ya no podrás enviar correos desde Gmail.');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline"
+                        style="font-size:.8rem;color:#EF4444;border-color:rgba(239,68,68,.4);white-space:nowrap;">
+                  <i class="bi bi-x-circle"></i> Desvincular Google
+                </button>
+              </form>
+            </div>
+            {% else %}
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1.25rem;">
+              <div style="max-width:480px;">
+                <div style="font-size:.85rem;color:var(--t-text-mid);margin-bottom:.6rem;line-height:1.55;">
+                  <i class="bi bi-envelope-exclamation-fill" style="color:var(--t-amber);margin-right:.35rem;"></i>
+                  Vincula tu cuenta para enviar correos a padres y acudientes directamente desde tu Gmail.
+                </div>
+                <div style="font-size:.78rem;color:var(--t-text-muted);line-height:1.5;">
+                  Solo se solicitará permiso para <strong>enviar correos en tu nombre</strong>. No se leerá ningún correo existente.
+                </div>
+              </div>
+              <a href="{% url 'social:begin' 'google-oauth2' %}?next=/cuentas/perfil/profesora/"
+                 style="display:inline-flex;align-items:center;gap:.65rem;padding:.65rem 1.2rem;
+                        background:var(--t-surface);border:1.5px solid var(--t-border);
+                        border-radius:10px;font-size:.85rem;font-weight:600;
+                        color:var(--t-text-mid);text-decoration:none;white-space:nowrap;
+                        transition:border-color .2s,box-shadow .2s;"
+                 onmouseover="this.style.borderColor='#4285F4';this.style.boxShadow='0 2px 8px rgba(66,133,244,.15)';"
+                 onmouseout="this.style.borderColor='';this.style.boxShadow='';">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                </svg>
+                Vincular con Google
+              </a>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- Modal editar perfil -->
+<style>
+  #edit-modal-box {
+    background: #fff;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 540px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 24px 64px rgba(0,0,0,.3);
+  }
+  #edit-modal-box .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #E5E7EB;
+  }
+  #edit-modal-box .modal-title {
+    font-family: var(--t-font-serif);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #111827;
+  }
+  #edit-modal-box .modal-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.3rem;
+    color: #9CA3AF;
+    line-height: 1;
+    padding: .25rem;
+    transition: color .15s;
+  }
+  #edit-modal-box .modal-close:hover { color: #374151; }
+  #edit-modal-box .modal-body { padding: 1.5rem; }
+  #edit-modal-box .pw-error {
+    display: none;
+    font-size: .8rem;
+    color: #EF4444;
+    margin-top: .35rem;
+    font-weight: 600;
+  }
+
+  body.teacher-dark #edit-modal-box {
+    background: #131929;
+    box-shadow: 0 24px 64px rgba(0,0,0,.6);
+  }
+  body.teacher-dark #edit-modal-box .modal-header { border-bottom-color: rgba(255,255,255,.08); }
+  body.teacher-dark #edit-modal-box .modal-title  { color: #E2E8F0; }
+  body.teacher-dark #edit-modal-box .modal-close  { color: #4B5563; }
+  body.teacher-dark #edit-modal-box .modal-close:hover { color: #E2E8F0; }
+  body.teacher-dark #edit-modal-box .form-label   { color: #94A3B8; }
+  body.teacher-dark #edit-modal-box .form-input   {
+    background: #0C1624;
+    border-color: rgba(255,255,255,.1);
+    color: #E2E8F0;
+  }
+  body.teacher-dark #edit-modal-box .form-input::placeholder { color: #374151; }
+  body.teacher-dark #edit-modal-box .form-input:focus {
+    border-color: #6366F1;
+    box-shadow: 0 0 0 3px rgba(99,102,241,.15);
+  }
+</style>
+
+<div id="edit-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:1rem;">
+  <div id="edit-modal-box">
+    <div class="modal-header">
+      <div class="modal-title">
+        <i class="bi bi-pencil-fill" style="color:var(--t-indigo);margin-right:.5rem;"></i>Editar perfil
+      </div>
+      <button class="modal-close" onclick="closeEditModal()"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="modal-body">
+      {% if success %}
+      <div style="background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);border-radius:8px;padding:.7rem 1rem;margin-bottom:1.1rem;color:#10B981;font-size:.85rem;font-weight:600;">
+        <i class="bi bi-check-circle-fill"></i> Perfil actualizado correctamente.
+      </div>
+      {% endif %}
+      <form method="post" id="edit-form" novalidate>
+        {% csrf_token %}
+        <div class="form-row-2" style="margin-bottom:1rem;">
+          <div class="form-group">
+            <label class="form-label">Nombre(s)</label>
+            <input type="text" name="first_name" class="form-input" value="{{ request.user.first_name }}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Apellidos</label>
+            <input type="text" name="last_name" class="form-input" value="{{ request.user.last_name }}">
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:1rem;">
+          <label class="form-label">Correo electrónico</label>
+          <input type="email" name="email" class="form-input" value="{{ request.user.email }}">
+        </div>
+        <div class="form-row-2" style="margin-bottom:1rem;">
+          <div class="form-group">
+            <label class="form-label">Especialidad</label>
+            <input type="text" name="subject_specialty" class="form-input" value="{{ profile.subject_specialty }}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Años de experiencia</label>
+            <input type="number" name="years_experience" class="form-input" min="0" max="50" value="{{ profile.years_experience }}">
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:1rem;">
+          <label class="form-label">Bio / Descripción</label>
+          <textarea name="bio" class="form-input" rows="3" style="resize:vertical;">{{ profile.bio }}</textarea>
+        </div>
+        <div style="border-top:1px solid var(--t-border-light,#F1F5F9);padding-top:1rem;margin-bottom:1rem;">
+          <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--t-text-muted,#9CA3AF);margin-bottom:.75rem;">
+            Cambiar contraseña <span style="font-weight:400;text-transform:none;letter-spacing:0;">(opcional)</span>
+          </div>
+          <div class="form-group" style="margin-bottom:.85rem;">
+            <label class="form-label">Nueva contraseña</label>
+            <input type="password" name="new_password" id="pw1" class="form-input" placeholder="••••••••" oninput="checkPw()">
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Confirmar contraseña</label>
+            <input type="password" name="confirm_password" id="pw2" class="form-input" placeholder="••••••••" oninput="checkPw()">
+            <div class="pw-error" id="pw-error"><i class="bi bi-exclamation-circle-fill"></i> Las contraseñas no coinciden.</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:.75rem;margin-top:1.5rem;">
+          <button type="submit" id="submit-btn" class="btn btn-primary" style="flex:1;justify-content:center;">
+            <i class="bi bi-check-circle"></i> Guardar cambios
+          </button>
+          <button type="button" onclick="closeEditModal()" class="btn btn-outline">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+if (window.innerWidth <= 768) {
+  document.getElementById('sidebar-toggle').style.display = 'block';
+}
+window.addEventListener('resize', () => {
+  const tog = document.getElementById('sidebar-toggle');
+  if (tog) tog.style.display = window.innerWidth <= 768 ? 'block' : 'none';
+});
+
+function openEditModal() {
+  document.getElementById('edit-modal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+function closeEditModal() {
+  document.getElementById('edit-modal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+document.getElementById('edit-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeEditModal();
+});
+
+function checkPw() {
+  const p1 = document.getElementById('pw1').value;
+  const p2 = document.getElementById('pw2').value;
+  const err = document.getElementById('pw-error');
+  const btn = document.getElementById('submit-btn');
+  if (p2 && p1 !== p2) {
+    err.style.display = 'block';
+    btn.disabled = true;
+    btn.style.opacity = '.5';
+  } else {
+    err.style.display = 'none';
+    btn.disabled = false;
+    btn.style.opacity = '1';
+  }
+}
+
+document.getElementById('edit-form').addEventListener('submit', function(e) {
+  const p1 = document.getElementById('pw1').value;
+  const p2 = document.getElementById('pw2').value;
+  if (p1 && p1 !== p2) {
+    e.preventDefault();
+    document.getElementById('pw-error').style.display = 'block';
+  }
+});
+
+{% if success %}openEditModal();{% endif %}
+</script>
+{% endblock %}

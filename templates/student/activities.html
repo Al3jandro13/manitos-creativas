@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mis Actividades — Manitos Creativas{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/student.css' %}">{% endblock %}
+
+{% block body_content %}
+<div class="student-layout">
+
+  {% include 'student/_sidebar.html' with active_page='activities' %}
+
+  <div class="student-main">
+
+    <!-- Topbar -->
+    <header class="student-topbar">
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Abrir menú">
+        <i class="bi bi-list"></i>
+      </button>
+      <div class="topbar-title">Actividades</div>
+      <div class="topbar-actions">
+        <div class="topbar-date">
+          <i class="bi bi-calendar3"></i>
+          <span id="topbarDate"></span>
+        </div>
+        <div class="topbar-stars-chip">
+          <i class="bi bi-star-fill"></i>
+          <span>{{ profile.total_stars|default:"0" }} estrellas</span>
+        </div>
+        <button class="dark-mode-toggle" id="darkModeToggle" aria-label="Cambiar modo">
+          <i class="bi bi-moon-fill" id="darkModeIcon"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Scroll area -->
+    <div class="student-scroll">
+
+      <!-- Page Hero -->
+      <div class="page-hero activities-hero">
+        <div class="page-hero-left">
+          <div class="page-hero-icon-pill">
+            <i class="bi bi-clipboard2-fill"></i> Mis Tareas
+          </div>
+          <h1 class="page-hero-title">Actividades</h1>
+          <p class="page-hero-sub">Completa tus tareas y gana recompensas 🌟</p>
+        </div>
+        <div class="page-hero-stats">
+          <div class="page-hero-stat-card">
+            <div class="hero-stat-num" style="color:#FCD34D;">{{ pending_tasks }}</div>
+            <div class="hero-stat-label">pendientes</div>
+          </div>
+          <div class="page-hero-stat-card">
+            <div class="hero-stat-num" style="color:#86EFAC;">{{ completed_count|default:"0" }}</div>
+            <div class="hero-stat-label">completadas</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section header -->
+      <div class="section-header">
+        <div class="section-title-new">
+          <span class="section-icon-badge blue"><i class="bi bi-clipboard2-fill"></i></span>
+          Actividades Disponibles
+        </div>
+        {% if pending_tasks > 0 %}
+        <span class="section-pending-badge">{{ pending_tasks }} pendiente{{ pending_tasks|pluralize:"s" }}</span>
+        {% endif %}
+      </div>
+
+      <!-- Activities list -->
+      <div class="activities-list-student">
+        {% if activities %}
+          {% for activity in activities %}
+          <a href="{% url 'student_activity_detail' activity.pk %}" class="activity-card-student">
+            <div class="activity-card-icon">
+              {% if activity.category.name == 'colorear' %}🖍️
+              {% elif activity.category.name == 'puntillismo' %}<i class="bi bi-circle-fill"></i>
+              {% elif activity.category.name == 'rompecabezas' %}<i class="bi bi-puzzle-fill"></i>
+              {% elif activity.category.name == 'cuento' %}<i class="bi bi-book-open-fill"></i>
+              {% elif activity.category.name == 'dibujo_libre' %}<i class="bi bi-pencil-fill"></i>
+              {% elif activity.category.name == 'consonantes' %}<i class="bi bi-alphabet-uppercase"></i>
+              {% elif activity.category.name == 'numeros' %}<i class="bi bi-123"></i>
+              {% elif activity.category.name == 'sumas' %}<i class="bi bi-plus-lg"></i>
+              {% elif activity.category.name == 'restas' %}<i class="bi bi-dash-lg"></i>
+              {% elif activity.category.name == 'lenguaje_senas' %}<i class="bi bi-hand-index-thumb-fill"></i>
+              {% elif activity.category.name == 'exploracion' %}<i class="bi bi-binoculars-fill"></i>
+              {% else %}<i class="bi bi-star-fill"></i>{% endif %}
+            </div>
+            <div class="activity-card-body">
+              <div class="activity-card-name">{{ activity.title }}</div>
+              <div class="activity-card-meta">
+                <span class="activity-card-cat">{{ activity.category.name }}</span>
+                {% if activity.pk in submitted_ids %}
+                <span class="activity-card-status-done"><i class="bi bi-check-circle-fill"></i> Entregada</span>
+                {% else %}
+                <span class="activity-card-status-pending"><i class="bi bi-hourglass-split"></i> Pendiente</span>
+                {% endif %}
+                <span class="activity-card-reward"><i class="bi bi-star-fill"></i> +{{ activity.reward_stars }}</span>
+              </div>
+              {% if activity.description %}
+              <div class="activity-card-desc">{{ activity.description|truncatechars:70 }}</div>
+              {% endif %}
+            </div>
+            <div class="activity-card-arrow"><i class="bi bi-chevron-right"></i></div>
+          </a>
+          {% endfor %}
+        {% else %}
+        <div class="page-empty-state">
+          <div class="page-empty-icon"><i class="bi bi-clipboard2"></i></div>
+          <div class="page-empty-title">Todavía no hay actividades publicadas</div>
+          <div class="page-empty-sub">¡Tu profe las publicará pronto!</div>
+        </div>
+        {% endif %}
+      </div>
+
+    </div><!-- /student-scroll -->
+  </div><!-- /student-main -->
+
+</div><!-- /student-layout -->
+
+<!-- Mobile sidebar overlay -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<script>
+(function () {
+  const dateEl = document.getElementById('topbarDate');
+  if (dateEl) {
+    dateEl.textContent = new Date().toLocaleDateString('es-CO', {
+      weekday: 'long', day: 'numeric', month: 'long'
+    });
+  }
+
+  const profileBtn = document.getElementById('sidebarProfileBtn');
+  const profileDropdown = document.getElementById('profileDropdown');
+  const profileChevron = document.getElementById('profileChevron');
+  if (profileBtn && profileDropdown) {
+    profileBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      const isOpen = profileDropdown.classList.toggle('open');
+      profileChevron.style.transform = isOpen ? 'rotate(180deg)' : '';
+    });
+    document.addEventListener('click', function () {
+      profileDropdown.classList.remove('open');
+      profileChevron.style.transform = '';
+    });
+  }
+
+  const toggle = document.getElementById('sidebarToggle');
+  const sidebar = document.getElementById('studentSidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  if (toggle && sidebar && overlay) {
+    toggle.addEventListener('click', function () {
+      sidebar.classList.toggle('open');
+      overlay.classList.toggle('open');
+    });
+    overlay.addEventListener('click', function () {
+      sidebar.classList.remove('open');
+      overlay.classList.remove('open');
+    });
+  }
+
+  const darkToggle = document.getElementById('darkModeToggle');
+  const darkIcon   = document.getElementById('darkModeIcon');
+  function applyDark(on) {
+    document.body.classList.toggle('student-dark', on);
+    if (darkIcon) darkIcon.className = on ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
+  }
+  applyDark(localStorage.getItem('student_dark') === '1');
+  if (darkToggle) {
+    darkToggle.addEventListener('click', function () {
+      const on = !document.body.classList.contains('student-dark');
+      applyDark(on);
+      localStorage.setItem('student_dark', on ? '1' : '0');
+    });
+  }
+})();
+</script>
+{% endblock %}

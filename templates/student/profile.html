@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Mi Perfil — Manitos Creativas{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/student.css' %}">{% endblock %}
+
+{% block body_content %}
+<div class="student-layout">
+
+  {% include 'student/_sidebar.html' with active_page='profile' %}
+
+  <div class="student-main">
+    <header class="student-topbar">
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Abrir menú"><i class="bi bi-list"></i></button>
+      <div class="topbar-breadcrumb">
+        <span class="bc-current">Mi Perfil</span>
+      </div>
+      <div class="topbar-actions">
+        <div class="topbar-date"><i class="bi bi-calendar3"></i><span id="topbarDate"></span></div>
+        <div class="topbar-stars-chip"><i class="bi bi-star-fill"></i><span>{{ profile.total_stars|default:"0" }} estrellas</span></div>
+        <button class="dark-mode-toggle" id="darkModeToggle" aria-label="Cambiar modo"><i class="bi bi-moon-fill" id="darkModeIcon"></i></button>
+      </div>
+    </header>
+
+    <div class="student-scroll">
+      <div style="max-width:900px;margin:0 auto;">
+
+        <!-- Hero -->
+        <div class="profile-hero">
+          <div class="profile-avatar-big">
+            {% if profile.selected_avatar == 'mochi' %}🩷
+            {% elif profile.selected_avatar == 'kiko' %}🧡
+            {% elif profile.selected_avatar == 'star' %}⭐
+            {% elif profile.selected_avatar == 'cloud' %}☁️
+            {% else %}🌟
+            {% endif %}
+          </div>
+          <div class="profile-hero-info">
+            <div class="profile-hero-name">{{ user.first_name }} {{ user.last_name }}</div>
+            <div class="profile-hero-username">@{{ user.username }}</div>
+            <div class="profile-hero-badges">
+              <span class="profile-badge profile-badge-level">
+                <i class="bi bi-mortarboard-fill"></i> Nivel {{ profile.level|default:"—" }}
+              </span>
+              {% if profile.age %}
+              <span class="profile-badge profile-badge-age">
+                <i class="bi bi-balloon-heart-fill"></i> {{ profile.age }} años
+              </span>
+              {% endif %}
+            </div>
+          </div>
+          <div class="profile-hero-stats">
+            <div class="profile-hero-stat">
+              <div class="profile-hero-stat-num gold">{{ profile.total_stars|default:"0" }}</div>
+              <div class="profile-hero-stat-label"><i class="bi bi-star-fill"></i> Estrellas</div>
+            </div>
+            <div class="profile-hero-stat">
+              <div class="profile-hero-stat-num green">{{ profile.total_medals|default:"0" }}</div>
+              <div class="profile-hero-stat-label"><i class="bi bi-award-fill"></i> Medallas</div>
+            </div>
+            <div class="profile-hero-stat">
+              <div class="profile-hero-stat-num" style="color:#A78BFA;">{{ games_played|default:"0" }}</div>
+              <div class="profile-hero-stat-label"><i class="bi bi-controller"></i> Juegos</div>
+            </div>
+            <div class="profile-hero-stat">
+              <div class="profile-hero-stat-num" style="color:#67E8F9;">{{ activities_done|default:"0" }}</div>
+              <div class="profile-hero-stat-label"><i class="bi bi-check2-circle"></i> Tareas</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cards grid -->
+        <div class="profile-grid">
+
+          <!-- Student info -->
+          <div class="profile-card">
+            <div class="profile-card-header">
+              <div class="profile-card-icon blue"><i class="bi bi-person-fill"></i></div>
+              <div class="profile-card-title">Datos del estudiante</div>
+            </div>
+            <div class="profile-field">
+              <div class="profile-field-label">Nombre completo</div>
+              <div class="profile-field-value">
+                <i class="bi bi-person"></i>
+                {{ user.first_name }} {{ user.last_name }}
+              </div>
+            </div>
+            <div class="profile-field">
+              <div class="profile-field-label">Usuario</div>
+              <div class="profile-field-value">
+                <i class="bi bi-at"></i>{{ user.username }}
+              </div>
+            </div>
+            <div class="profile-field">
+              <div class="profile-field-label">Correo electrónico</div>
+              <div class="profile-field-value {% if not user.email %}muted{% endif %}">
+                <i class="bi bi-envelope"></i>
+                {{ user.email|default:"Sin correo registrado" }}
+              </div>
+            </div>
+            <div class="profile-field">
+              <div class="profile-field-label">Nivel escolar</div>
+              <div class="profile-field-value">
+                <i class="bi bi-mortarboard"></i> Nivel {{ profile.level|default:"—" }}
+              </div>
+            </div>
+            <div class="profile-field">
+              <div class="profile-field-label">Edad</div>
+              <div class="profile-field-value {% if not profile.age %}muted{% endif %}">
+                <i class="bi bi-balloon-heart"></i>
+                {% if profile.age %}{{ profile.age }} años{% else %}Sin registrar{% endif %}
+              </div>
+            </div>
+            <div class="profile-field">
+              <div class="profile-field-label">Avatar</div>
+              <div class="profile-field-value">
+                {% if profile.selected_avatar == 'mochi' %}🩷 Mochi
+                {% elif profile.selected_avatar == 'kiko' %}🧡 Kiko
+                {% elif profile.selected_avatar == 'star' %}⭐ Estrella
+                {% elif profile.selected_avatar == 'cloud' %}☁️ Nube
+                {% else %}🌟 Sin seleccionar
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <!-- Guardian info -->
+          <div class="profile-card">
+            <div class="profile-card-header">
+              <div class="profile-card-icon pink"><i class="bi bi-people-fill"></i></div>
+              <div class="profile-card-title">Datos del acudiente</div>
+            </div>
+            <div class="profile-field">
+              <div class="profile-field-label">Nombre del acudiente</div>
+              <div class="profile-field-value {% if not profile.parent_name %}muted{% endif %}">
+                <i class="bi bi-person-heart"></i>
+                {{ profile.parent_name|default:"Sin registrar" }}
+              </div>
+            </div>
+            <div class="profile-field">
+              <div class="profile-field-label">Correo del acudiente</div>
+              <div class="profile-field-value {% if not profile.parent_email %}muted{% endif %}">
+                <i class="bi bi-envelope-heart"></i>
+                {{ profile.parent_email|default:"Sin registrar" }}
+              </div>
+            </div>
+            <div class="profile-field">
+              <div class="profile-field-label">Teléfono</div>
+              <div class="profile-field-value {% if not profile.parent_phone %}muted{% endif %}">
+                <i class="bi bi-telephone"></i>
+                {{ profile.parent_phone|default:"Sin registrar" }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Activity summary -->
+          <div class="profile-card">
+            <div class="profile-card-header">
+              <div class="profile-card-icon amber"><i class="bi bi-bar-chart-fill"></i></div>
+              <div class="profile-card-title">Resumen de actividad</div>
+            </div>
+            <div class="profile-field">
+              <div class="profile-field-label">Juegos jugados</div>
+              <div class="profile-field-value">
+                <i class="bi bi-controller"></i> {{ games_played|default:"0" }} juegos
+              </div>
+            </div>
+            <div class="profile-field">
+              <div class="profile-field-label">Tareas entregadas</div>
+              <div class="profile-field-value">
+                <i class="bi bi-check2-circle"></i> {{ activities_done|default:"0" }} actividades
+              </div>
+            </div>
+            <div class="profile-field">
+              <div class="profile-field-label">Estrellas ganadas</div>
+              <div class="profile-field-value" style="color:#F59E0B;font-weight:800;">
+                <i class="bi bi-star-fill"></i> {{ profile.total_stars|default:"0" }} estrellas
+              </div>
+            </div>
+            <div class="profile-field">
+              <div class="profile-field-label">Medallas obtenidas</div>
+              <div class="profile-field-value" style="color:#10B981;font-weight:800;">
+                <i class="bi bi-award-fill"></i> {{ profile.total_medals|default:"0" }} medallas
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /profile-grid -->
+
+      </div>
+    </div><!-- /student-scroll -->
+  </div><!-- /student-main -->
+</div><!-- /student-layout -->
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<script>
+(function(){
+  var d=document.getElementById('topbarDate');
+  if(d)d.textContent=new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long'});
+  var pb=document.getElementById('sidebarProfileBtn'),pd=document.getElementById('profileDropdown'),pc=document.getElementById('profileChevron');
+  if(pb&&pd){pb.addEventListener('click',function(e){e.stopPropagation();var o=pd.classList.toggle('open');pc.style.transform=o?'rotate(180deg)':'';});document.addEventListener('click',function(){pd.classList.remove('open');pc.style.transform='';});}
+  var t=document.getElementById('sidebarToggle'),s=document.getElementById('studentSidebar'),ov=document.getElementById('sidebarOverlay');
+  if(t&&s&&ov){t.addEventListener('click',function(){s.classList.toggle('open');ov.classList.toggle('open');});ov.addEventListener('click',function(){s.classList.remove('open');ov.classList.remove('open');});}
+  var dt=document.getElementById('darkModeToggle'),di=document.getElementById('darkModeIcon');
+  function sd(on){document.body.classList.toggle('student-dark',on);if(di)di.className=on?'bi bi-sun-fill':'bi bi-moon-fill';}
+  sd(localStorage.getItem('student_dark')==='1');
+  if(dt)dt.addEventListener('click',function(){var on=!document.body.classList.contains('student-dark');sd(on);localStorage.setItem('student_dark',on?'1':'0');});
+})();
+</script>
+{% endblock %}

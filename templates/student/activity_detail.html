@@ -1,0 +1,181 @@
+﻿{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ activity.title }} — Manitos Creativas{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/student.css' %}">
+{% endblock %}
+
+{% block body_content %}
+<div class="student-page">
+  <header class="student-topbar">
+    <a href="{% url 'student_activities' %}" class="student-topbar-logo">
+      <img src="{% static 'images/logo.png' %}" alt="Manitos Creativas" style="height:3.2rem;width:auto;filter:drop-shadow(0 2px 6px rgba(0,0,0,.2));">
+    </a>
+    <a href="{% url 'student_activities' %}" class="btn btn-outline" style="padding:.45rem 1rem;font-size:.85rem;">← Actividades</a>
+  </header>
+
+  <div class="student-content" style="max-width:800px;">
+
+    <!-- Header -->
+    <div class="game-page-header" style="margin-bottom:1.5rem;">
+      <div style="font-size:3rem;margin-bottom:.5rem;color:var(--primary);">
+        {% if activity.category.name == 'colorear' %}<img src="{% static 'images/logo.png' %}" alt="colorear" style="height:2.5rem;width:auto;filter:drop-shadow(0 2px 8px rgba(0,0,0,.15));">
+        {% elif activity.category.name == 'dibujo_libre' %}<i class="bi bi-pencil-fill"></i>
+        {% elif activity.category.name == 'rompecabezas' %}<i class="bi bi-puzzle-fill"></i>
+        {% elif activity.category.name == 'cuento' %}<i class="bi bi-book-open-fill"></i>
+        {% elif activity.category.name == 'consonantes' %}<i class="bi bi-alphabet-uppercase"></i>
+        {% elif activity.category.name == 'numeros' %}<i class="bi bi-123"></i>
+        {% elif activity.category.name == 'sumas' %}<i class="bi bi-plus-lg"></i>
+        {% elif activity.category.name == 'restas' %}<i class="bi bi-dash-lg"></i>
+        {% elif activity.category.name == 'lenguaje_senas' %}<i class="bi bi-hand-index-thumb-fill"></i>
+        {% elif activity.category.name == 'exploracion' %}<i class="bi bi-binoculars-fill"></i>
+        {% else %}<i class="bi bi-star-fill"></i>{% endif %}
+      </div>
+      <div class="game-page-title">{{ activity.title }}</div>
+      <div class="game-page-sub">{{ activity.category.name }} · <i class="bi bi-star-fill" style="color:var(--accent-yellow);"></i> +{{ activity.reward_stars }} estrellas</div>
+    </div>
+
+    {% if activity.description %}
+    <div style="background:white;border-radius:var(--radius-md);padding:1.25rem 1.5rem;margin-bottom:1.5rem;box-shadow:0 4px 14px rgba(0,0,0,.05);">
+      <div style="font-family:var(--font-accent);font-weight:700;color:var(--primary);margin-bottom:.5rem;display:flex;align-items:center;gap:.4rem;">
+        <i class="bi bi-pencil-fill"></i> Instrucciones
+      </div>
+      <p style="color:var(--text-dark);line-height:1.7;">{{ activity.description }}</p>
+    </div>
+    {% endif %}
+
+    {% if submission %}
+    <!-- Already submitted -->
+    <div class="alert alert-success" style="font-size:1rem;padding:1.25rem;">
+      <i class="bi bi-check-circle-fill"></i> ¡Ya entregaste esta actividad!
+      {% if submission.teacher_feedback %}
+      <br><br>
+      <strong>Comentario de tu profe:</strong> {{ submission.teacher_feedback }}
+      {% endif %}
+      {% if submission.stars_awarded %}
+      <br><strong><i class="bi bi-star-fill" style="color:var(--accent-yellow);"></i> Recibiste {{ submission.stars_awarded }} estrella{{ submission.stars_awarded|pluralize }}!</strong>
+      {% endif %}
+    </div>
+    {% else %}
+    <!-- Submission form -->
+    <div class="game-area">
+      <div style="font-family:var(--font-accent);font-weight:800;color:var(--primary);font-size:1rem;margin-bottom:1rem;display:flex;align-items:center;gap:.4rem;">
+        <i class="bi bi-pencil-fill"></i> Enviar mi trabajo
+      </div>
+
+      <!-- Canvas for drawing activities -->
+      {% if activity.category.name in 'dibujo_libre,colorear,puntillismo' %}
+      <div class="drawing-tools" id="drawing-tools">
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;">
+          <span style="font-size:.8rem;font-weight:700;color:var(--text-mid);">Color:</span>
+          {% for color in "#7C3AED,#EC4899,#FBBF24,#10B981,#3B82F6,#F97316,#1E1B4B,#EF4444,#FFFFFF"|split:"," %}
+          <button class="color-btn {% if forloop.first %}selected{% endif %}" style="background:{{ color }};" data-color="{{ color }}" title="{{ color }}"></button>
+          {% endfor %}
+        </div>
+        <div style="display:flex;gap:.5rem;align-items:center;">
+          <span style="font-size:.8rem;font-weight:700;color:var(--text-mid);">Tamaño:</span>
+          <input type="range" class="brush-size-slider" id="brush-size" min="2" max="40" value="8" style="width:100px;">
+        </div>
+        <button class="tool-btn active" id="btn-draw"><i class="bi bi-pencil-fill"></i> Dibujar</button>
+        <button class="tool-btn" id="btn-erase"><i class="bi bi-eraser-fill"></i> Borrar</button>
+        <button class="tool-btn" id="btn-clear" onclick="clearCanvas()"><i class="bi bi-trash-fill"></i> Limpiar</button>
+      </div>
+      <canvas id="drawing-canvas" width="600" height="350" style="border:3px solid var(--primary-light);border-radius:var(--radius-md);cursor:crosshair;width:100%;max-width:600px;display:block;"></canvas>
+      {% endif %}
+
+      <form method="post" style="margin-top:1.5rem;" id="submit-form">
+        {% csrf_token %}
+        {% if activity.category.name in 'dibujo_libre,colorear,puntillismo' %}
+        <input type="hidden" name="drawing_data" id="drawing-data-input">
+        {% endif %}
+        <div style="margin-bottom:1rem;">
+          <label style="display:block;font-family:var(--font-accent);font-weight:700;font-size:.9rem;color:var(--text-dark);margin-bottom:.4rem;">
+            <i class="bi bi-chat-fill"></i> Cuéntanos algo sobre tu trabajo (opcional)
+          </label>
+          <textarea name="notes" rows="3" class="form-input" style="resize:vertical;" placeholder="Aquí puedes escribir lo que quieras..."></textarea>
+        </div>
+        <button type="submit" class="btn btn-secondary" style="font-size:1rem;padding:.85rem 2rem;" onclick="prepareSubmit(event)">
+          <i class="bi bi-send-fill"></i> ¡Entregar mi trabajo!
+        </button>
+      </form>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+
+{% if not submission and activity.category.name in 'dibujo_libre,colorear,puntillismo' %}
+<script>
+// Canvas drawing
+const canvas = document.getElementById('drawing-canvas');
+const ctx = canvas.getContext('2d');
+let drawing = false, erasing = false;
+let brushColor = '#7C3AED', brushSize = 8;
+
+// Fill white
+ctx.fillStyle = '#FFFFFF';
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+function getPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
+}
+
+canvas.addEventListener('mousedown',  e => { drawing = true; draw(e); });
+canvas.addEventListener('mousemove',  e => { if (drawing) draw(e); });
+canvas.addEventListener('mouseup',    () => drawing = false);
+canvas.addEventListener('mouseleave', () => drawing = false);
+canvas.addEventListener('touchstart', e => { e.preventDefault(); drawing = true; draw(e); }, { passive: false });
+canvas.addEventListener('touchmove',  e => { e.preventDefault(); if (drawing) draw(e); }, { passive: false });
+canvas.addEventListener('touchend',   () => drawing = false);
+
+function draw(e) {
+  const pos = getPos(e);
+  ctx.beginPath();
+  ctx.arc(pos.x, pos.y, brushSize / 2, 0, Math.PI * 2);
+  ctx.fillStyle = erasing ? '#FFFFFF' : brushColor;
+  ctx.fill();
+}
+
+// Color buttons
+document.querySelectorAll('.color-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    brushColor = btn.dataset.color;
+    erasing = false;
+    document.getElementById('btn-draw').classList.add('active');
+    document.getElementById('btn-erase').classList.remove('active');
+  });
+});
+
+document.getElementById('brush-size').addEventListener('input', e => { brushSize = +e.target.value; });
+document.getElementById('btn-draw').addEventListener('click', () => {
+  erasing = false;
+  document.getElementById('btn-draw').classList.add('active');
+  document.getElementById('btn-erase').classList.remove('active');
+});
+document.getElementById('btn-erase').addEventListener('click', () => {
+  erasing = true;
+  document.getElementById('btn-erase').classList.add('active');
+  document.getElementById('btn-draw').classList.remove('active');
+});
+function clearCanvas() {
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+function prepareSubmit(e) {
+  document.getElementById('drawing-data-input').value = canvas.toDataURL('image/png');
+}
+</script>
+{% else %}
+<script>
+function prepareSubmit(e) {} // no-op for non-drawing activities
+</script>
+{% endif %}
+{% endblock %}

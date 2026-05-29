@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Revisar entrega — Manitos Creativas{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/teacher.css' %}">{% endblock %}
+
+{% block body_content %}
+<div class="teacher-layout">
+  {% include 'teacher/_sidebar.html' %}
+  <main class="teacher-main">
+    <div class="teacher-topbar">
+      <div style="display:flex;align-items:center;gap:.85rem;">
+        <button id="sidebar-toggle"
+          style="display:none;background:none;border:none;cursor:pointer;font-size:1.2rem;color:var(--t-text-mid);padding:.25rem;"
+          onclick="document.querySelector('.sidebar').classList.toggle('open')">
+          <i class="bi bi-list"></i>
+        </button>
+        <div class="teacher-topbar-title"><i class="bi bi-check2-circle"></i> Revisar entrega</div>
+      </div>
+      <div class="topbar-actions">
+        <a href="{% url 'activity_detail' submission.activity.pk %}" class="btn btn-outline">← Volver</a>
+      </div>
+    </div>
+    <div class="teacher-content">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;max-width:920px;">
+
+        <!-- Student work -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <div class="panel-title">
+              <i class="bi bi-person"></i> {{ submission.student.get_full_name|default:submission.student.username }}
+            </div>
+            <span class="badge badge-blue">{{ submission.activity.title|truncatechars:25 }}</span>
+          </div>
+          <div class="panel-body" style="padding-top:.75rem;">
+            {% if submission.drawing_data and submission.drawing_data != 'null' %}
+            <img src="{{ submission.drawing_data }}" alt="Dibujo del estudiante"
+              style="width:100%;border-radius:var(--t-radius-md);border:1px solid var(--t-border);margin-bottom:1rem;">
+            {% endif %}
+            {% if submission.notes %}
+            <div style="background:var(--t-indigo-light);border-radius:var(--t-radius);padding:.85rem 1rem;font-size:.855rem;color:var(--t-text);line-height:1.6;border-left:3px solid var(--t-indigo);">
+              <strong style="font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--t-indigo);">Nota del estudiante</strong><br>
+              {{ submission.notes }}
+            </div>
+            {% endif %}
+            <div style="font-size:.72rem;color:var(--t-text-muted);margin-top:.85rem;">
+              Entregado el {{ submission.submitted_at|date:"d M Y, H:i" }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Review form -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <div class="panel-title"><i class="bi bi-pencil"></i> Tu evaluación</div>
+          </div>
+          <div class="panel-body" style="padding-top:.75rem;">
+            <form method="post" novalidate>
+              {% csrf_token %}
+              <div class="form-group">
+                <label class="form-label"><i class="bi bi-star"></i> Estrellas a otorgar (0–10)</label>
+                <input type="number" name="stars_awarded" class="form-input" min="0" max="10" value="5">
+              </div>
+              <div class="form-group">
+                <label class="form-label"><i class="bi bi-chat"></i> Comentario para el estudiante</label>
+                <textarea name="teacher_feedback" class="form-textarea" rows="4"
+                  placeholder="¡Excelente trabajo! Me gustó mucho cómo..."></textarea>
+              </div>
+              <div class="form-group">
+                <label style="display:flex;align-items:center;gap:.55rem;cursor:pointer;font-family:var(--t-font-sans);font-weight:500;font-size:.875rem;color:var(--t-text-mid);">
+                  <input type="checkbox" name="is_featured" style="width:16px;height:16px;accent-color:var(--t-indigo);cursor:pointer;">
+                  <i class="bi bi-trophy" style="color:var(--t-amber);"></i> Destacar en el Tablero de Fama
+                </label>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle"></i> Aprobar y calificar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+</div>
+<script>
+if (window.innerWidth <= 768) document.getElementById('sidebar-toggle').style.display = 'block';
+window.addEventListener('resize', () => {
+  const tog = document.getElementById('sidebar-toggle');
+  if (tog) tog.style.display = window.innerWidth <= 768 ? 'block' : 'none';
+});
+</script>
+{% endblock %}

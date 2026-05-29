@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Actividades — Manitos Creativas{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/teacher.css' %}">{% endblock %}
+
+{% block body_content %}
+<div class="teacher-layout">
+  {% include 'teacher/_sidebar.html' %}
+  <main class="teacher-main">
+    <div class="teacher-topbar">
+      <div style="display:flex;align-items:center;gap:.85rem;">
+        <button id="sidebar-toggle"
+          style="display:none;background:none;border:none;cursor:pointer;font-size:1.2rem;color:var(--t-text-mid);padding:.25rem;"
+          onclick="document.querySelector('.sidebar').classList.toggle('open')">
+          <i class="bi bi-list"></i>
+        </button>
+        <div class="teacher-topbar-title"><i class="bi bi-collection"></i> Mis Actividades</div>
+      </div>
+      <div class="topbar-actions">
+        <a href="{% url 'create_activity' %}" class="btn btn-primary"><i class="bi bi-plus"></i> Nueva actividad</a>
+      </div>
+    </div>
+    <div class="teacher-content">
+
+      <!-- Filters -->
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.5rem;align-items:center;">
+        <a href="?status=all" class="filter-chip {% if not request.GET.status or request.GET.status == 'all' %}active{% endif %}">Todas</a>
+        <a href="?status=published" class="filter-chip {% if request.GET.status == 'published' %}active{% endif %}">Publicadas</a>
+        <a href="?status=draft" class="filter-chip {% if request.GET.status == 'draft' %}active{% endif %}">Borradores</a>
+      </div>
+
+      {% if activities %}
+      <div style="display:flex;flex-direction:column;gap:.7rem;">
+        {% for activity in activities %}
+        <div class="activity-list-item">
+          <div class="activity-list-icon">
+            {% if activity.category.name == 'colorear' %}<i class="bi bi-palette"></i>
+            {% elif activity.category.name == 'puntillismo' %}<i class="bi bi-dot"></i>
+            {% elif activity.category.name == 'rompecabezas' %}<i class="bi bi-puzzle"></i>
+            {% elif activity.category.name == 'cuento' %}<i class="bi bi-book-open"></i>
+            {% elif activity.category.name == 'dibujo_libre' %}<i class="bi bi-pencil"></i>
+            {% elif activity.category.name == 'consonantes' %}<i class="bi bi-alphabet-uppercase"></i>
+            {% elif activity.category.name == 'numeros' %}<i class="bi bi-123"></i>
+            {% elif activity.category.name == 'sumas' %}<i class="bi bi-plus-lg"></i>
+            {% elif activity.category.name == 'restas' %}<i class="bi bi-dash-lg"></i>
+            {% elif activity.category.name == 'lenguaje_senas' %}<i class="bi bi-hand-index-thumb"></i>
+            {% elif activity.category.name == 'exploracion' %}<i class="bi bi-binoculars"></i>
+            {% else %}<i class="bi bi-star"></i>{% endif %}
+          </div>
+          <div class="activity-list-info">
+            <div class="activity-list-title">{{ activity.title }}</div>
+            <div class="activity-list-meta">
+              <span class="badge badge-blue">{{ activity.category.name }}</span>
+              <span class="badge {% if activity.status == 'published' %}badge-green{% elif activity.status == 'draft' %}badge-yellow{% else %}badge-purple{% endif %}">
+                {{ activity.get_status_display }}
+              </span>
+              <span style="font-size:.72rem;color:var(--t-text-muted);display:inline-flex;align-items:center;gap:.3rem;">
+                <i class="bi bi-star" style="color:var(--t-amber);font-size:.65rem;"></i>
+                +{{ activity.reward_stars }} &middot; {{ activity.created_at|date:"d M Y" }}
+              </span>
+              {% if activity.pending_count %}
+              <span class="badge badge-pink">{{ activity.pending_count }} por revisar</span>
+              {% endif %}
+            </div>
+          </div>
+          <div>
+            <a href="{% url 'activity_detail' activity.pk %}" class="btn btn-outline" style="padding:.38rem .85rem;font-size:.8rem;">Ver →</a>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-state-icon"><i class="bi bi-collection"></i></div>
+        <div class="empty-state-title">Aún no tienes actividades</div>
+        <a href="{% url 'create_activity' %}" class="btn btn-primary"><i class="bi bi-plus"></i> Crear primera actividad</a>
+      </div>
+      {% endif %}
+
+    </div>
+  </main>
+</div>
+<script>
+if (window.innerWidth <= 768) document.getElementById('sidebar-toggle').style.display = 'block';
+window.addEventListener('resize', () => {
+  const tog = document.getElementById('sidebar-toggle');
+  if (tog) tog.style.display = window.innerWidth <= 768 ? 'block' : 'none';
+});
+</script>
+{% endblock %}

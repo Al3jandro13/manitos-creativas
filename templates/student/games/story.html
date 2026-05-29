@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Cuento Interactivo — Manitos Creativas{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/student.css' %}">{% endblock %}
+
+{% block body_content %}
+<div class="student-layout">
+
+  {% include 'student/_sidebar.html' with active_page='games' %}
+
+  <div class="student-main">
+    <header class="student-topbar">
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Abrir menú"><i class="bi bi-list"></i></button>
+      <div class="topbar-breadcrumb">
+        <a href="{% url 'games_home' %}" class="breadcrumb-link">Mis Juegos</a>
+        <i class="bi bi-chevron-right" style="font-size:.7rem;color:#9CA3AF;"></i>
+        <span class="bc-current">Cuento Mágico</span>
+      </div>
+      <div class="topbar-actions">
+        <div class="topbar-date"><i class="bi bi-calendar3"></i><span id="topbarDate"></span></div>
+        <div class="topbar-stars-chip"><i class="bi bi-star-fill"></i><span>{{ profile.total_stars|default:"0" }} estrellas</span></div>
+        <button class="dark-mode-toggle" id="darkModeToggle" aria-label="Cambiar modo"><i class="bi bi-moon-fill" id="darkModeIcon"></i></button>
+      </div>
+    </header>
+
+    <div class="student-scroll">
+      <div style="max-width:720px;margin:0 auto;">
+
+        <div class="game-page-header" style="background:linear-gradient(135deg,#C2410C,#9A3412);">
+          <div style="font-size:3rem;margin-bottom:.5rem;">📖</div>
+          <div class="game-page-title">¡El Cuento Mágico!</div>
+          <div class="game-page-sub">Lee y toma decisiones para continuar la historia ✨</div>
+        </div>
+
+        <div class="game-area">
+          <div id="scene-box" style="background:linear-gradient(135deg,#FFF0F8,#F3F0FF);border-radius:var(--radius-lg);padding:2rem;margin-bottom:1.5rem;text-align:center;">
+            <div id="scene-emoji" style="font-size:5rem;margin-bottom:1rem;animation:welcome-bounce 2s ease-in-out infinite;">🌟</div>
+            <div id="scene-title" style="font-family:var(--font-display);font-size:1.6rem;color:var(--primary);margin-bottom:.75rem;"></div>
+            <div id="scene-text" style="font-size:1.05rem;line-height:1.8;color:var(--text-dark);max-width:500px;margin:0 auto;"></div>
+          </div>
+
+          <div id="choices-box" style="display:flex;flex-direction:column;gap:.75rem;"></div>
+
+          <div id="end-box" style="display:none;text-align:center;padding:2rem;">
+            <div style="font-size:4rem;margin-bottom:1rem;">🎊</div>
+            <div style="font-family:var(--font-display);font-size:1.8rem;color:var(--primary);margin-bottom:.75rem;">¡Historia completa!</div>
+            <div style="color:var(--text-mid);margin-bottom:1.5rem;">Tomaste <span id="choices-made">0</span> decisiones increíbles</div>
+            <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
+              <button onclick="startStory()" class="btn btn-outline">🔄 Leer otra vez</button>
+              <button onclick="saveScore()" id="save-btn" class="btn btn-secondary">🌟 Guardar estrellas</button>
+            </div>
+          </div>
+
+          <div style="margin-top:1.25rem;" id="progress-box">
+            <div style="display:flex;justify-content:space-between;font-size:.8rem;color:var(--text-light);margin-bottom:.35rem;">
+              <span>Progreso</span>
+              <span id="progress-text">Escena 1</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="story-progress" style="width:0%;"></div></div>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /student-scroll -->
+  </div><!-- /student-main -->
+</div><!-- /student-layout -->
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<style>
+body.student-dark #scene-box {
+  background: linear-gradient(135deg, #1A0A18, #150D1C) !important;
+}
+body.student-dark #scene-text  { color: #CBD5E1 !important; }
+body.student-dark #scene-title { color: #A78BFA !important; }
+</style>
+
+<script>
+const STORY = [
+  { id:0, emoji:'🌳', title:'¡El bosque encantado!', text:'Luna es una pequeña exploradora. Un día encuentra un camino misterioso en el bosque. ¿Qué debe hacer?',
+    choices:[{text:'🌸 Seguir el camino de flores',next:1},{text:'⭐ Seguir las estrellas brillantes',next:2}] },
+  { id:1, emoji:'🦋', title:'¡Las flores mágicas!', text:'Luna sigue las flores y encuentra una mariposa gigante de colores. La mariposa le habla: "¿Quieres volar conmigo?" 🌈',
+    choices:[{text:'🦋 ¡Sí, quiero volar!',next:3},{text:'🏡 No, prefiero buscar mi camino a casa',next:4}] },
+  { id:2, emoji:'✨', title:'¡Las estrellas guías!', text:'Luna sigue las estrellas y llega a un lago brillante. Un pez dorado le dice que conoce el tesoro del bosque.',
+    choices:[{text:'🐟 Seguir al pez dorado',next:3},{text:'🌙 Esperar bajo la luna',next:4}] },
+  { id:3, emoji:'🏆', title:'¡El gran tesoro!', text:'¡Luna encuentra el tesoro del bosque! No son joyas ni monedas... ¡Es una caja llena de semillas mágicas que hacen crecer flores de colores! 🌸',
+    choices:[{text:'🌸 Plantar las semillas',next:5}] },
+  { id:4, emoji:'🏡', title:'¡El camino a casa!', text:'Luna encuentra el camino a su casa. En el bolsillo tiene una pluma de la mariposa. ¡Siempre recordará el bosque encantado!',
+    choices:[{text:'🌟 Volver al bosque mañana',next:5}] },
+  { id:5, emoji:'🌈', title:'¡FIN!', text:'Luna aprendió que los bosques guardan magia y que los amigos más inesperados son los mejores. ¡Colorín colorado, este cuento ha terminado! 🎉',
+    choices:[], end:true },
+];
+
+let currentScene = 0, choicesMade = 0, totalScenes = 5;
+
+function showScene(id) {
+  const scene = STORY.find(s => s.id === id);
+  if (!scene) return;
+  currentScene = id;
+  document.getElementById('scene-emoji').textContent = scene.emoji;
+  document.getElementById('scene-title').textContent = scene.title;
+  document.getElementById('scene-text').textContent  = scene.text;
+
+  const choicesBox = document.getElementById('choices-box');
+  choicesBox.innerHTML = '';
+
+  if (scene.end) {
+    document.getElementById('end-box').style.display = 'block';
+    document.getElementById('progress-box').style.display = 'none';
+    document.getElementById('choices-made').textContent = choicesMade;
+    if (window.Confetti) Confetti.fire();
+    return;
+  }
+
+  document.getElementById('end-box').style.display = 'none';
+  document.getElementById('progress-box').style.display = 'block';
+  const progress = Math.min((id / totalScenes) * 100, 95);
+  document.getElementById('story-progress').style.width = progress + '%';
+  document.getElementById('progress-text').textContent = `Escena ${id + 1}`;
+
+  if ('speechSynthesis' in window) {
+    speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(scene.text);
+    utter.lang = 'es-CO'; utter.rate = 0.85;
+    speechSynthesis.speak(utter);
+  }
+
+  scene.choices.forEach(choice => {
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-outline';
+    btn.style.cssText = 'width:100%;justify-content:flex-start;font-size:1rem;padding:.85rem 1.5rem;border-radius:var(--radius-md);';
+    btn.textContent = choice.text;
+    btn.addEventListener('click', () => { choicesMade++; showScene(choice.next); });
+    choicesBox.appendChild(btn);
+  });
+}
+
+function startStory() {
+  choicesMade = 0;
+  document.getElementById('end-box').style.display = 'none';
+  document.getElementById('progress-box').style.display = 'block';
+  showScene(0);
+}
+
+function getCookie(name) {
+  for (let c of document.cookie.split(';')) {
+    const [k,v] = c.trim().split('=');
+    if (k === name) return decodeURIComponent(v);
+  }
+  return '';
+}
+function saveScore() {
+  fetch('{% url "save_game_score" %}', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+    body: JSON.stringify({ game_type: 'story', score: choicesMade, stars_earned: 4 }),
+  })
+  .then(r => r.json())
+  .then(() => {
+    if (window.Toast) Toast.show('¡Historia completada! ⭐ +4 estrellas', 'success');
+    document.getElementById('save-btn').disabled = true;
+  });
+}
+
+startStory();
+
+// Layout init
+(function(){
+  var d=document.getElementById('topbarDate');
+  if(d)d.textContent=new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long'});
+  var pb=document.getElementById('sidebarProfileBtn'),pd=document.getElementById('profileDropdown'),pc=document.getElementById('profileChevron');
+  if(pb&&pd){pb.addEventListener('click',function(e){e.stopPropagation();var o=pd.classList.toggle('open');pc.style.transform=o?'rotate(180deg)':'';});document.addEventListener('click',function(){pd.classList.remove('open');pc.style.transform='';});}
+  var t=document.getElementById('sidebarToggle'),s=document.getElementById('studentSidebar'),ov=document.getElementById('sidebarOverlay');
+  if(t&&s&&ov){t.addEventListener('click',function(){s.classList.toggle('open');ov.classList.toggle('open');});ov.addEventListener('click',function(){s.classList.remove('open');ov.classList.remove('open');});}
+  var dt=document.getElementById('darkModeToggle'),di=document.getElementById('darkModeIcon');
+  function sd(on){document.body.classList.toggle('student-dark',on);if(di)di.className=on?'bi bi-sun-fill':'bi bi-moon-fill';}
+  sd(localStorage.getItem('student_dark')==='1');
+  if(dt)dt.addEventListener('click',function(){var on=!document.body.classList.contains('student-dark');sd(on);localStorage.setItem('student_dark',on?'1':'0');});
+})();
+</script>
+{% endblock %}

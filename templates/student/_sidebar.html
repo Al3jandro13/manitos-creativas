@@ -1,0 +1,98 @@
+{% load static %}
+<aside class="student-sidebar" id="studentSidebar">
+
+  <!-- Logo -->
+  <div class="sidebar-logo-wrap">
+    <a href="{% url 'student_dashboard' %}" class="sidebar-logo-link">
+      <img src="{% static 'images/logo.png' %}" alt="Manitos Creativas" class="sidebar-logo-img">
+      <span class="sidebar-logo-text">Manitos Creativas</span>
+    </a>
+  </div>
+
+  <!-- Navigation -->
+  <nav class="sidebar-nav">
+    <div class="sidebar-nav-label">MENÚ</div>
+    <a href="{% url 'student_dashboard' %}" class="sidebar-nav-item {% if active_page == 'dashboard' %}active{% endif %}">
+      <span class="sidebar-nav-icon"><i class="bi bi-house-door-fill"></i></span>
+      <span>Inicio</span>
+    </a>
+    <a href="{% url 'games_home' %}" class="sidebar-nav-item {% if active_page == 'games' %}active{% endif %}">
+      <span class="sidebar-nav-icon"><i class="bi bi-controller"></i></span>
+      <span>Mis Juegos</span>
+    </a>
+    <a href="{% url 'student_activities' %}" class="sidebar-nav-item {% if active_page == 'activities' %}active{% endif %}">
+      <span class="sidebar-nav-icon"><i class="bi bi-clipboard2-fill"></i></span>
+      <span>Actividades</span>
+      {% if pending_tasks > 0 %}
+      <span class="sidebar-nav-badge">{{ pending_tasks }}</span>
+      {% endif %}
+    </a>
+    <a href="{% url 'student_logros' %}" class="sidebar-nav-item {% if active_page == 'logros' %}active{% endif %}">
+      <span class="sidebar-nav-icon"><i class="bi bi-trophy-fill"></i></span>
+      <span>Mis Logros</span>
+    </a>
+  </nav>
+
+  <!-- Recent activities -->
+  <div class="sidebar-activities-section">
+    <div class="sidebar-section-title">ACTIVIDADES RECIENTES</div>
+    {% if recent_submissions %}
+      {% for sub in recent_submissions|slice:":3" %}
+      <div class="sidebar-activity-item">
+        <div class="sidebar-activity-icon">
+          {% if sub.activity.category.name == 'colorear' %}🖍️
+          {% elif sub.activity.category.name == 'dibujo_libre' %}✏️
+          {% elif sub.activity.category.name == 'puntillismo' %}🎨
+          {% elif sub.activity.category.name == 'rompecabezas' %}🧩
+          {% elif sub.activity.category.name == 'cuento' %}📖
+          {% elif sub.activity.category.name == 'consonantes' %}🔤
+          {% elif sub.activity.category.name == 'numeros' %}🔢
+          {% elif sub.activity.category.name == 'sumas' %}➕
+          {% else %}⭐{% endif %}
+        </div>
+        <div class="sidebar-activity-info">
+          <div class="sidebar-activity-name">{{ sub.activity.title|truncatechars:22 }}</div>
+          <div class="sidebar-activity-status done">Completada</div>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+    <div class="sidebar-activity-empty">
+      <i class="bi bi-clipboard2"></i>
+      <span>Sin actividades recientes</span>
+    </div>
+    {% endif %}
+    <a href="{% url 'student_activities' %}" class="sidebar-activities-link">
+      Ver todas <i class="bi bi-arrow-right"></i>
+    </a>
+  </div>
+
+  <div style="flex:1;"></div>
+
+  <!-- Profile (bottom) -->
+  <div class="sidebar-profile-wrap">
+    <div class="sidebar-profile-dropdown" id="profileDropdown">
+      <a href="{% url 'student_profile' %}" class="sidebar-profile-option">
+        <i class="bi bi-person-circle"></i> Ver perfil
+      </a>
+      <a href="{% url 'logout' %}" class="sidebar-profile-option logout">
+        <i class="bi bi-box-arrow-left"></i> Cerrar sesión
+      </a>
+    </div>
+    <button class="sidebar-profile-btn" id="sidebarProfileBtn">
+      <div class="sidebar-profile-avatar">
+        {% if profile.selected_avatar == 'mochi' %}<i class="bi bi-heart-fill" style="color:#F9A8D4;"></i>
+        {% elif profile.selected_avatar == 'kiko' %}<i class="bi bi-sun-fill" style="color:#FCD34D;"></i>
+        {% elif profile.selected_avatar == 'star' %}<i class="bi bi-star-fill" style="color:#FCD34D;"></i>
+        {% elif profile.selected_avatar == 'cloud' %}<i class="bi bi-cloud-fill" style="color:#BAE6FD;"></i>
+        {% else %}<i class="bi bi-person-fill" style="color:#93C5FD;"></i>{% endif %}
+      </div>
+      <div class="sidebar-profile-info">
+        <div class="sidebar-profile-name">{{ request.user.first_name|default:request.user.username }}</div>
+        <div class="sidebar-profile-role">Estudiante</div>
+      </div>
+      <i class="bi bi-chevron-up sidebar-profile-chevron" id="profileChevron"></i>
+    </button>
+  </div>
+
+</aside>

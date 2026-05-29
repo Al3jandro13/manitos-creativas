@@ -1,0 +1,497 @@
+﻿{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Manitos Creativas — Plataforma Educativa Preescolar{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/landing.css' %}">
+{% endblock %}
+
+{% block body_content %}
+
+<!-- ══════════════════════════════
+     NAVEGACIÓN
+════════════════════════════════ -->
+<nav class="navbar" id="navbar">
+  <div class="container">
+    <div class="nav-inner">
+      <a href="/" class="nav-logo">
+        <img src="{% static 'images/logo.png' %}" alt="Manitos Creativas" style="height:4.5rem;width:auto;filter:drop-shadow(0 2px 8px rgba(0,0,0,.15));">
+      </a>
+
+      <ul class="nav-links" id="nav-links">
+        <li><a href="#caracteristicas">¿Por qué nosotros?</a></li>
+        <li><a href="#actividades">Actividades</a></li>
+        <li><a href="#tablero-fama">Tablero de Fama</a></li>
+        <li><a href="#unirse">Únete</a></li>
+      </ul>
+
+      <div class="nav-cta">
+        <a href="{% url 'login' %}" class="btn btn-outline" style="padding:.55rem 1.25rem;font-size:.9rem;">
+          <i class="bi bi-key-fill"></i> Ingresar
+        </a>
+        <a href="{% url 'register_student' %}" class="btn btn-primary" style="padding:.55rem 1.25rem;font-size:.9rem;">
+          <i class="bi bi-person-plus-fill"></i> Registrar niño/a
+        </a>
+      </div>
+
+      <button class="nav-hamburger" id="hamburger" aria-label="Menú">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════
+     HERO — pure visual scene (everything moves)
+════════════════════════════════ -->
+<section class="hero" id="inicio">
+  <canvas id="particles-canvas"></canvas>
+
+  <!-- ── All floating elements — ordered far → close by data-speed ── -->
+  <div class="hero-shapes-layer" id="heroShapes">
+
+    <!-- FAR layer (speed 0.3–0.6) — barely moves, anchors scene -->
+    <div class="hero-shape hs-big-ring"      data-speed="0.3"  data-rot="0"></div>
+    <div class="hero-shape hs-pink-half"     data-speed="0.35" data-rot="0"></div>
+    <div class="hero-shape hs-dot-center-r"  data-speed="0.4"  data-rot="0"></div>
+    <div class="hero-shape hs-lavender-sq"   data-speed="0.45" data-rot="-20"></div>
+    <div class="hero-shape hs-sticker-arte"  data-speed="0.55" data-rot="-12">Arte</div>
+
+    <!-- MID-FAR layer (speed 0.65–1.0) -->
+    <div class="hero-shape hs-purple-sq"     data-speed="0.7"  data-rot="15"></div>
+    <div class="hero-shape hs-mid-sq"        data-speed="0.8"  data-rot="-18"></div>
+    <div class="hero-shape hs-mid-ring"      data-speed="0.5"  data-rot="0"></div>
+    <div class="hero-shape hs-red-rect"      data-speed="0.9"  data-rot="-5"></div>
+    <div class="hero-shape hs-teal-semi"     data-speed="0.9"  data-rot="0"></div>
+
+    <!-- TÍTULO PRINCIPAL — flota al nivel intermedio, elementos rápidos pasan por delante -->
+    <div class="hero-shape hs-hero-title" data-speed="0.38" data-rot="0">
+      <span class="hs-hero-line1">
+        <span class="htl" style="--i:0">M</span><span class="htl" style="--i:1">a</span><span class="htl" style="--i:2">n</span><span class="htl" style="--i:3">i</span><span class="htl" style="--i:4">t</span><span class="htl" style="--i:5">o</span><span class="htl" style="--i:6">s</span>
+      </span>
+      <span class="hs-hero-line2">
+        <span class="htl" style="--i:8">C</span><span class="htl" style="--i:9">r</span><span class="htl" style="--i:10">e</span><span class="htl" style="--i:11">a</span><span class="htl" style="--i:12">t</span><span class="htl" style="--i:13">i</span><span class="htl" style="--i:14">v</span><span class="htl" style="--i:15">a</span><span class="htl" style="--i:16">s</span>
+      </span>
+    </div>
+
+    <!-- MID layer (speed 1.1–1.5) -->
+    <div class="hero-shape hs-mid-star"      data-speed="1.2"  data-rot="0"></div>
+    <div class="hero-shape hs-sticker-jugar" data-speed="1.1"  data-rot="-6">¡Jugar!</div>
+    <div class="hero-shape hs-mid-dot-l"     data-speed="1.4"  data-rot="0"></div>
+    <div class="hero-shape hs-mid-dot-r"     data-speed="1.3"  data-rot="0"></div>
+    <div class="hero-shape hs-orange-bar-l"  data-speed="1.4"  data-rot="-12"></div>
+    <div class="hero-shape hs-orange-bar-r"  data-speed="1.5"  data-rot="14"></div>
+    <div class="hero-shape hs-icon-music"    data-speed="1.4"  data-rot="12"><i class="bi bi-music-note-beamed"></i></div>
+
+    <!-- MID-CLOSE layer (speed 1.6–2.2) -->
+    <div class="hero-shape hs-yellow-dot-l"  data-speed="1.6"  data-rot="0"></div>
+    <div class="hero-shape hs-yellow-dot-r"  data-speed="1.7"  data-rot="0"></div>
+    <div class="hero-shape hs-green-dot"     data-speed="1.6"  data-rot="0"></div>
+    <div class="hero-shape hs-pencil"        data-speed="1.8"  data-rot="22"></div>
+    <div class="hero-shape hs-rect-diagonal" data-speed="1.9"  data-rot="35"></div>
+    <div class="hero-shape hs-icon-palette"  data-speed="2.0"  data-rot="-8"><i class="bi bi-palette-fill"></i></div>
+    <div class="hero-shape hs-mid-tri"       data-speed="2.2"  data-rot="8"></div>
+
+    <!-- CLOSE layer (speed 2.4–3.0) — most responsive to mouse -->
+    <div class="hero-shape hs-sticker-crear" data-speed="2.4"  data-rot="8">✨ Crear</div>
+    <div class="hero-shape hs-pink-star"     data-speed="2.6"  data-rot="20"></div>
+    <div class="hero-shape hs-pink-tri"      data-speed="2.0"  data-rot="10"></div>
+    <div class="hero-shape hs-icon-book"     data-speed="2.8"  data-rot="-5"><i class="bi bi-book-open-fill"></i></div>
+    <div class="hero-shape hs-dot-center-l"  data-speed="3.0"  data-rot="0"></div>
+  </div>
+
+  <!-- ── Characters layer ── -->
+  <div class="hero-chars-layer">
+    <div class="char-wrapper char-wrapper-2" data-speed="0.6" data-rot="0">
+      <img src="{% static 'images/character2.svg' %}" class="mascot-char2" alt="Lumin">
+    </div>
+
+    <div class="char-wrapper char-wrapper-1" data-speed="0.8" data-rot="0">
+      <img src="{% static 'images/character1.svg' %}" class="mascot-char1" alt="Pincelin">
+    </div>
+  </div>
+
+  <!-- ── Scroll hint ── -->
+  <div class="hero-scroll-hint">
+    <span class="hero-scroll-text">Descubre más</span>
+    <div class="hero-scroll-arrow"><i class="bi bi-chevron-down"></i></div>
+  </div>
+
+  <!-- Wave -->
+  <div class="wave-divider">
+    <svg viewBox="0 0 1440 80" preserveAspectRatio="none">
+      <path d="M0,40 C360,80 1080,0 1440,40 L1440,80 L0,80 Z" fill="#FFFFFF"/>
+    </svg>
+  </div>
+</section>
+
+<!-- ══════════════════════════════
+     PITCH — propuesta de valor + estadísticas
+════════════════════════════════ -->
+<section class="hero-intro" id="bienvenida">
+  <div class="hi-blob hi-blob-1"></div>
+  <div class="hi-blob hi-blob-2"></div>
+  <div class="hi-blob hi-blob-3"></div>
+
+  <div class="container">
+    <div class="hero-intro-layout">
+
+      <!-- Izquierda: texto de pitch + CTAs -->
+      <div class="hi-pitch reveal">
+        <div class="hi-badge">
+          <span class="hero-badge-dot"></span>
+          Plataforma educativa para preescolar · Transición A y B
+        </div>
+        <h2 class="hi-pitch-title">
+          Donde aprender y crear<br>
+          se vuelven la misma <span class="hi-pitch-accent">aventura</span>
+        </h2>
+        <p class="hi-pitch-desc">
+          Actividades artísticas, juegos educativos y seguimiento del progreso de tus niños — todo en un solo lugar, diseñado con amor para preescolar.
+        </p>
+        <div class="hi-ctas">
+          <a href="{% url 'register_student' %}" class="btn btn-primary" style="font-size:1.05rem;padding:.9rem 2.2rem;">
+            <i class="bi bi-person-plus-fill"></i> ¡Registra a tu hijo/a!
+          </a>
+          <a href="{% url 'login' %}" class="btn btn-outline" style="font-size:1.05rem;padding:.9rem 2.2rem;">
+            <i class="bi bi-person-workspace"></i> Soy profesor/a
+          </a>
+        </div>
+      </div>
+
+      <!-- Derecha: tarjetas de estadísticas 2×2 -->
+      <div class="hi-cards-grid reveal delay-2">
+        <div class="hi-card hi-card-purple">
+          <div class="hi-card-icon"><i class="bi bi-palette-fill"></i></div>
+          <span class="hi-card-num" data-count="12">0</span>
+          <span class="hi-card-label">Tipos de<br>actividades</span>
+        </div>
+        <div class="hi-card hi-card-pink">
+          <div class="hi-card-icon"><i class="bi bi-controller"></i></div>
+          <span class="hi-card-num" data-count="8">0</span>
+          <span class="hi-card-label">Juegos<br>educativos</span>
+        </div>
+        <div class="hi-card hi-card-yellow">
+          <div class="hi-card-icon"><i class="bi bi-star-fill"></i></div>
+          <span class="hi-card-num" data-count="5">0</span>
+          <span class="hi-card-label">Dimensiones<br>de evaluación</span>
+        </div>
+        <div class="hi-card hi-card-teal">
+          <div class="hi-card-icon"><i class="bi bi-heart-fill"></i></div>
+          <span class="hi-card-num" data-count="100">0</span>
+          <span class="hi-card-label">%&nbsp;con amor</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════
+     CARACTERÍSTICAS
+════════════════════════════════ -->
+<section class="section-features" id="caracteristicas">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-eyebrow reveal">¿Por qué Manitos Creativas?</span>
+      <h2 class="section-title reveal delay-1">Diseñado con amor<br>para pequeños genios</h2>
+      <p class="section-desc reveal delay-2">
+        Un espacio donde la educación preescolar cobra vida con herramientas
+        pedagógicas modernas y aprendizaje lúdico.
+      </p>
+    </div>
+
+    <div class="features-grid">
+      <div class="feature-card reveal delay-1" data-accent="purple">
+        <div class="feature-icon-wrap feature-icon-purple"><i class="bi bi-stars"></i></div>
+        <div class="feature-title">12 Tipos de Actividades</div>
+        <p class="feature-desc">Desde colorear y puntillismo hasta lenguaje de señas y exploración sensorial — todo en un solo lugar.</p>
+      </div>
+      <div class="feature-card reveal delay-2" data-accent="pink">
+        <div class="feature-icon-wrap feature-icon-pink"><i class="bi bi-controller"></i></div>
+        <div class="feature-title">Juegos Educativos</div>
+        <p class="feature-desc">Rompecabezas, dibujo libre, números del 1 al 100, sumas y restas de forma divertida e interactiva.</p>
+      </div>
+      <div class="feature-card reveal delay-3" data-accent="yellow">
+        <div class="feature-icon-wrap feature-icon-yellow"><i class="bi bi-star-fill"></i></div>
+        <div class="feature-title">Sistema de Estrellas</div>
+        <p class="feature-desc">Los niños ganan estrellas y medallas por cada logro, manteniéndolos motivados y comprometidos.</p>
+      </div>
+      <div class="feature-card reveal delay-4" data-accent="green">
+        <div class="feature-icon-wrap feature-icon-green"><i class="bi bi-bar-chart-fill"></i></div>
+        <div class="feature-title">Reportes Semanales</div>
+        <p class="feature-desc">Los profesores registran notas y reportes detallados con 5 dimensiones de evaluación formativa.</p>
+      </div>
+      <div class="feature-card reveal delay-5" data-accent="blue">
+        <div class="feature-icon-wrap feature-icon-blue"><i class="bi bi-universal-access"></i></div>
+        <div class="feature-title">Totalmente Accesible</div>
+        <p class="feature-desc">Panel de accesibilidad completo con 8 opciones: tamaño de texto, contraste, fuente legible y más.</p>
+      </div>
+      <div class="feature-card reveal delay-6" data-accent="orange">
+        <div class="feature-icon-wrap feature-icon-orange"><i class="bi bi-trophy-fill"></i></div>
+        <div class="feature-title">Tablero de Fama</div>
+        <p class="feature-desc">Los mejores trabajos y logros de los estudiantes se exhiben con orgullo en el salón de la fama.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════
+     ACTIVIDADES
+════════════════════════════════ -->
+<section class="section-activities" id="actividades">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-eyebrow reveal">Lo que hacemos</span>
+      <h2 class="section-title reveal delay-1">Un universo de actividades creativas</h2>
+    </div>
+
+    <div class="activities-categories">
+
+      <div class="activity-category reveal delay-1">
+        <div class="activity-cat-label activity-cat-arte">
+          <i class="bi bi-palette-fill"></i>
+          <span>Arte</span>
+        </div>
+        <div class="activity-cat-pills">
+          <div class="activity-pill"><span class="activity-pill-icon"><i class="bi bi-brush-fill"></i></span><span>Colorear</span></div>
+          <div class="activity-pill"><span class="activity-pill-icon"><i class="bi bi-circle-fill"></i></span><span>Puntillismo</span></div>
+          <div class="activity-pill"><span class="activity-pill-icon"><i class="bi bi-pencil-fill"></i></span><span>Dibujo Libre</span></div>
+          <div class="activity-pill"><span class="activity-pill-icon"><i class="bi bi-image-fill"></i></span><span>Actividades Libres</span></div>
+        </div>
+      </div>
+
+      <div class="activity-category reveal delay-2">
+        <div class="activity-cat-label activity-cat-juegos">
+          <i class="bi bi-controller"></i>
+          <span>Juegos</span>
+        </div>
+        <div class="activity-cat-pills">
+          <div class="activity-pill"><span class="activity-pill-icon"><i class="bi bi-puzzle-fill"></i></span><span>Rompecabezas</span></div>
+          <div class="activity-pill"><span class="activity-pill-icon"><i class="bi bi-book-open-fill"></i></span><span>Cuentos Interactivos</span></div>
+          <div class="activity-pill"><span class="activity-pill-icon"><i class="bi bi-123"></i></span><span>Números 1–100</span></div>
+          <div class="activity-pill"><span class="activity-pill-icon"><i class="bi bi-plus-lg"></i></span><span>Sumas y Restas</span></div>
+        </div>
+      </div>
+
+      <div class="activity-category reveal delay-3">
+        <div class="activity-cat-label activity-cat-lenguaje">
+          <i class="bi bi-chat-heart-fill"></i>
+          <span>Lenguaje</span>
+        </div>
+        <div class="activity-cat-pills">
+          <div class="activity-pill"><span class="activity-pill-icon"><i class="bi bi-alphabet-uppercase"></i></span><span>Consonantes</span></div>
+          <div class="activity-pill"><span class="activity-pill-icon"><i class="bi bi-hand-index-thumb-fill"></i></span><span>Lenguaje de Señas</span></div>
+          <div class="activity-pill"><span class="activity-pill-icon"><i class="bi bi-binoculars-fill"></i></span><span>Exploración Sensorial</span></div>
+          <div class="activity-pill activity-pill-more"><span class="activity-pill-icon"><i class="bi bi-stars"></i></span><span>¡Y mucho más!</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════
+     TABLERO DE FAMA
+════════════════════════════════ -->
+<section class="fame-section" id="tablero-fama">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-eyebrow reveal">Nuestros campeones</span>
+      <h2 class="section-title reveal delay-1">Tablero de Fama</h2>
+      <p class="section-desc reveal delay-2">
+        Los increíbles logros de nuestros pequeños artistas, reconocidos con medallas de honor.
+      </p>
+    </div>
+
+    {% if fame_entries %}
+    <div class="fame-grid">
+      {% for entry in fame_entries %}
+      <div class="fame-card reveal delay-{{ forloop.counter }}">
+        <span class="fame-sparkle"><i class="bi bi-stars"></i></span>
+        <span class="fame-medal">
+          {% if entry.medal_type == 'gold' %}<i class="bi bi-trophy-fill" style="color:#F59E0B;"></i>
+          {% elif entry.medal_type == 'silver' %}<i class="bi bi-trophy-fill" style="color:#9CA3AF;"></i>
+          {% elif entry.medal_type == 'bronze' %}<i class="bi bi-trophy-fill" style="color:#92400E;"></i>
+          {% elif entry.medal_type == 'star' %}<i class="bi bi-star-fill" style="color:#FBBF24;"></i>
+          {% elif entry.medal_type == 'heart' %}<i class="bi bi-heart-fill" style="color:#7C3AED;"></i>
+          {% elif entry.medal_type == 'rainbow' %}<i class="bi bi-palette-fill" style="color:#7C3AED;"></i>
+          {% else %}<i class="bi bi-award-fill" style="color:#F59E0B;"></i>{% endif %}
+        </span>
+        <div class="fame-student-name">
+          {{ entry.student.get_full_name|default:entry.student.username }}
+        </div>
+        {% if entry.student.student_profile %}
+        <div class="fame-student-level">
+          Transición {{ entry.student.student_profile.level }}
+        </div>
+        {% endif %}
+        <p class="fame-reason">{{ entry.description }}</p>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="fame-grid">
+      <div class="fame-card reveal delay-1">
+        <span class="fame-sparkle"><i class="bi bi-stars"></i></span>
+        <span class="fame-medal"><i class="bi bi-trophy-fill" style="color:#F59E0B;"></i></span>
+        <div class="fame-student-name">¡Tu nombre aquí!</div>
+        <div class="fame-student-level">Transición A</div>
+        <p class="fame-reason">Pronto los mejores trabajos aparecerán en nuestro tablero de fama.</p>
+      </div>
+      <div class="fame-card reveal delay-2">
+        <span class="fame-sparkle"><i class="bi bi-stars"></i></span>
+        <span class="fame-medal"><i class="bi bi-star-fill" style="color:#FBBF24;"></i></span>
+        <div class="fame-student-name">¡Sé el primero!</div>
+        <div class="fame-student-level">Transición B</div>
+        <p class="fame-reason">Completa actividades y gana estrellas para aparecer en el tablero.</p>
+      </div>
+      <div class="fame-card reveal delay-3">
+        <span class="fame-sparkle"><i class="bi bi-stars"></i></span>
+        <span class="fame-medal"><i class="bi bi-palette-fill" style="color:#7C3AED;font-size:1.8rem;"></i></span>
+        <div class="fame-student-name">¡Tú puedes lograrlo!</div>
+        <div class="fame-student-level">Transición A o B</div>
+        <p class="fame-reason">Los profesores reconocen el esfuerzo y dedicación de cada pequeño artista.</p>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+<!-- ══════════════════════════════
+     ROLES (Profesor / Estudiante)
+════════════════════════════════ -->
+<section class="section-roles" id="unirse">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-eyebrow reveal">Para todos</span>
+      <h2 class="section-title reveal delay-1">Elige tu espacio<br>en Manitos Creativas</h2>
+    </div>
+
+    <div class="roles-grid">
+      <!-- Teacher Card -->
+      <div class="role-card role-card-teacher reveal-left delay-1">
+        <div class="role-card-bg"></div>
+        <div class="role-card-bg-2"></div>
+        <span class="role-emoji"><i class="bi bi-person-workspace"></i></span>
+        <h3 class="role-title">Soy Profesor/a</h3>
+        <p class="role-desc">
+          Gestiona tu salón de forma creativa. Crea actividades, registra evaluaciones,
+          genera reportes semanales y celebra los logros de tus estudiantes.
+        </p>
+        <ul class="role-features">
+          <li>Dashboard con estadísticas en tiempo real</li>
+          <li>12 tipos de actividades configurables</li>
+          <li>Plantillas de notas (S/A/B/En Proceso)</li>
+          <li>Reportes semanales con 5 dimensiones</li>
+          <li>Tablero de fama y anuncios</li>
+          <li>Gestión de recursos didácticos</li>
+        </ul>
+        <a href="{% url 'login' %}" class="btn-role btn-role-teacher">
+          <i class="bi bi-box-arrow-in-right"></i> Ingresar como Profesor/a →
+        </a>
+      </div>
+
+      <!-- Student Card -->
+      <div class="role-card role-card-student reveal-right delay-2">
+        <div class="role-card-bg"></div>
+        <div class="role-card-bg-2"></div>
+        <span class="role-emoji"><i class="bi bi-person-fill"></i></span>
+        <h3 class="role-title">Mi hijo/a es Estudiante</h3>
+        <p class="role-desc">
+          Crea la cuenta de tu pequeño/a y déjalo explorar un mundo lleno de juegos,
+          arte y aprendizaje diseñado especialmente para preescolar.
+        </p>
+        <ul class="role-features">
+          <li>Panel colorido y fácil de usar</li>
+          <li>8 juegos educativos interactivos</li>
+          <li>Actividades asignadas por el profesor</li>
+          <li>Sistema de estrellas y medallas</li>
+          <li>Cuentos, dibujos y rompecabezas</li>
+          <li>Lenguaje de señas básico (LSC)</li>
+        </ul>
+        <a href="{% url 'register_student' %}" class="btn-role btn-role-student">
+          <i class="bi bi-star-fill"></i> Registrar a mi hijo/a →
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════
+     CTA FINAL
+════════════════════════════════ -->
+<section class="section-cta">
+  <div class="cta-bubbles" id="cta-bubbles"></div>
+  <div class="container cta-content">
+    <h2 class="cta-title reveal">
+      ¡Listo para empezar<br>la aventura?
+    </h2>
+    <p class="cta-desc reveal delay-1">
+      Únete a Manitos Creativas hoy. Es gratis, seguro<br>
+      y diseñado con todo el amor para los más pequeños.
+    </p>
+    <div class="cta-actions reveal delay-2">
+      <a href="{% url 'register_student' %}" class="btn btn-secondary" style="font-size:1.1rem;padding:1rem 2.5rem;">
+        <i class="bi bi-person-plus-fill"></i> ¡Comenzar ahora!
+      </a>
+      <a href="{% url 'login' %}" class="btn btn-ghost" style="font-size:1.05rem;padding:1rem 2rem;">
+        <i class="bi bi-key-fill"></i> Ya tengo cuenta
+      </a>
+    </div>
+
+    <div class="cta-chars reveal delay-3">
+      <img src="{% static 'images/character2.svg' %}" width="80" alt="Lumin"
+           style="animation:char2-float 4s ease-in-out infinite;filter:drop-shadow(0 8px 20px rgba(236,72,153,.4));">
+      <img src="{% static 'images/character1.svg' %}" width="90" alt="Pincelin"
+           style="animation:char1-float 4.5s ease-in-out infinite .5s;filter:drop-shadow(0 8px 20px rgba(251,191,36,.4));">
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════
+     FOOTER
+════════════════════════════════ -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.5rem;">
+          <img src="{% static 'images/logo.png' %}" alt="Manitos Creativas" style="height:4rem;width:auto;filter:drop-shadow(0 2px 8px rgba(0,0,0,.15));">
+        </div>
+        <p class="footer-brand-desc">
+          Plataforma educativa diseñada con amor para niños de preescolar
+          (Transición A y B). Aprendemos jugando, creamos soñando.
+        </p>
+      </div>
+      <div>
+        <div class="footer-col-title">Navegación</div>
+        <ul class="footer-links">
+          <li><a href="#inicio">Inicio</a></li>
+          <li><a href="#caracteristicas">Características</a></li>
+          <li><a href="#actividades">Actividades</a></li>
+          <li><a href="#tablero-fama">Tablero de Fama</a></li>
+          <li><a href="#unirse">Únete</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="footer-col-title">Acceso</div>
+        <ul class="footer-links">
+          <li><a href="{% url 'login' %}">Iniciar Sesión</a></li>
+          <li><a href="{% url 'register_student' %}">Registrar Estudiante</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2025 Manitos Creativas. Hecho con <span class="footer-hearts">♥</span> para preescolar.</span>
+      <span>Educación · Creatividad · Amor</span>
+    </div>
+  </div>
+</footer>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/landing.js' %}"></script>
+{% endblock %}

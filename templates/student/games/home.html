@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Mis Juegos — Manitos Creativas{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/student.css' %}">{% endblock %}
+
+{% block body_content %}
+<div class="student-layout">
+
+  {% include 'student/_sidebar.html' with active_page='games' %}
+
+  <div class="student-main">
+
+    <!-- Topbar -->
+    <header class="student-topbar">
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Abrir menú">
+        <i class="bi bi-list"></i>
+      </button>
+      <div class="topbar-title">Mis Juegos</div>
+      <div class="topbar-actions">
+        <div class="topbar-date">
+          <i class="bi bi-calendar3"></i>
+          <span id="topbarDate"></span>
+        </div>
+        <div class="topbar-stars-chip">
+          <i class="bi bi-star-fill"></i>
+          <span>{{ profile.total_stars|default:"0" }} estrellas</span>
+        </div>
+        <button class="dark-mode-toggle" id="darkModeToggle" aria-label="Cambiar modo">
+          <i class="bi bi-moon-fill" id="darkModeIcon"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Scroll area -->
+    <div class="student-scroll">
+
+      <!-- Page Hero -->
+      <div class="page-hero games-hero">
+        <div class="page-hero-left">
+          <div class="page-hero-icon-pill">
+            <i class="bi bi-controller"></i> Zona de Juegos
+          </div>
+          <h1 class="page-hero-title">¡Elige tu juego!</h1>
+          <p class="page-hero-sub">Juega, aprende y gana estrellas ⭐</p>
+        </div>
+        <div class="page-hero-stats">
+          <div class="page-hero-stat-card">
+            <div class="hero-stat-num">{{ completed_count|default:"0" }}</div>
+            <div class="hero-stat-label">de {{ total_games }}<br>completados</div>
+          </div>
+          <div class="page-hero-stat-card">
+            <div class="hero-stat-num" style="color:#86EFAC;">{{ profile.total_stars|default:"0" }}</div>
+            <div class="hero-stat-label">estrellas<br>ganadas</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section header -->
+      <div class="section-header">
+        <div class="section-title-new">
+          <span class="section-icon-badge"><i class="bi bi-controller"></i></span>
+          Todos los Juegos
+        </div>
+      </div>
+
+      <!-- Games Grid -->
+      <div class="games-grid">
+        <a href="{% url 'game_puzzle' %}" class="game-card game-card-purple">
+          <span class="game-icon">🧩</span>
+          <span class="game-name">Rompecabezas</span>
+          <span class="game-stars"><i class="bi bi-star-fill"></i> +5</span>
+        </a>
+        <a href="{% url 'game_coloring' %}" class="game-card game-card-pink">
+          <span class="game-icon">🖍️</span>
+          <span class="game-name">Colorear</span>
+          <span class="game-stars"><i class="bi bi-star-fill"></i> +4</span>
+        </a>
+        <a href="{% url 'game_drawing' %}" class="game-card game-card-teal">
+          <span class="game-icon">✏️</span>
+          <span class="game-name">Dibujo Libre</span>
+          <span class="game-stars"><i class="bi bi-star-fill"></i> +3</span>
+        </a>
+        <a href="{% url 'game_puntillismo' %}" class="game-card game-card-lime">
+          <span class="game-icon">🎨</span>
+          <span class="game-name">Puntillismo</span>
+          <span class="game-stars"><i class="bi bi-star-fill"></i> +4</span>
+        </a>
+        <a href="{% url 'game_numbers' %}" class="game-card game-card-yellow">
+          <span class="game-icon">🔢</span>
+          <span class="game-name">Números 1–100</span>
+          <span class="game-stars"><i class="bi bi-star-fill"></i> +4</span>
+        </a>
+        <a href="{% url 'game_consonants' %}" class="game-card game-card-indigo">
+          <span class="game-icon">🔤</span>
+          <span class="game-name">Consonantes</span>
+          <span class="game-stars"><i class="bi bi-star-fill"></i> +4</span>
+        </a>
+        <a href="{% url 'game_math' %}?type=add" class="game-card game-card-blue">
+          <span class="game-icon">➕</span>
+          <span class="game-name">Sumas</span>
+          <span class="game-stars"><i class="bi bi-star-fill"></i> +5</span>
+        </a>
+        <a href="{% url 'game_math' %}?type=sub" class="game-card game-card-rose">
+          <span class="game-icon">➖</span>
+          <span class="game-name">Restas</span>
+          <span class="game-stars"><i class="bi bi-star-fill"></i> +5</span>
+        </a>
+        <a href="{% url 'game_story' %}" class="game-card game-card-orange">
+          <span class="game-icon">📖</span>
+          <span class="game-name">Cuento</span>
+          <span class="game-stars"><i class="bi bi-star-fill"></i> +4</span>
+        </a>
+        <a href="{% url 'game_snake' %}" class="game-card game-card-teal">
+          <span class="game-icon">🐍</span>
+          <span class="game-name">Serpiente</span>
+          <span class="game-stars"><i class="bi bi-star-fill"></i> +5</span>
+        </a>
+        <a href="{% url 'game_wordsearch' %}" class="game-card game-card-sky">
+          <span class="game-icon">🔠</span>
+          <span class="game-name">Sopa de Letras</span>
+          <span class="game-stars"><i class="bi bi-star-fill"></i> +5</span>
+        </a>
+      </div>
+
+    </div><!-- /student-scroll -->
+  </div><!-- /student-main -->
+
+</div><!-- /student-layout -->
+
+<!-- Mobile sidebar overlay -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<script>
+(function () {
+  const dateEl = document.getElementById('topbarDate');
+  if (dateEl) {
+    dateEl.textContent = new Date().toLocaleDateString('es-CO', {
+      weekday: 'long', day: 'numeric', month: 'long'
+    });
+  }
+
+  const profileBtn = document.getElementById('sidebarProfileBtn');
+  const profileDropdown = document.getElementById('profileDropdown');
+  const profileChevron = document.getElementById('profileChevron');
+  if (profileBtn && profileDropdown) {
+    profileBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      const isOpen = profileDropdown.classList.toggle('open');
+      profileChevron.style.transform = isOpen ? 'rotate(180deg)' : '';
+    });
+    document.addEventListener('click', function () {
+      profileDropdown.classList.remove('open');
+      profileChevron.style.transform = '';
+    });
+  }
+
+  const toggle = document.getElementById('sidebarToggle');
+  const sidebar = document.getElementById('studentSidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  if (toggle && sidebar && overlay) {
+    toggle.addEventListener('click', function () {
+      sidebar.classList.toggle('open');
+      overlay.classList.toggle('open');
+    });
+    overlay.addEventListener('click', function () {
+      sidebar.classList.remove('open');
+      overlay.classList.remove('open');
+    });
+  }
+
+  const darkToggle = document.getElementById('darkModeToggle');
+  const darkIcon   = document.getElementById('darkModeIcon');
+  function applyDark(on) {
+    document.body.classList.toggle('student-dark', on);
+    if (darkIcon) darkIcon.className = on ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
+  }
+  applyDark(localStorage.getItem('student_dark') === '1');
+  if (darkToggle) {
+    darkToggle.addEventListener('click', function () {
+      const on = !document.body.classList.contains('student-dark');
+      applyDark(on);
+      localStorage.setItem('student_dark', on ? '1' : '0');
+    });
+  }
+})();
+</script>
+{% endblock %}

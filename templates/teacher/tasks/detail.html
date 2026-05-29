@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ activity.title }} — Manitos Creativas{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/teacher.css' %}">{% endblock %}
+
+{% block body_content %}
+<div class="teacher-layout">
+  {% include 'teacher/_sidebar.html' %}
+  <main class="teacher-main">
+    <div class="teacher-topbar">
+      <div style="display:flex;align-items:center;gap:.85rem;">
+        <button id="sidebar-toggle"
+          style="display:none;background:none;border:none;cursor:pointer;font-size:1.2rem;color:var(--t-text-mid);padding:.25rem;"
+          onclick="document.querySelector('.sidebar').classList.toggle('open')">
+          <i class="bi bi-list"></i>
+        </button>
+        <div class="teacher-topbar-title"><i class="bi bi-clipboard2"></i> Detalle de Actividad</div>
+      </div>
+      <div class="topbar-actions">
+        <a href="{% url 'activities_list' %}" class="btn btn-outline">← Volver</a>
+      </div>
+    </div>
+    <div class="teacher-content">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;">
+
+        <!-- Activity Info -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <div class="panel-title"><i class="bi bi-clipboard2"></i> {{ activity.title }}</div>
+            <span class="badge {% if activity.status == 'published' %}badge-green{% else %}badge-yellow{% endif %}">
+              {{ activity.get_status_display }}
+            </span>
+          </div>
+          <div class="panel-body" style="padding-top:.75rem;">
+            <div style="margin-bottom:.85rem;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;">
+              <span class="badge badge-blue">{{ activity.category.name }}</span>
+              <span style="font-size:.75rem;color:var(--t-text-muted);display:inline-flex;align-items:center;gap:.3rem;">
+                <i class="bi bi-star" style="color:var(--t-amber);font-size:.7rem;"></i> +{{ activity.reward_stars }} estrellas
+              </span>
+            </div>
+            {% if activity.description %}
+            <p style="color:var(--t-text-mid);line-height:1.7;margin-bottom:1rem;font-size:.875rem;">{{ activity.description }}</p>
+            {% endif %}
+            <div style="font-size:.75rem;color:var(--t-text-muted);">Creada el {{ activity.created_at|date:"d M Y" }}</div>
+            {% if activity.due_date %}
+            <div style="font-size:.75rem;color:var(--t-text-muted);margin-top:.2rem;">Vence el {{ activity.due_date|date:"d M Y" }}</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Submissions -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <div class="panel-title"><i class="bi bi-inbox"></i> Entregas</div>
+            <span class="badge badge-purple">{{ submissions.count }}</span>
+          </div>
+          <div class="panel-body">
+            {% if submissions %}
+              {% for sub in submissions %}
+              <div class="student-item">
+                <div class="student-avatar">{{ sub.student.first_name|first|upper }}</div>
+                <div>
+                  <div class="student-name">{{ sub.student.get_full_name|default:sub.student.username }}</div>
+                  <div class="student-level" style="display:flex;align-items:center;gap:.35rem;margin-top:.15rem;">
+                    <span class="badge {% if sub.status == 'approved' %}badge-green{% elif sub.status == 'submitted' %}badge-yellow{% else %}badge-blue{% endif %}">{{ sub.get_status_display }}</span>
+                    {% if sub.stars_awarded %}
+                    <span style="font-size:.72rem;color:var(--t-amber);font-weight:600;">
+                      <i class="bi bi-star-fill" style="font-size:.62rem;"></i> {{ sub.stars_awarded }}
+                    </span>
+                    {% endif %}
+                  </div>
+                </div>
+                {% if sub.status == 'submitted' %}
+                <a href="{% url 'review_submission' sub.pk %}" class="badge badge-pink" style="text-decoration:none;margin-left:auto;">Revisar →</a>
+                {% endif %}
+              </div>
+              {% endfor %}
+            {% else %}
+            <div class="empty-state" style="padding:2rem;">
+              <div class="empty-state-icon" style="font-size:2rem;"><i class="bi bi-inbox"></i></div>
+              <div class="empty-state-title" style="margin-bottom:0;">Sin entregas aún</div>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<script>
+if (window.innerWidth <= 768) document.getElementById('sidebar-toggle').style.display = 'block';
+window.addEventListener('resize', () => {
+  const tog = document.getElementById('sidebar-toggle');
+  if (tog) tog.style.display = window.innerWidth <= 768 ? 'block' : 'none';
+});
+</script>
+{% endblock %}

@@ -1,0 +1,228 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard — Manitos Creativas{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/teacher.css' %}">
+{% endblock %}
+
+{% block body_content %}
+<div class="teacher-layout">
+
+  {% include 'teacher/_sidebar.html' %}
+
+  <main class="teacher-main">
+
+    <!-- Topbar -->
+    <div class="teacher-topbar">
+      <div style="display:flex;align-items:center;gap:.85rem;">
+        <button id="sidebar-toggle"
+          style="display:none;background:none;border:none;cursor:pointer;font-size:1.2rem;color:var(--t-text-mid);padding:.25rem;"
+          onclick="document.querySelector('.sidebar').classList.toggle('open')">
+          <i class="bi bi-list"></i>
+        </button>
+        <div class="teacher-topbar-title">
+          Bienvenida, {{ request.user.first_name|default:request.user.username }}
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <a href="{% url 'create_activity' %}" class="btn btn-primary">
+          <i class="bi bi-plus"></i> Nueva actividad
+        </a>
+        <a href="{% url 'announcements' %}" class="btn btn-outline">
+          <i class="bi bi-megaphone"></i> Anuncio
+        </a>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="teacher-content">
+
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-purple"><i class="bi bi-clipboard2"></i></div>
+          <div class="stat-number">{{ stats.total_activities }}</div>
+          <div class="stat-label">Actividades</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-green"><i class="bi bi-check-circle"></i></div>
+          <div class="stat-number">{{ stats.published }}</div>
+          <div class="stat-label">Publicadas</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-yellow"><i class="bi bi-hourglass-split"></i></div>
+          <div class="stat-number">{{ stats.pending_reviews }}</div>
+          <div class="stat-label">Por Revisar</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon stat-icon-pink"><i class="bi bi-people"></i></div>
+          <div class="stat-number">{{ stats.total_students }}</div>
+          <div class="stat-label">Estudiantes</div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="quick-actions">
+        <a href="{% url 'activities_list' %}" class="quick-action-btn">
+          <div class="qa-icon" style="background:var(--t-indigo-light);color:var(--t-indigo);">
+            <i class="bi bi-collection"></i>
+          </div>
+          <span>Mis Actividades</span>
+        </a>
+        <a href="{% url 'grades' %}" class="quick-action-btn">
+          <div class="qa-icon" style="background:var(--t-amber-light);color:var(--t-amber);">
+            <i class="bi bi-bar-chart"></i>
+          </div>
+          <span>Notas y Evaluaciones</span>
+        </a>
+        <a href="{% url 'weekly_reports' %}" class="quick-action-btn">
+          <div class="qa-icon" style="background:var(--t-teal-light);color:var(--t-teal);">
+            <i class="bi bi-calendar3"></i>
+          </div>
+          <span>Reportes Semanales</span>
+        </a>
+        <a href="{% url 'fame_board' %}" class="quick-action-btn">
+          <div class="qa-icon" style="background:var(--t-rose-light);color:var(--t-rose);">
+            <i class="bi bi-trophy"></i>
+          </div>
+          <span>Tablero de Fama</span>
+        </a>
+      </div>
+
+      <!-- Dashboard grid -->
+      <div class="dashboard-grid">
+
+        <!-- Recent Activities -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <div class="panel-title"><i class="bi bi-clipboard2"></i> Actividades Recientes</div>
+            <a href="{% url 'activities_list' %}" class="panel-link">Ver todas →</a>
+          </div>
+          <div class="panel-body">
+            {% if recent_activities %}
+              {% for activity in recent_activities %}
+              <div class="activity-row">
+                <div class="activity-row-icon">
+                  {% if activity.category.name == 'colorear' %}<i class="bi bi-palette"></i>
+                  {% elif activity.category.name == 'puntillismo' %}<i class="bi bi-dot"></i>
+                  {% elif activity.category.name == 'rompecabezas' %}<i class="bi bi-puzzle"></i>
+                  {% elif activity.category.name == 'cuento' %}<i class="bi bi-book-open"></i>
+                  {% elif activity.category.name == 'dibujo_libre' %}<i class="bi bi-pencil"></i>
+                  {% elif activity.category.name == 'consonantes' %}<i class="bi bi-alphabet-uppercase"></i>
+                  {% elif activity.category.name == 'numeros' %}<i class="bi bi-123"></i>
+                  {% elif activity.category.name == 'sumas' %}<i class="bi bi-plus-lg"></i>
+                  {% elif activity.category.name == 'restas' %}<i class="bi bi-dash-lg"></i>
+                  {% elif activity.category.name == 'lenguaje_senas' %}<i class="bi bi-hand-index-thumb"></i>
+                  {% elif activity.category.name == 'exploracion' %}<i class="bi bi-binoculars"></i>
+                  {% else %}<i class="bi bi-star"></i>{% endif %}
+                </div>
+                <div class="activity-row-info">
+                  <div class="activity-row-name">{{ activity.title }}</div>
+                  <div class="activity-row-meta">
+                    <span>{{ activity.category.name }}</span>
+                    <span class="badge badge-{% if activity.status == 'published' %}green{% elif activity.status == 'draft' %}yellow{% else %}blue{% endif %}">
+                      {{ activity.get_status_display }}
+                    </span>
+                  </div>
+                </div>
+                <div class="activity-row-action">
+                  <a href="{% url 'activity_detail' activity.pk %}" class="panel-link" style="font-size:.78rem;">Ver →</a>
+                </div>
+              </div>
+              {% endfor %}
+            {% else %}
+              <div class="empty-state">
+                <div class="empty-state-icon"><i class="bi bi-clipboard2"></i></div>
+                <div class="empty-state-title">Aún no hay actividades</div>
+                <a href="{% url 'create_activity' %}" class="btn btn-primary">
+                  <i class="bi bi-plus"></i> Crear primera actividad
+                </a>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Right Column -->
+        <div style="display:flex;flex-direction:column;gap:1.25rem;">
+
+          <!-- Pending Reviews -->
+          <div class="panel-card">
+            <div class="panel-header">
+              <div class="panel-title"><i class="bi bi-hourglass-split"></i> Por Revisar</div>
+              {% if stats.pending_reviews > 0 %}
+              <span class="badge badge-pink">{{ stats.pending_reviews }}</span>
+              {% endif %}
+            </div>
+            <div class="panel-body">
+              {% if pending_submissions %}
+                {% for sub in pending_submissions %}
+                <div class="student-item">
+                  <div class="student-avatar">
+                    {{ sub.student.first_name|first|upper }}{{ sub.student.last_name|first|upper }}
+                  </div>
+                  <div>
+                    <div class="student-name">{{ sub.student.get_full_name|default:sub.student.username }}</div>
+                    <div class="student-level">{{ sub.activity.title|truncatechars:28 }}</div>
+                  </div>
+                  <a href="{% url 'review_submission' sub.pk %}"
+                    style="margin-left:auto;font-size:.75rem;color:var(--t-indigo);font-weight:600;text-decoration:none;white-space:nowrap;">
+                    Revisar →
+                  </a>
+                </div>
+                {% endfor %}
+              {% else %}
+                <div class="empty-state" style="padding:1.5rem;">
+                  <div style="font-size:1.5rem;margin-bottom:.5rem;color:var(--t-teal);opacity:.7;">
+                    <i class="bi bi-check-circle"></i>
+                  </div>
+                  <div class="empty-state-title" style="margin-bottom:0;">¡Todo al día!</div>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Recent Announcements -->
+          <div class="panel-card">
+            <div class="panel-header">
+              <div class="panel-title"><i class="bi bi-megaphone"></i> Anuncios</div>
+              <a href="{% url 'announcements' %}" class="panel-link">Gestionar →</a>
+            </div>
+            <div class="panel-body">
+              {% if recent_announcements %}
+                {% for ann in recent_announcements %}
+                <div class="announcement-item">
+                  <span class="announcement-type-badge ann-type-{{ ann.type }}">
+                    {{ ann.get_type_display }}
+                  </span>
+                  <div class="announcement-title">{{ ann.title }}</div>
+                  <div class="announcement-date">{{ ann.created_at|date:"d M Y" }}</div>
+                </div>
+                {% endfor %}
+              {% else %}
+                <div class="empty-state" style="padding:1.5rem;">
+                  <div style="font-size:1.5rem;margin-bottom:.5rem;opacity:.35;"><i class="bi bi-megaphone"></i></div>
+                  <div class="empty-state-title" style="margin-bottom:0;">Sin anuncios recientes</div>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+if (window.innerWidth <= 768) {
+  document.getElementById('sidebar-toggle').style.display = 'block';
+}
+window.addEventListener('resize', () => {
+  const tog = document.getElementById('sidebar-toggle');
+  if (tog) tog.style.display = window.innerWidth <= 768 ? 'block' : 'none';
+});
+</script>
+{% endblock %}

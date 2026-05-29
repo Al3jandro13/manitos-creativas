@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Dibujo Libre — Manitos Creativas{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/student.css' %}">{% endblock %}
+
+{% block body_content %}
+<div class="student-layout">
+
+  {% include 'student/_sidebar.html' with active_page='games' %}
+
+  <div class="student-main">
+    <header class="student-topbar">
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Abrir menú"><i class="bi bi-list"></i></button>
+      <div class="topbar-breadcrumb">
+        <a href="{% url 'games_home' %}" class="breadcrumb-link">Mis Juegos</a>
+        <i class="bi bi-chevron-right" style="font-size:.7rem;color:#9CA3AF;"></i>
+        <span class="bc-current">Dibujo Libre</span>
+      </div>
+      <div class="topbar-actions">
+        <div class="topbar-date"><i class="bi bi-calendar3"></i><span id="topbarDate"></span></div>
+        <div class="topbar-stars-chip"><i class="bi bi-star-fill"></i><span>{{ profile.total_stars|default:"0" }} estrellas</span></div>
+        <button class="dark-mode-toggle" id="darkModeToggle" aria-label="Cambiar modo"><i class="bi bi-moon-fill" id="darkModeIcon"></i></button>
+      </div>
+    </header>
+
+    <div class="student-scroll">
+      <div style="max-width:820px;margin:0 auto;">
+
+        <div class="game-page-header" style="background:linear-gradient(135deg,#0D9488,#0F766E);">
+          <div style="font-size:3rem;margin-bottom:.5rem;">✏️</div>
+          <div class="game-page-title">¡Dibujo Libre!</div>
+          <div class="game-page-sub">Crea lo que quieras 🌈 ¡Tu imaginación manda!</div>
+        </div>
+
+        <div class="game-area">
+          <div class="drawing-tools">
+            <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;">
+              <span style="font-size:.8rem;font-weight:700;color:var(--text-mid);">Color:</span>
+              <button class="color-btn selected" style="background:#7C3AED;" data-color="#7C3AED"></button>
+              <button class="color-btn" style="background:#EC4899;" data-color="#EC4899"></button>
+              <button class="color-btn" style="background:#FBBF24;" data-color="#FBBF24"></button>
+              <button class="color-btn" style="background:#10B981;" data-color="#10B981"></button>
+              <button class="color-btn" style="background:#3B82F6;" data-color="#3B82F6"></button>
+              <button class="color-btn" style="background:#F97316;" data-color="#F97316"></button>
+              <button class="color-btn" style="background:#EF4444;" data-color="#EF4444"></button>
+              <button class="color-btn" style="background:#1E1B4B;" data-color="#1E1B4B"></button>
+              <button class="color-btn" style="background:#FFFFFF;border-color:#E5E7EB;" data-color="#FFFFFF"></button>
+              <button class="color-btn" style="background:#000000;" data-color="#000000"></button>
+            </div>
+            <div style="display:flex;gap:.5rem;align-items:center;">
+              <span style="font-size:.8rem;font-weight:700;color:var(--text-mid);">Tamaño:</span>
+              <input type="range" class="brush-size-slider" id="brush-size" min="2" max="50" value="10" style="width:100px;">
+              <span id="size-label" style="font-size:.8rem;color:var(--text-mid);min-width:24px;">10</span>
+            </div>
+            <button class="tool-btn active" id="btn-draw">✏️ Dibujar</button>
+            <button class="tool-btn" id="btn-erase">🧹 Borrar</button>
+            <button class="tool-btn" onclick="clearCanvas()">🗑️ Limpiar</button>
+            <button class="tool-btn" onclick="downloadCanvas()">💾 Descargar</button>
+          </div>
+
+          <canvas id="drawing-canvas" width="740" height="420" style="border-radius:var(--radius-md);cursor:crosshair;width:100%;display:block;touch-action:none;"></canvas>
+
+          <div style="text-align:center;margin-top:1.5rem;">
+            <button onclick="saveDrawing()" class="btn btn-secondary" style="font-size:1rem;">
+              🌟 ¡Guardar mi dibujo!
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /student-scroll -->
+  </div><!-- /student-main -->
+</div><!-- /student-layout -->
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<script>
+const canvas = document.getElementById('drawing-canvas');
+const ctx = canvas.getContext('2d');
+let drawing = false, erasing = false;
+let brushColor = '#7C3AED', brushSize = 10;
+
+ctx.fillStyle = '#FFFFFF';
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+function getPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const src = e.touches ? e.touches[0] : e;
+  return { x: (src.clientX - rect.left) * scaleX, y: (src.clientY - rect.top) * scaleY };
+}
+
+let lastPos = null;
+function drawAt(pos) {
+  if (lastPos) {
+    ctx.beginPath();
+    ctx.moveTo(lastPos.x, lastPos.y);
+    ctx.lineTo(pos.x, pos.y);
+    ctx.strokeStyle = erasing ? '#FFFFFF' : brushColor;
+    ctx.lineWidth = brushSize;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+  } else {
+    ctx.beginPath();
+    ctx.arc(pos.x, pos.y, brushSize / 2, 0, Math.PI * 2);
+    ctx.fillStyle = erasing ? '#FFFFFF' : brushColor;
+    ctx.fill();
+  }
+  lastPos = pos;
+}
+
+canvas.addEventListener('mousedown',  e => { drawing = true; lastPos = null; drawAt(getPos(e)); });
+canvas.addEventListener('mousemove',  e => { if (drawing) drawAt(getPos(e)); });
+canvas.addEventListener('mouseup',    () => { drawing = false; lastPos = null; });
+canvas.addEventListener('mouseleave', () => { drawing = false; lastPos = null; });
+canvas.addEventListener('touchstart', e => { e.preventDefault(); drawing = true; lastPos = null; drawAt(getPos(e)); }, { passive: false });
+canvas.addEventListener('touchmove',  e => { e.preventDefault(); if (drawing) drawAt(getPos(e)); }, { passive: false });
+canvas.addEventListener('touchend',   () => { drawing = false; lastPos = null; });
+
+document.querySelectorAll('.color-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    brushColor = btn.dataset.color;
+    erasing = false;
+    document.getElementById('btn-draw').classList.add('active');
+    document.getElementById('btn-erase').classList.remove('active');
+  });
+});
+
+document.getElementById('brush-size').addEventListener('input', e => {
+  brushSize = +e.target.value;
+  document.getElementById('size-label').textContent = brushSize;
+});
+document.getElementById('btn-draw').addEventListener('click', () => {
+  erasing = false;
+  document.getElementById('btn-draw').classList.add('active');
+  document.getElementById('btn-erase').classList.remove('active');
+});
+document.getElementById('btn-erase').addEventListener('click', () => {
+  erasing = true;
+  document.getElementById('btn-erase').classList.add('active');
+  document.getElementById('btn-draw').classList.remove('active');
+});
+function clearCanvas() {
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+function downloadCanvas() {
+  const a = document.createElement('a');
+  a.download = 'mi-dibujo.png';
+  a.href = canvas.toDataURL('image/png');
+  a.click();
+}
+function getCookie(name) {
+  for (let c of document.cookie.split(';')) {
+    const [k,v] = c.trim().split('=');
+    if (k === name) return decodeURIComponent(v);
+  }
+  return '';
+}
+function saveDrawing() {
+  fetch('{% url "save_game_score" %}', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+    body: JSON.stringify({ game_type: 'drawing', score: 100, stars_earned: 3 }),
+  })
+  .then(r => r.json())
+  .then(() => {
+    if (window.Confetti) Confetti.fire();
+    if (window.Toast) Toast.show('¡Dibujo guardado! ⭐ +3 estrellas', 'success');
+  });
+}
+
+// Layout init
+(function(){
+  var d=document.getElementById('topbarDate');
+  if(d)d.textContent=new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long'});
+  var pb=document.getElementById('sidebarProfileBtn'),pd=document.getElementById('profileDropdown'),pc=document.getElementById('profileChevron');
+  if(pb&&pd){pb.addEventListener('click',function(e){e.stopPropagation();var o=pd.classList.toggle('open');pc.style.transform=o?'rotate(180deg)':'';});document.addEventListener('click',function(){pd.classList.remove('open');pc.style.transform='';});}
+  var t=document.getElementById('sidebarToggle'),s=document.getElementById('studentSidebar'),ov=document.getElementById('sidebarOverlay');
+  if(t&&s&&ov){t.addEventListener('click',function(){s.classList.toggle('open');ov.classList.toggle('open');});ov.addEventListener('click',function(){s.classList.remove('open');ov.classList.remove('open');});}
+  var dt=document.getElementById('darkModeToggle'),di=document.getElementById('darkModeIcon');
+  function sd(on){document.body.classList.toggle('student-dark',on);if(di)di.className=on?'bi bi-sun-fill':'bi bi-moon-fill';}
+  sd(localStorage.getItem('student_dark')==='1');
+  if(dt)dt.addEventListener('click',function(){var on=!document.body.classList.contains('student-dark');sd(on);localStorage.setItem('student_dark',on?'1':'0');});
+})();
+</script>
+{% endblock %}

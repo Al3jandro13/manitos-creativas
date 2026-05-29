@@ -1,0 +1,385 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Enviar Correo — Manitos Creativas{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/teacher.css' %}">{% endblock %}
+
+{% block body_content %}
+<div class="teacher-layout">
+  {% include 'teacher/_sidebar.html' %}
+  <main class="teacher-main">
+
+    <div class="teacher-topbar">
+      <div style="display:flex;align-items:center;gap:.85rem;">
+        <button id="sidebar-toggle"
+          style="display:none;background:none;border:none;cursor:pointer;font-size:1.2rem;color:var(--t-text-mid);padding:.25rem;"
+          onclick="document.querySelector('.sidebar').classList.toggle('open')">
+          <i class="bi bi-list"></i>
+        </button>
+        <div class="teacher-topbar-title"><i class="bi bi-envelope-fill"></i> Enviar Correo</div>
+      </div>
+    </div>
+
+    <div class="teacher-content">
+      <div class="teacher-form" style="max-width:720px;">
+
+        <div class="form-title" style="margin-bottom:1.5rem;">
+          <i class="bi bi-send-fill"></i> Nuevo mensaje
+        </div>
+
+        {% if not google_linked %}
+        <div style="display:flex;align-items:center;gap:.75rem;padding:.85rem 1.1rem;margin-bottom:1.25rem;
+                    background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:10px;">
+          <i class="bi bi-exclamation-triangle-fill" style="color:#D97706;font-size:1.05rem;flex-shrink:0;"></i>
+          <div style="font-size:.85rem;color:var(--t-text-mid);">
+            <strong style="color:#D97706;">Cuenta de Google no vinculada.</strong>
+            Para enviar correos debes
+            <a href="{% url 'teacher_profile' %}" style="color:#4285F4;font-weight:600;text-decoration:none;">
+              vincular tu cuenta de Google en tu perfil</a>.
+          </div>
+        </div>
+        {% endif %}
+
+        {% if sent %}
+        <div class="email-alert email-alert-ok">
+          <i class="bi bi-check-circle-fill"></i> ¡Correo enviado correctamente!
+        </div>
+        {% endif %}
+        {% if error %}
+        <div class="email-alert email-alert-err">
+          <i class="bi bi-exclamation-circle-fill"></i> {{ error }}
+        </div>
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data" novalidate id="emailForm">
+          {% csrf_token %}
+
+          <!-- DESTINATARIOS -->
+          <div class="form-group">
+            <label class="form-label">
+              <i class="bi bi-envelope-at-fill"></i> Para (correos separados por coma)
+            </label>
+            <input type="text" name="to_emails" id="toEmails" class="form-input"
+              placeholder="ejemplo@gmail.com, otro@hotmail.com"
+              value="{{ request.POST.to_emails }}" autocomplete="off">
+            <div style="margin-top:.5rem;display:flex;flex-wrap:wrap;gap:.4rem;" id="chipContainer"></div>
+
+            <!-- Acceso rápido a estudiantes del sistema -->
+            {% if students %}
+            <details style="margin-top:.6rem;">
+              <summary style="font-size:.8rem;color:var(--t-text-muted);cursor:pointer;user-select:none;">
+                <i class="bi bi-people-fill"></i> Agregar correo de un estudiante del sistema
+              </summary>
+              <div style="margin-top:.5rem;display:flex;flex-wrap:wrap;gap:.4rem;">
+                {% for s in students %}
+                {% if s.email %}
+                <button type="button" class="email-quick-chip" onclick="addEmail('{{ s.email }}')">
+                  {{ s.get_full_name|default:s.username }} &lt;{{ s.email }}&gt;
+                </button>
+                {% endif %}
+                {% endfor %}
+              </div>
+            </details>
+            {% endif %}
+          </div>
+
+          <!-- ASUNTO -->
+          <div class="form-group">
+            <label class="form-label"><i class="bi bi-chat-left-text-fill"></i> Asunto</label>
+            <input type="text" name="subject" id="emailSubject" class="form-input"
+              placeholder="ej: Avance semanal de su hijo/a"
+              value="{{ request.POST.subject }}" required>
+          </div>
+
+          <!-- CUERPO + IA -->
+          <div class="form-group">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;flex-wrap:wrap;gap:.5rem;">
+              <label class="form-label" style="margin:0;"><i class="bi bi-text-paragraph"></i> Mensaje</label>
+              <button type="button" class="btn-ai-draft" id="aiDraftBtn" onclick="openAiPanel()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                Redactar con IA
+              </button>
+            </div>
+            <textarea name="body" id="emailBody" class="form-input" rows="10"
+              style="resize:vertical;font-family:inherit;"
+              placeholder="Escribe el mensaje aquí o usa la IA para redactarlo...">{{ request.POST.body }}</textarea>
+          </div>
+
+          <!-- PANEL IA (oculto por defecto) -->
+          <div id="aiPanel" style="display:none;margin-bottom:1.25rem;">
+            <div class="ai-panel">
+              <div class="ai-panel-header">
+                <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:.4rem;vertical-align:middle;"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>Asistente de IA</span>
+                <button type="button" onclick="closeAiPanel()" style="background:none;border:none;cursor:pointer;color:inherit;font-size:1rem;padding:.2rem;"><i class="bi bi-x-lg"></i></button>
+              </div>
+              <div class="ai-panel-body">
+                <label class="form-label" style="font-size:.8rem;">¿Qué quieres comunicar? Descríbelo brevemente</label>
+                <textarea id="aiPrompt" class="form-input" rows="3"
+                  style="resize:none;font-size:.875rem;"
+                  placeholder="ej: Informar a los padres sobre las actividades de arte de esta semana, destacar el progreso en colorear y pedir materiales para la próxima clase."></textarea>
+                <div style="display:flex;gap:.6rem;margin-top:.75rem;align-items:center;">
+                  <button type="button" class="btn btn-primary" style="font-size:.85rem;padding:.55rem 1.1rem;" onclick="generateDraft()">
+                    <i class="bi bi-stars"></i> Generar borrador
+                  </button>
+                  <span id="aiSpinner" style="display:none;font-size:.82rem;color:var(--t-text-muted);">
+                    <i class="bi bi-hourglass-split"></i> Generando...
+                  </span>
+                  <span id="aiError" style="display:none;font-size:.82rem;color:#EF4444;font-weight:600;"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ADJUNTOS -->
+          <div class="form-group">
+            <label class="form-label"><i class="bi bi-paperclip"></i> Archivos adjuntos</label>
+            <div class="file-drop-zone" id="fileDropZone" onclick="document.getElementById('attachments').click()">
+              <i class="bi bi-cloud-upload" style="font-size:1.6rem;margin-bottom:.4rem;color:var(--t-indigo);"></i>
+              <div style="font-size:.88rem;font-weight:600;">Haz clic o arrastra archivos aquí</div>
+              <div style="font-size:.78rem;color:var(--t-text-muted);margin-top:.2rem;">PDF, Word, imágenes, etc. — máx. 10 MB por archivo</div>
+            </div>
+            <input type="file" name="attachments" id="attachments" multiple style="display:none;"
+              accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.png,.jpg,.jpeg,.gif,.zip"
+              onchange="showFiles(this.files)">
+            <div id="fileList" style="margin-top:.6rem;display:flex;flex-direction:column;gap:.35rem;"></div>
+          </div>
+
+          <div class="form-actions" style="margin-top:1.75rem;">
+            <button type="submit" class="btn btn-primary" style="min-width:160px;">
+              <i class="bi bi-send-fill"></i> Enviar correo
+            </button>
+            <a href="{% url 'teacher_dashboard' %}" class="btn btn-outline">Cancelar</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+</div>
+
+<style>
+.email-alert {
+  padding: .85rem 1.1rem;
+  border-radius: var(--t-radius);
+  margin-bottom: 1.5rem;
+  font-size: .9rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+}
+.email-alert-ok  { background: rgba(16,185,129,.12); border: 1px solid rgba(16,185,129,.3); color: #10B981; }
+.email-alert-err { background: rgba(239,68,68,.1);   border: 1px solid rgba(239,68,68,.25); color: #EF4444; }
+
+.btn-ai-draft {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  padding: .45rem .95rem;
+  font-size: .82rem;
+  font-weight: 700;
+  font-family: var(--t-font-sans);
+  color: #7C3AED;
+  background: rgba(124,58,237,.08);
+  border: 1.5px solid rgba(124,58,237,.25);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background .18s, border-color .18s, transform .15s;
+}
+.btn-ai-draft:hover {
+  background: rgba(124,58,237,.15);
+  border-color: rgba(124,58,237,.5);
+  transform: translateY(-1px);
+}
+body.teacher-dark .btn-ai-draft {
+  color: #A78BFA;
+  background: rgba(124,58,237,.12);
+  border-color: rgba(124,58,237,.35);
+}
+
+.ai-panel {
+  border: 1.5px solid rgba(124,58,237,.3);
+  border-radius: var(--t-radius-md);
+  background: rgba(124,58,237,.04);
+  overflow: hidden;
+}
+.ai-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .65rem 1rem;
+  background: rgba(124,58,237,.08);
+  font-size: .82rem;
+  font-weight: 700;
+  color: #7C3AED;
+  border-bottom: 1px solid rgba(124,58,237,.15);
+}
+.ai-panel-body { padding: 1rem; }
+body.teacher-dark .ai-panel { background: rgba(99,102,241,.06); border-color: rgba(99,102,241,.25); }
+body.teacher-dark .ai-panel-header { background: rgba(99,102,241,.12); color: #A78BFA; border-bottom-color: rgba(99,102,241,.2); }
+
+.email-quick-chip {
+  font-size: .78rem;
+  padding: .3rem .65rem;
+  background: var(--t-surface);
+  border: 1px solid var(--t-border);
+  border-radius: 20px;
+  cursor: pointer;
+  color: var(--t-text-mid);
+  font-family: var(--t-font-sans);
+  transition: border-color .15s, color .15s;
+}
+.email-quick-chip:hover { border-color: var(--t-indigo); color: var(--t-indigo); }
+
+.file-drop-zone {
+  border: 2px dashed var(--t-border);
+  border-radius: var(--t-radius-md);
+  padding: 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .2s, background .2s;
+  color: var(--t-text-mid);
+}
+.file-drop-zone:hover, .file-drop-zone.dragover {
+  border-color: var(--t-indigo);
+  background: rgba(99,102,241,.04);
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  padding: .5rem .75rem;
+  background: var(--t-surface);
+  border: 1px solid var(--t-border);
+  border-radius: 8px;
+  font-size: .82rem;
+  color: var(--t-text-mid);
+}
+.file-item i { color: var(--t-indigo); font-size: 1rem; }
+.file-item-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-item-size { color: var(--t-text-muted); font-size: .75rem; white-space: nowrap; }
+</style>
+
+<script>
+if (window.innerWidth <= 768) document.getElementById('sidebar-toggle').style.display = 'block';
+window.addEventListener('resize', () => {
+  const t = document.getElementById('sidebar-toggle');
+  if (t) t.style.display = window.innerWidth <= 768 ? 'block' : 'none';
+});
+
+/* ── Chips de destinatarios ── */
+function addEmail(email) {
+  const input = document.getElementById('toEmails');
+  const current = input.value.trim();
+  const existing = current.split(',').map(e => e.trim()).filter(Boolean);
+  if (!existing.includes(email)) {
+    input.value = existing.length ? current + ', ' + email : email;
+  }
+  updateChips();
+}
+
+function updateChips() {
+  const input = document.getElementById('toEmails');
+  const container = document.getElementById('chipContainer');
+  const emails = input.value.split(',').map(e => e.trim()).filter(Boolean);
+  container.innerHTML = emails.map((e, i) =>
+    `<span style="display:inline-flex;align-items:center;gap:.35rem;padding:.25rem .6rem;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.25);border-radius:20px;font-size:.78rem;color:var(--t-indigo);font-family:var(--t-font-sans);">
+      ${e}
+      <button type="button" onclick="removeEmail(${i})" style="background:none;border:none;cursor:pointer;color:inherit;padding:0;line-height:1;font-size:.85rem;">&times;</button>
+    </span>`
+  ).join('');
+}
+
+function removeEmail(idx) {
+  const input = document.getElementById('toEmails');
+  const emails = input.value.split(',').map(e => e.trim()).filter(Boolean);
+  emails.splice(idx, 1);
+  input.value = emails.join(', ');
+  updateChips();
+}
+
+document.getElementById('toEmails').addEventListener('input', updateChips);
+document.getElementById('toEmails').addEventListener('blur', updateChips);
+updateChips();
+
+/* ── Panel IA ── */
+function openAiPanel()  { document.getElementById('aiPanel').style.display = 'block'; document.getElementById('aiPrompt').focus(); }
+function closeAiPanel() { document.getElementById('aiPanel').style.display = 'none'; }
+
+async function generateDraft() {
+  const prompt  = document.getElementById('aiPrompt').value.trim();
+  const subject = document.getElementById('emailSubject').value.trim();
+  const spinner = document.getElementById('aiSpinner');
+  const errEl   = document.getElementById('aiError');
+  const btn     = document.querySelector('#aiPanel .btn-primary');
+
+  if (!prompt) { errEl.textContent = 'Describe qué quieres comunicar.'; errEl.style.display = 'inline'; return; }
+  errEl.style.display = 'none';
+  spinner.style.display = 'inline';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch('{% url "ai_draft_email" %}', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+      body: JSON.stringify({ prompt, subject }),
+    });
+    const data = await res.json();
+    if (data.draft) {
+      document.getElementById('emailBody').value = data.draft;
+      closeAiPanel();
+    } else {
+      errEl.textContent = data.error || 'Error generando el borrador.';
+      errEl.style.display = 'inline';
+    }
+  } catch (e) {
+    errEl.textContent = 'Error de conexión.';
+    errEl.style.display = 'inline';
+  } finally {
+    spinner.style.display = 'none';
+    btn.disabled = false;
+  }
+}
+
+/* ── Archivos adjuntos ── */
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / 1048576).toFixed(1) + ' MB';
+}
+
+function fileIcon(name) {
+  const ext = name.split('.').pop().toLowerCase();
+  const map = { pdf:'bi-file-earmark-pdf-fill', doc:'bi-file-earmark-word-fill', docx:'bi-file-earmark-word-fill',
+    xls:'bi-file-earmark-excel-fill', xlsx:'bi-file-earmark-excel-fill', ppt:'bi-file-earmark-slides-fill',
+    pptx:'bi-file-earmark-slides-fill', png:'bi-file-earmark-image-fill', jpg:'bi-file-earmark-image-fill',
+    jpeg:'bi-file-earmark-image-fill', gif:'bi-file-earmark-image-fill', zip:'bi-file-earmark-zip-fill' };
+  return map[ext] || 'bi-file-earmark-fill';
+}
+
+function showFiles(files) {
+  const list = document.getElementById('fileList');
+  list.innerHTML = '';
+  Array.from(files).forEach(f => {
+    const div = document.createElement('div');
+    div.className = 'file-item';
+    div.innerHTML = `<i class="bi ${fileIcon(f.name)}"></i>
+      <span class="file-item-name">${f.name}</span>
+      <span class="file-item-size">${formatSize(f.size)}</span>`;
+    list.appendChild(div);
+  });
+}
+
+/* Drag & drop */
+const zone = document.getElementById('fileDropZone');
+zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('dragover'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+zone.addEventListener('drop', e => {
+  e.preventDefault();
+  zone.classList.remove('dragover');
+  const input = document.getElementById('attachments');
+  const dt = e.dataTransfer;
+  input.files = dt.files;
+  showFiles(dt.files);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,610 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Sopa de Letras — Manitos Creativas{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/student.css' %}">
+<style>
+  /* ── Page ── */
+  .ws-page { max-width: 1060px; margin: 0 auto; padding-bottom: 2rem; }
+
+  /* ── Header ── */
+  .ws-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+  }
+  .ws-title {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    color: #1E3A5F;
+    line-height: 1;
+    margin: 0;
+  }
+  .ws-theme-tag {
+    display: inline-block;
+    margin-top: .3rem;
+    padding: .22rem .9rem;
+    border-radius: 20px;
+    background: #DBEAFE;
+    color: #1D4ED8;
+    font-family: var(--font-accent);
+    font-size: .8rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+  }
+  .ws-new-btn {
+    padding: .55rem 1.2rem;
+    border-radius: 12px;
+    border: 2px solid #BFDBFE;
+    background: #EFF6FF;
+    color: #1D4ED8;
+    font-family: var(--font-accent);
+    font-size: .88rem;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex; align-items: center; gap: .4rem;
+    transition: background .15s, border-color .15s, transform .1s;
+    white-space: nowrap;
+  }
+  .ws-new-btn:hover { background: #DBEAFE; border-color: #93C5FD; transform: translateY(-1px); }
+  .ws-new-btn:active { transform: translateY(0); }
+
+  /* ── Stats ── */
+  .ws-stats {
+    display: flex;
+    gap: .75rem;
+    margin-bottom: 1.25rem;
+  }
+  .ws-stat {
+    flex: 1;
+    min-width: 80px;
+    background: #fff;
+    border: 2px solid #E2E8F0;
+    border-radius: 14px;
+    padding: .65rem .75rem;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,.04);
+  }
+  .ws-stat-val {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    line-height: 1.1;
+    color: #2563EB;
+  }
+  .ws-stat-lbl {
+    display: block;
+    font-family: var(--font-accent);
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: #94A3B8;
+    margin-top: .1rem;
+  }
+
+  /* ── Body: grid + panel ── */
+  .ws-body {
+    display: flex;
+    gap: 1.25rem;
+    align-items: flex-start;
+  }
+
+  /* ── Grid ── */
+  .ws-grid-outer {
+    flex: 1;
+    min-width: 0;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 6px 32px rgba(0,0,0,.15);
+    background: #0B1526;
+  }
+  #wsGrid {
+    display: grid;
+    gap: 2px;
+    padding: 8px;
+    background: #0B1526;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+  }
+  .ws-cell {
+    width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    background: #1C2E4A;
+    color: #7EA8D8;
+    font-family: var(--font-display);
+    font-size: 1rem;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background .07s, color .07s;
+  }
+  .ws-cell:hover { background: #253d5e; color: #CBD5E1; }
+  .ws-cell.highlighted {
+    background: #2563EB;
+    color: #fff;
+  }
+  .ws-cell.found-0  { background: #1D4ED8; color: #fff; }
+  .ws-cell.found-1  { background: #15803D; color: #fff; }
+  .ws-cell.found-2  { background: #B91C1C; color: #fff; }
+  .ws-cell.found-3  { background: #6D28D9; color: #fff; }
+  .ws-cell.found-4  { background: #0E7490; color: #fff; }
+  .ws-cell.found-5  { background: #B45309; color: #fff; }
+  .ws-cell.found-6  { background: #9D174D; color: #fff; }
+  .ws-cell.found-7  { background: #0F766E; color: #fff; }
+  .ws-cell.found-8  { background: #4338CA; color: #fff; }
+  .ws-cell.found-9  { background: #7C2D12; color: #fff; }
+  .ws-cell.found-10 { background: #065F46; color: #fff; }
+  .ws-cell.found-11 { background: #1E3A5F; color: #fff; }
+
+  /* ── Word panel ── */
+  .ws-panel {
+    width: 220px;
+    flex-shrink: 0;
+    background: #fff;
+    border: 2px solid #E2E8F0;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,.07);
+  }
+  .ws-panel-head {
+    background: linear-gradient(135deg, #1E3A5F, #2563EB);
+    padding: .8rem 1rem;
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: 1rem;
+    letter-spacing: .03em;
+    display: flex; align-items: center; gap: .5rem;
+  }
+  .ws-panel-body { padding: .75rem; display: flex; flex-direction: column; gap: 5px; }
+  .ws-word-item {
+    padding: .5rem .8rem;
+    border-radius: 10px;
+    font-family: var(--font-accent);
+    font-size: .88rem;
+    font-weight: 800;
+    color: #1E293B;
+    background: #F1F5F9;
+    border: 1.5px solid #E2E8F0;
+    display: flex; align-items: center; gap: .55rem;
+    letter-spacing: .05em;
+    transition: all .2s;
+  }
+  .ws-word-item .wi-icon { font-size: .8rem; color: #94A3B8; flex-shrink: 0; }
+  .ws-word-item.found {
+    background: #F0FDF4;
+    border-color: #86EFAC;
+    color: #166534;
+    text-decoration: line-through;
+    opacity: .8;
+  }
+  .ws-word-item.found .wi-icon { color: #16A34A; }
+
+  /* ── Complete banner ── */
+  .ws-complete {
+    display: none;
+    margin-top: 1.5rem;
+    background: #fff;
+    border: 2px solid #BBF7D0;
+    border-radius: 18px;
+    padding: 2rem 1.5rem;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,.06);
+  }
+  .ws-complete-icon { font-size: 2.5rem; color: #D97706; margin-bottom: .5rem; }
+  .ws-complete h3 {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    color: #1E3A5F;
+    margin: 0 0 .5rem;
+  }
+  .ws-complete p {
+    font-family: var(--font-accent);
+    font-size: .95rem;
+    color: #64748B;
+    margin: 0 0 1.25rem;
+  }
+  .ws-complete-btns { display: flex; gap: .75rem; flex-wrap: wrap; justify-content: center; }
+
+  /* ── Dark mode ── */
+  body.student-dark .ws-title { color: #93C5FD; }
+  body.student-dark .ws-theme-tag { background: rgba(37,99,235,.18); color: #93C5FD; }
+  body.student-dark .ws-new-btn {
+    background: #0A1726;
+    border-color: rgba(37,99,235,.35);
+    color: #93C5FD;
+  }
+  body.student-dark .ws-new-btn:hover { background: #0F2240; border-color: #3B82F6; }
+  body.student-dark .ws-stat {
+    background: #0E1E30;
+    border-color: rgba(255,255,255,.07);
+    box-shadow: 0 2px 8px rgba(0,0,0,.3);
+  }
+  body.student-dark .ws-stat-val { color: #60A5FA; }
+  body.student-dark .ws-stat-lbl { color: #4B5563; }
+  body.student-dark .ws-panel {
+    background: #0E1E30;
+    border-color: rgba(255,255,255,.07);
+  }
+  body.student-dark .ws-word-item {
+    background: #0A1726;
+    border-color: rgba(255,255,255,.06);
+    color: #CBD5E1;
+  }
+  body.student-dark .ws-word-item .wi-icon { color: #4B5563; }
+  body.student-dark .ws-word-item.found {
+    background: #052e16;
+    border-color: rgba(134,239,172,.2);
+    color: #86EFAC;
+  }
+  body.student-dark .ws-word-item.found .wi-icon { color: #4ADE80; }
+  body.student-dark .ws-complete {
+    background: #0E1E30;
+    border-color: rgba(134,239,172,.2);
+  }
+  body.student-dark .ws-complete h3 { color: #93C5FD; }
+  body.student-dark .ws-complete p  { color: #4B5563; }
+
+  /* ── Responsive ── */
+  @media (max-width: 680px) {
+    .ws-body { flex-direction: column; }
+    .ws-panel { width: 100%; }
+    .ws-panel-body { flex-direction: row; flex-wrap: wrap; }
+    .ws-word-item { flex: 1; min-width: 100px; }
+    .ws-title { font-size: 1.5rem; }
+  }
+</style>
+{% endblock %}
+
+{% block body_content %}
+<div class="student-layout">
+
+  {% include 'student/_sidebar.html' with active_page='games' %}
+
+  <div class="student-main">
+    <header class="student-topbar">
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Abrir menú"><i class="bi bi-list"></i></button>
+      <div class="topbar-breadcrumb">
+        <a href="{% url 'games_home' %}" class="breadcrumb-link">Mis Juegos</a>
+        <i class="bi bi-chevron-right" style="font-size:.7rem;color:#9CA3AF;"></i>
+        <span class="bc-current">Sopa de Letras</span>
+      </div>
+      <div class="topbar-actions">
+        <div class="topbar-date"><i class="bi bi-calendar3"></i><span id="topbarDate"></span></div>
+        <div class="topbar-stars-chip"><i class="bi bi-star-fill"></i><span>{{ profile.total_stars|default:"0" }} estrellas</span></div>
+        <button class="dark-mode-toggle" id="darkModeToggle" aria-label="Cambiar modo"><i class="bi bi-moon-fill" id="darkModeIcon"></i></button>
+      </div>
+    </header>
+
+    <div class="student-scroll">
+      <div class="ws-page">
+
+        <!-- Header -->
+        <div class="ws-header">
+          <div>
+            <h1 class="ws-title">Sopa de Letras</h1>
+            <div class="ws-theme-tag" id="themeTag">Tema: —</div>
+          </div>
+          <button class="ws-new-btn" id="newGameBtn">
+            <i class="bi bi-arrow-repeat"></i> Nueva sopa
+          </button>
+        </div>
+
+        <!-- Stats -->
+        <div class="ws-stats">
+          <div class="ws-stat">
+            <span class="ws-stat-val" id="score-val">0</span>
+            <span class="ws-stat-lbl">Puntos</span>
+          </div>
+          <div class="ws-stat">
+            <span class="ws-stat-val" id="found-val">0/0</span>
+            <span class="ws-stat-lbl">Palabras</span>
+          </div>
+          <div class="ws-stat">
+            <span class="ws-stat-val" id="stars-val">0</span>
+            <span class="ws-stat-lbl"><i class="bi bi-star-fill" style="color:#D97706;font-size:.75em;"></i> Estrellas</span>
+          </div>
+        </div>
+
+        <!-- Grid + word list -->
+        <div class="ws-body">
+          <div class="ws-grid-outer">
+            <div id="wsGrid"></div>
+          </div>
+          <div class="ws-panel">
+            <div class="ws-panel-head">
+              <i class="bi bi-list-check"></i> Palabras
+            </div>
+            <div class="ws-panel-body" id="wordList"></div>
+          </div>
+        </div>
+
+        <!-- Complete banner -->
+        <div class="ws-complete" id="completeBanner">
+          <div class="ws-complete-icon"><i class="bi bi-trophy-fill"></i></div>
+          <h3>Sopa completada</h3>
+          <p id="completeMsg"></p>
+          <div class="ws-complete-btns">
+            <button class="btn btn-primary" id="newGameBtn2">
+              <i class="bi bi-arrow-repeat"></i> Nueva sopa
+            </button>
+            <button class="btn btn-secondary" id="saveBtn">
+              <i class="bi bi-floppy-fill"></i> Guardar progreso
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<script>
+const ROWS = 16, COLS = 16;
+const ALPHABET = 'ABCDEFGHIJKLMNOPRSTUVWXZ';
+
+const THEMES = [
+  { name:'Animales',  words:['GATO','PERRO','PATO','VACA','OSO','LEON','MONO','RANA','LORO','TIGRE','LOBO','PUMA'] },
+  { name:'Frutas',    words:['PERA','UVAS','MANGO','LIMON','FRESA','MORA','MELON','COCO','CEREZA','PAPAYA','DURAZNO','CIRUELA'] },
+  { name:'Colores',   words:['ROJO','AZUL','VERDE','ROSA','GRIS','CAFE','NEGRO','LILA','BEIGE','CELESTE','DORADO','PLATEADO'] },
+  { name:'Familia',   words:['MAMA','PAPA','HIJO','HIJA','ABUELO','ABUELA','TIO','TIA','PRIMO','PRIMA','BEBE','HERMANO'] },
+  { name:'Escuela',   words:['LAPIZ','LIBRO','MESA','SILLA','BORRADOR','REGLA','MAPA','GOMA','CLASE','PATIO','CUADERNO','PUPITRE'] }
+];
+
+const DIRS = [
+  {dr:0,dc:1},{dr:1,dc:0},{dr:1,dc:1},
+  {dr:0,dc:-1},{dr:-1,dc:0},{dr:1,dc:-1},{dr:-1,dc:1},{dr:-1,dc:-1}
+];
+
+let grid, placedWords, foundWords, theme;
+let selecting = false, startCell = null, curCell = null;
+let score = 0, saved = false;
+
+function init() {
+  theme = THEMES[Math.floor(Math.random() * THEMES.length)];
+  const r = generateGrid(theme.words);
+  grid = r.grid; placedWords = r.placed;
+  foundWords = new Map();
+  score = 0; saved = false;
+
+  document.getElementById('themeTag').textContent = 'Tema: ' + theme.name;
+  document.getElementById('completeBanner').style.display = 'none';
+  renderGrid();
+  renderWordList();
+  updateHUD();
+}
+
+function generateGrid(words) {
+  const g = Array.from({length:ROWS}, ()=>Array(COLS).fill(''));
+  const placed = [];
+  for (const word of words) {
+    let ok = false, tries = 0;
+    while (!ok && tries < 400) {
+      tries++;
+      const dir = DIRS[Math.floor(Math.random()*DIRS.length)];
+      const minR = dir.dr<0?word.length-1:0;
+      const maxR = dir.dr>0?ROWS-word.length:ROWS-1;
+      const minC = dir.dc<0?word.length-1:0;
+      const maxC = dir.dc>0?COLS-word.length:COLS-1;
+      if (minR>maxR||minC>maxC) continue;
+      const r0 = minR+Math.floor(Math.random()*(maxR-minR+1));
+      const c0 = minC+Math.floor(Math.random()*(maxC-minC+1));
+      let valid = true;
+      for (let i=0;i<word.length;i++) {
+        const r=r0+dir.dr*i,c=c0+dir.dc*i;
+        if (g[r][c]!==''&&g[r][c]!==word[i]){valid=false;break;}
+      }
+      if (!valid) continue;
+      const cells=[];
+      for (let i=0;i<word.length;i++) {
+        const r=r0+dir.dr*i,c=c0+dir.dc*i;
+        g[r][c]=word[i]; cells.push({r,c});
+      }
+      placed.push({word,cells,colorIdx:placed.length%12});
+      ok=true;
+    }
+  }
+  for (let r=0;r<ROWS;r++)
+    for (let c=0;c<COLS;c++)
+      if (g[r][c]==='') g[r][c]=ALPHABET[Math.floor(Math.random()*ALPHABET.length)];
+  return {grid:g,placed};
+}
+
+function renderGrid() {
+  const container = document.getElementById('wsGrid');
+  container.innerHTML='';
+  container.style.gridTemplateColumns=`repeat(${COLS},36px)`;
+  for (let r=0;r<ROWS;r++) {
+    for (let c=0;c<COLS;c++) {
+      const el=document.createElement('div');
+      el.className='ws-cell'; el.textContent=grid[r][c];
+      el.dataset.r=r; el.dataset.c=c;
+      container.appendChild(el);
+    }
+  }
+  attachEvents(container);
+  // Scale to fit after render
+  requestAnimationFrame(scaleGrid);
+}
+
+function attachEvents(container) {
+  container.addEventListener('mousedown',e=>{
+    const cell=e.target.closest('.ws-cell');
+    if(!cell)return;
+    selecting=true;
+    startCell={r:+cell.dataset.r,c:+cell.dataset.c};
+    curCell=startCell; highlight(); e.preventDefault();
+  });
+  container.addEventListener('mousemove',e=>{
+    if(!selecting)return;
+    const cell=e.target.closest('.ws-cell');
+    if(!cell)return;
+    curCell={r:+cell.dataset.r,c:+cell.dataset.c}; highlight();
+  });
+  document.addEventListener('mouseup',()=>{
+    if(!selecting)return;
+    selecting=false; checkWord(); clearHighlight();
+  });
+  container.addEventListener('touchstart',e=>{
+    const cell=document.elementFromPoint(e.touches[0].clientX,e.touches[0].clientY)?.closest('.ws-cell');
+    if(!cell)return;
+    selecting=true;
+    startCell={r:+cell.dataset.r,c:+cell.dataset.c};
+    curCell=startCell; highlight(); e.preventDefault();
+  },{passive:false});
+  container.addEventListener('touchmove',e=>{
+    if(!selecting)return;
+    const cell=document.elementFromPoint(e.touches[0].clientX,e.touches[0].clientY)?.closest('.ws-cell');
+    if(cell){curCell={r:+cell.dataset.r,c:+cell.dataset.c};highlight();}
+    e.preventDefault();
+  },{passive:false});
+  container.addEventListener('touchend',()=>{
+    if(!selecting)return;
+    selecting=false; checkWord(); clearHighlight();
+  });
+}
+
+function scaleGrid() {
+  const outer = document.querySelector('.ws-grid-outer');
+  if (!outer) return;
+  const available = outer.offsetWidth - 16; // minus grid padding
+  const natural = COLS * 36 + (COLS - 1) * 2;
+  if (available <= 0) return;
+  const size = available >= natural ? 36 : Math.max(18, Math.floor((available - (COLS-1)*2) / COLS));
+  const fontSize = Math.max(10, Math.round(size * 0.46));
+  const gridEl = document.getElementById('wsGrid');
+  gridEl.style.gridTemplateColumns = `repeat(${COLS},${size}px)`;
+  document.querySelectorAll('.ws-cell').forEach(el=>{
+    el.style.width = size+'px';
+    el.style.height = size+'px';
+    el.style.fontSize = fontSize+'px';
+  });
+}
+window.addEventListener('resize', scaleGrid);
+
+function getLineCells(r1,c1,r2,c2) {
+  const dr=r2-r1,dc=c2-c1;
+  if (dr!==0&&dc!==0&&Math.abs(dr)!==Math.abs(dc)) return null;
+  const len=Math.max(Math.abs(dr),Math.abs(dc))+1;
+  const sr=dr===0?0:dr/Math.abs(dr);
+  const sc=dc===0?0:dc/Math.abs(dc);
+  return Array.from({length:len},(_,i)=>({r:r1+sr*i,c:c1+sc*i}));
+}
+
+function cellEl(r,c){return document.querySelector(`#wsGrid .ws-cell[data-r="${r}"][data-c="${c}"]`);}
+
+function highlight() {
+  clearHighlight();
+  if (!startCell||!curCell) return;
+  const cells=getLineCells(startCell.r,startCell.c,curCell.r,curCell.c);
+  if (!cells) return;
+  cells.forEach(({r,c})=>{
+    const el=cellEl(r,c);
+    if(el&&!el.className.includes('found-')) el.classList.add('highlighted');
+  });
+}
+function clearHighlight(){document.querySelectorAll('#wsGrid .ws-cell.highlighted').forEach(el=>el.classList.remove('highlighted'));}
+
+function checkWord() {
+  if (!startCell||!curCell) return;
+  const cells=getLineCells(startCell.r,startCell.c,curCell.r,curCell.c);
+  if (!cells||cells.length<2) return;
+  const word=cells.map(({r,c})=>grid[r][c]).join('');
+  const wordRev=word.split('').reverse().join('');
+  for (const pw of placedWords) {
+    if (foundWords.has(pw.word)) continue;
+    if (word!==pw.word&&wordRev!==pw.word) continue;
+    const pwKeys=pw.cells.map(({r,c})=>`${r},${c}`);
+    const selKeys=cells.map(({r,c})=>`${r},${c}`);
+    const revKeys=[...cells].reverse().map(({r,c})=>`${r},${c}`);
+    const match=keys=>pwKeys.length===keys.length&&pwKeys.every((k,i)=>k===keys[i]);
+    if (match(selKeys)||match(revKeys)) {
+      foundWords.set(pw.word,pw.colorIdx);
+      pw.cells.forEach(({r,c})=>{
+        const el=cellEl(r,c);
+        if(el) el.className='ws-cell found-'+pw.colorIdx;
+      });
+      const item=document.querySelector(`.ws-word-item[data-word="${pw.word}"]`);
+      if(item){item.classList.add('found');item.querySelector('.wi-icon').className='bi bi-check-circle-fill wi-icon';}
+      score+=10; updateHUD();
+      if(window.Toast) Toast.show('Encontraste: '+pw.word,'success');
+      if(foundWords.size===placedWords.length) setTimeout(gameComplete,500);
+      break;
+    }
+  }
+}
+
+function renderWordList() {
+  const list=document.getElementById('wordList');
+  list.innerHTML='';
+  placedWords.forEach(pw=>{
+    const item=document.createElement('div');
+    item.className='ws-word-item'; item.dataset.word=pw.word;
+    item.innerHTML=`<i class="bi bi-circle wi-icon"></i><span>${pw.word}</span>`;
+    list.appendChild(item);
+  });
+}
+
+function calcStars(f,total) {
+  const p=f/total;
+  if(p>=1) return 5; if(p>=.8) return 4; if(p>=.6) return 3;
+  if(p>=.4) return 2; if(p>=.2) return 1; return 0;
+}
+
+function updateHUD() {
+  document.getElementById('score-val').textContent=score;
+  document.getElementById('found-val').textContent=foundWords.size+'/'+placedWords.length;
+  document.getElementById('stars-val').textContent=calcStars(foundWords.size,placedWords.length);
+}
+
+function gameComplete() {
+  if(window.Confetti) Confetti.fire();
+  const stars=calcStars(foundWords.size,placedWords.length);
+  document.getElementById('completeMsg').textContent=
+    'Encontraste '+foundWords.size+' palabras y ganaste '+stars+' estrella'+(stars!==1?'s':'')+'.';
+  document.getElementById('completeBanner').style.display='block';
+  document.getElementById('completeBanner').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function getCookie(n){for(let c of document.cookie.split(';')){const[k,v]=c.trim().split('=');if(k===n)return decodeURIComponent(v);}return '';}
+
+document.getElementById('saveBtn').addEventListener('click',function(){
+  if(saved)return; saved=true;
+  const stars=calcStars(foundWords.size,placedWords.length);
+  fetch('{% url "save_game_score" %}',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},
+    body:JSON.stringify({game_type:'wordsearch',score,stars_earned:stars}),
+  })
+  .then(r=>r.json())
+  .then(data=>{
+    if(window.Toast)Toast.show('Guardado — '+(data.stars_earned||stars)+' estrellas','success');
+    this.disabled=true;
+    this.innerHTML='<i class="bi bi-check-circle-fill"></i> Guardado';
+  })
+  .catch(()=>{saved=false;if(window.Toast)Toast.show('Error al guardar.','error');});
+});
+
+document.getElementById('newGameBtn').addEventListener('click',init);
+document.getElementById('newGameBtn2').addEventListener('click',init);
+
+init();
+
+(function(){
+  var d=document.getElementById('topbarDate');
+  if(d)d.textContent=new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long'});
+  var pb=document.getElementById('sidebarProfileBtn'),pd=document.getElementById('profileDropdown'),pc=document.getElementById('profileChevron');
+  if(pb&&pd){pb.addEventListener('click',function(e){e.stopPropagation();var o=pd.classList.toggle('open');pc.style.transform=o?'rotate(180deg)':'';});document.addEventListener('click',function(){pd.classList.remove('open');pc.style.transform='';});}
+  var t=document.getElementById('sidebarToggle'),s=document.getElementById('studentSidebar'),ov=document.getElementById('sidebarOverlay');
+  if(t&&s&&ov){t.addEventListener('click',function(){s.classList.toggle('open');ov.classList.toggle('open');});ov.addEventListener('click',function(){s.classList.remove('open');ov.classList.remove('open');});}
+  var dt=document.getElementById('darkModeToggle'),di=document.getElementById('darkModeIcon');
+  function sd(on){document.body.classList.toggle('student-dark',on);if(di)di.className=on?'bi bi-sun-fill':'bi bi-moon-fill';}
+  sd(localStorage.getItem('student_dark')==='1');
+  if(dt)dt.addEventListener('click',function(){var on=!document.body.classList.contains('student-dark');sd(on);localStorage.setItem('student_dark',on?'1':'0');});
+})();
+</script>
+{% endblock %}

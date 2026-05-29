@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Números 1-100 — Manitos Creativas{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/student.css' %}">{% endblock %}
+
+{% block body_content %}
+<div class="student-layout">
+
+  {% include 'student/_sidebar.html' with active_page='games' %}
+
+  <div class="student-main">
+    <header class="student-topbar">
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Abrir menú"><i class="bi bi-list"></i></button>
+      <div class="topbar-breadcrumb">
+        <a href="{% url 'games_home' %}" class="breadcrumb-link">Mis Juegos</a>
+        <i class="bi bi-chevron-right" style="font-size:.7rem;color:#9CA3AF;"></i>
+        <span class="bc-current">Números 1–100</span>
+      </div>
+      <div class="topbar-actions">
+        <div class="topbar-date"><i class="bi bi-calendar3"></i><span id="topbarDate"></span></div>
+        <div class="topbar-stars-chip"><i class="bi bi-star-fill"></i><span>{{ profile.total_stars|default:"0" }} estrellas</span></div>
+        <button class="dark-mode-toggle" id="darkModeToggle" aria-label="Cambiar modo"><i class="bi bi-moon-fill" id="darkModeIcon"></i></button>
+      </div>
+    </header>
+
+    <div class="student-scroll">
+      <div style="max-width:900px;margin:0 auto;">
+
+        <div class="game-page-header" style="background:linear-gradient(135deg,#D97706,#B45309);">
+          <div style="font-size:3rem;margin-bottom:.5rem;"><i class="bi bi-123"></i></div>
+          <div class="game-page-title">¡Números del 1 al 100!</div>
+          <div class="game-page-sub">Haz clic en un número para escucharlo <i class="bi bi-volume-up-fill"></i></div>
+        </div>
+
+        <div class="game-score-display">
+          <div class="score-item"><span class="score-value" id="clicked-count">0</span><span class="score-label">Explorados</span></div>
+          <div class="score-item"><span class="score-value" id="session-stars">0</span><span class="score-label"><i class="bi bi-star-fill" style="color:var(--accent-yellow);"></i> Estrellas</span></div>
+        </div>
+
+        <div class="game-area">
+          <div class="numbers-grid" id="numbers-grid"></div>
+          <div style="text-align:center;margin-top:1.5rem;">
+            <button id="save-btn" class="btn btn-primary" onclick="saveScore()" style="display:none;">
+              <i class="bi bi-floppy-fill"></i> ¡Guardar mis estrellas!
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /student-scroll -->
+  </div><!-- /student-main -->
+</div><!-- /student-layout -->
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<script>
+const grid = document.getElementById('numbers-grid');
+let clicked = new Set();
+
+for (let i = 1; i <= 100; i++) {
+  const btn = document.createElement('button');
+  btn.className = 'number-btn';
+  btn.textContent = i;
+  btn.dataset.n = i;
+  btn.addEventListener('click', () => speakNumber(btn, i));
+  grid.appendChild(btn);
+}
+
+function speakNumber(btn, n) {
+  if ('speechSynthesis' in window) {
+    speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(n.toString());
+    utter.lang = 'es-CO'; utter.rate = 0.85;
+    speechSynthesis.speak(utter);
+  }
+  btn.classList.add('spoken');
+  clicked.add(n);
+  document.getElementById('clicked-count').textContent = clicked.size;
+  const stars = Math.floor(clicked.size / 10);
+  document.getElementById('session-stars').textContent = stars;
+  if (clicked.size >= 10) document.getElementById('save-btn').style.display = 'inline-flex';
+}
+
+function getCookie(name) {
+  for (let c of document.cookie.split(';')) {
+    const [k,v] = c.trim().split('=');
+    if (k === name) return decodeURIComponent(v);
+  }
+  return '';
+}
+
+function saveScore() {
+  const stars = Math.floor(clicked.size / 10);
+  fetch('{% url "save_game_score" %}', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+    body: JSON.stringify({ game_type: 'numbers', score: clicked.size, stars_earned: stars }),
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (window.Confetti) Confetti.fire();
+    if (window.Toast) Toast.show(`¡Ganaste ${data.stars_earned || stars} estrellas!`, 'success');
+    document.getElementById('save-btn').disabled = true;
+    document.getElementById('save-btn').innerHTML = '<i class="bi bi-check-circle-fill"></i> ¡Guardado!';
+  })
+  .catch(() => { if (window.Toast) Toast.show('Error al guardar. Intenta de nuevo.', 'error'); });
+}
+
+// Layout init
+(function(){
+  var d=document.getElementById('topbarDate');
+  if(d)d.textContent=new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long'});
+  var pb=document.getElementById('sidebarProfileBtn'),pd=document.getElementById('profileDropdown'),pc=document.getElementById('profileChevron');
+  if(pb&&pd){pb.addEventListener('click',function(e){e.stopPropagation();var o=pd.classList.toggle('open');pc.style.transform=o?'rotate(180deg)':'';});document.addEventListener('click',function(){pd.classList.remove('open');pc.style.transform='';});}
+  var t=document.getElementById('sidebarToggle'),s=document.getElementById('studentSidebar'),ov=document.getElementById('sidebarOverlay');
+  if(t&&s&&ov){t.addEventListener('click',function(){s.classList.toggle('open');ov.classList.toggle('open');});ov.addEventListener('click',function(){s.classList.remove('open');ov.classList.remove('open');});}
+  var dt=document.getElementById('darkModeToggle'),di=document.getElementById('darkModeIcon');
+  function sd(on){document.body.classList.toggle('student-dark',on);if(di)di.className=on?'bi bi-sun-fill':'bi bi-moon-fill';}
+  sd(localStorage.getItem('student_dark')==='1');
+  if(dt)dt.addEventListener('click',function(){var on=!document.body.classList.contains('student-dark');sd(on);localStorage.setItem('student_dark',on?'1':'0');});
+})();
+</script>
+{% endblock %}

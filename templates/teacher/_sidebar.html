@@ -1,0 +1,152 @@
+{% load static %}
+<aside class="sidebar" id="sidebar">
+
+  <!-- Header -->
+  <div class="sidebar-header">
+    <span class="sidebar-logo">
+      <img src="{% static 'images/logo.png' %}" alt="Manitos Creativas" style="height:2.3rem;width:auto;filter:drop-shadow(0 2px 6px rgba(0,0,0,.4));">
+    </span>
+    <div style="flex:1;min-width:0;">
+      <div class="sidebar-brand">Manitos Creativas</div>
+      <span class="sidebar-brand-sub">Panel Docente</span>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <nav class="sidebar-nav">
+
+    <div class="nav-section-title">Principal</div>
+    <a href="{% url 'teacher_dashboard' %}" class="sidebar-item {% if request.resolver_match.url_name == 'teacher_dashboard' %}active{% endif %}">
+      <span class="item-icon"><i class="bi bi-house-door-fill"></i></span>
+      <span>Dashboard</span>
+    </a>
+
+    <div class="nav-section-title">Actividades</div>
+    <a href="{% url 'activities_list' %}" class="sidebar-item {% if 'activities' in request.path and 'detail' not in request.path and 'crear' not in request.path and 'revision' not in request.path %}active{% endif %}">
+      <span class="item-icon"><i class="bi bi-collection-fill"></i></span>
+      <span>Mis Actividades</span>
+    </a>
+    <a href="{% url 'create_activity' %}" class="sidebar-item {% if 'crear' in request.path %}active{% endif %}">
+      <span class="item-icon"><i class="bi bi-plus-circle-fill"></i></span>
+      <span>Crear Actividad</span>
+    </a>
+
+    <div class="nav-section-title">Estudiantes</div>
+    <a href="{% url 'grades' %}" class="sidebar-item {% if request.resolver_match.url_name == 'grades' %}active{% endif %}">
+      <span class="item-icon"><i class="bi bi-bar-chart-fill"></i></span>
+      <span>Notas</span>
+    </a>
+    <a href="{% url 'weekly_reports' %}" class="sidebar-item {% if request.resolver_match.url_name == 'weekly_reports' %}active{% endif %}">
+      <span class="item-icon"><i class="bi bi-calendar3"></i></span>
+      <span>Reportes Semanales</span>
+    </a>
+
+    <div class="nav-section-title">Juegos</div>
+    <a href="{% url 'puzzle_images_list' %}" class="sidebar-item {% if request.resolver_match.url_name == 'puzzle_images_list' %}active{% endif %}">
+      <span class="item-icon"><i class="bi bi-puzzle-fill"></i></span>
+      <span>Imágenes Rompecabezas</span>
+    </a>
+    <a href="{% url 'coloring_images_list' %}" class="sidebar-item {% if request.resolver_match.url_name == 'coloring_images_list' %}active{% endif %}">
+      <span class="item-icon"><i class="bi bi-palette-fill"></i></span>
+      <span>Bocetos para Colorear</span>
+    </a>
+
+    <div class="nav-section-title">Comunicación</div>
+    <a href="{% url 'send_email' %}" class="sidebar-item {% if request.resolver_match.url_name == 'send_email' %}active{% endif %}">
+      <span class="item-icon"><i class="bi bi-envelope-fill"></i></span>
+      <span>Enviar Correo</span>
+    </a>
+
+    <div class="nav-section-title">Salón</div>
+    <a href="{% url 'fame_board' %}" class="sidebar-item {% if request.resolver_match.url_name == 'fame_board' %}active{% endif %}">
+      <span class="item-icon"><i class="bi bi-trophy-fill"></i></span>
+      <span>Tablero de Fama</span>
+    </a>
+    <a href="{% url 'announcements' %}" class="sidebar-item {% if request.resolver_match.url_name == 'announcements' %}active{% endif %}">
+      <span class="item-icon"><i class="bi bi-megaphone-fill"></i></span>
+      <span>Anuncios</span>
+    </a>
+
+  </nav>
+
+  <div style="flex:1;min-height:1rem;"></div>
+
+  <!-- Profile at bottom -->
+  <div class="sidebar-profile-wrap">
+    <div class="sidebar-profile-dropdown" id="teacherProfileDropdown">
+      <a href="{% url 'teacher_profile' %}" class="sidebar-profile-option {% if request.resolver_match.url_name == 'teacher_profile' %}active{% endif %}">
+        <i class="bi bi-person-circle"></i>
+        <span>Mi Perfil</span>
+      </a>
+      <a href="{% url 'logout' %}" class="sidebar-profile-option sidebar-profile-logout">
+        <i class="bi bi-box-arrow-left"></i>
+        <span>Cerrar sesión</span>
+      </a>
+    </div>
+    <button class="sidebar-profile-btn" id="teacherProfileBtn">
+      <div class="sidebar-profile-avatar">
+        {{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}
+      </div>
+      <div class="sidebar-profile-info">
+        <span class="sidebar-profile-name">{{ request.user.get_full_name|default:request.user.username }}</span>
+        <span class="sidebar-profile-role">Profesora / Profesor</span>
+      </div>
+      <i class="bi bi-chevron-up sidebar-profile-chevron" id="teacherProfileChevron"></i>
+    </button>
+  </div>
+
+</aside>
+
+<script>
+/* Prevent FOUC — apply dark class immediately before paint */
+if (localStorage.getItem('teacher-dark') === '1') {
+  document.body.classList.add('teacher-dark');
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+
+  /* ── Inject dark mode toggle into topbar ── */
+  var topbar = document.querySelector('.teacher-topbar');
+  if (topbar) {
+    var actions = topbar.querySelector('.topbar-actions');
+    if (!actions) {
+      actions = document.createElement('div');
+      actions.className = 'topbar-actions';
+      topbar.appendChild(actions);
+    }
+    var btn = document.createElement('button');
+    btn.className = 'dark-mode-toggle';
+    btn.id = 'darkModeToggle';
+    btn.setAttribute('aria-label', 'Cambiar modo');
+    btn.setAttribute('title', 'Alternar modo oscuro');
+    btn.innerHTML = '<i class="bi ' + (localStorage.getItem('teacher-dark') === '1' ? 'bi-sun-fill' : 'bi-moon-fill') + '" id="darkModeIcon"></i>';
+    actions.appendChild(btn);
+
+    btn.addEventListener('click', function () {
+      var dark = !document.body.classList.contains('teacher-dark');
+      document.body.classList.toggle('teacher-dark', dark);
+      localStorage.setItem('teacher-dark', dark ? '1' : '0');
+      var ic = document.getElementById('darkModeIcon');
+      if (ic) ic.className = dark ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
+    });
+  }
+
+  /* ── Profile dropdown ── */
+  var profileBtn      = document.getElementById('teacherProfileBtn');
+  var profileDropdown = document.getElementById('teacherProfileDropdown');
+  var profileChevron  = document.getElementById('teacherProfileChevron');
+
+  if (profileBtn && profileDropdown) {
+    profileBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var open = profileDropdown.classList.toggle('open');
+      if (profileChevron) profileChevron.style.transform = open ? 'rotate(180deg)' : '';
+    });
+    document.addEventListener('click', function () {
+      profileDropdown.classList.remove('open');
+      if (profileChevron) profileChevron.style.transform = '';
+    });
+  }
+
+});
+</script>

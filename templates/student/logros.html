@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mis Logros — Manitos Creativas{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/student.css' %}">{% endblock %}
+
+{% block body_content %}
+<div class="student-layout">
+
+  {% include 'student/_sidebar.html' with active_page='logros' %}
+
+  <div class="student-main">
+
+    <!-- Topbar -->
+    <header class="student-topbar">
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Abrir menú">
+        <i class="bi bi-list"></i>
+      </button>
+      <div class="topbar-title">Mis Logros</div>
+      <div class="topbar-actions">
+        <div class="topbar-date">
+          <i class="bi bi-calendar3"></i>
+          <span id="topbarDate"></span>
+        </div>
+        <div class="topbar-stars-chip">
+          <i class="bi bi-star-fill"></i>
+          <span>{{ profile.total_stars|default:"0" }} estrellas</span>
+        </div>
+        <button class="dark-mode-toggle" id="darkModeToggle" aria-label="Cambiar modo">
+          <i class="bi bi-moon-fill" id="darkModeIcon"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Scroll area -->
+    <div class="student-scroll">
+
+      <!-- Page Hero -->
+      <div class="page-hero logros-hero">
+        <div class="page-hero-left">
+          <div class="page-hero-icon-pill" style="background:rgba(251,191,36,.2);border-color:rgba(251,191,36,.35);color:#FCD34D;">
+            <i class="bi bi-trophy-fill"></i> Mis Reconocimientos
+          </div>
+          <h1 class="page-hero-title">Mis Logros</h1>
+          <p class="page-hero-sub">Cada medalla cuenta tu esfuerzo 🏆</p>
+        </div>
+        <div class="page-hero-stats">
+          <div class="page-hero-stat-card" style="border-color:rgba(251,191,36,.25);">
+            <div class="hero-stat-num" style="color:#FCD34D;">{{ fame_entries|length }}</div>
+            <div class="hero-stat-label">medalla{{ fame_entries|length|pluralize:"s" }}<br>obtenida{{ fame_entries|length|pluralize:"s" }}</div>
+          </div>
+          <div class="page-hero-stat-card" style="border-color:rgba(251,191,36,.25);">
+            <div class="hero-stat-num" style="color:#F9A8D4;">{{ profile.total_medals|default:"0" }}</div>
+            <div class="hero-stat-label">total de<br>medallas</div>
+          </div>
+        </div>
+      </div>
+
+      {% if fame_entries %}
+
+      <!-- Section header -->
+      <div class="section-header">
+        <div class="section-title-new">
+          <span class="section-icon-badge gold"><i class="bi bi-trophy-fill"></i></span>
+          Salón de la Fama
+        </div>
+      </div>
+
+      <!-- Logros grid -->
+      <div class="logros-grid">
+        {% for entry in fame_entries %}
+        <div class="logro-card">
+          <div class="logro-medal-wrap">
+            {% if entry.medal_type == 'gold' %}
+              <i class="bi bi-trophy-fill" style="color:#D97706;font-size:2.2rem;"></i>
+            {% elif entry.medal_type == 'silver' %}
+              <i class="bi bi-trophy-fill" style="color:#94A3B8;font-size:2.2rem;"></i>
+            {% elif entry.medal_type == 'bronze' %}
+              <i class="bi bi-trophy-fill" style="color:#B45309;font-size:2.2rem;"></i>
+            {% elif entry.medal_type == 'heart' %}
+              <i class="bi bi-heart-fill" style="color:#EC4899;font-size:2.2rem;"></i>
+            {% elif entry.medal_type == 'rainbow' %}
+              <span style="font-size:2.2rem;">🌈</span>
+            {% else %}
+              <i class="bi bi-star-fill" style="color:#FBBF24;font-size:2.2rem;"></i>
+            {% endif %}
+          </div>
+          <div class="logro-medal-type">
+            {% if entry.medal_type == 'gold' %}Medalla de Oro
+            {% elif entry.medal_type == 'silver' %}Medalla de Plata
+            {% elif entry.medal_type == 'bronze' %}Medalla de Bronce
+            {% elif entry.medal_type == 'heart' %}Corazón
+            {% elif entry.medal_type == 'rainbow' %}Arcoíris
+            {% else %}Estrella{% endif %}
+          </div>
+          <div class="logro-title">{{ entry.title }}</div>
+          {% if entry.description %}
+          <div class="logro-description">{{ entry.description }}</div>
+          {% endif %}
+          <div class="logro-date"><i class="bi bi-calendar3"></i> {{ entry.created_at|date:"d M Y" }}</div>
+        </div>
+        {% endfor %}
+      </div>
+
+      {% else %}
+
+      <!-- Empty state -->
+      <div class="page-empty-state">
+        <div class="page-empty-icon" style="font-size:3.5rem;">🏆</div>
+        <div class="page-empty-title">¡Aún no tienes logros!</div>
+        <div class="page-empty-sub">Completa actividades y juegos para que tu profe te otorgue reconocimientos.</div>
+        <a href="{% url 'student_activities' %}" class="banner-cta" style="margin-top:1.5rem;">
+          <i class="bi bi-clipboard2-fill"></i> Ver actividades
+        </a>
+      </div>
+
+      {% endif %}
+
+    </div><!-- /student-scroll -->
+  </div><!-- /student-main -->
+
+</div><!-- /student-layout -->
+
+<!-- Mobile sidebar overlay -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<script>
+(function () {
+  const dateEl = document.getElementById('topbarDate');
+  if (dateEl) {
+    dateEl.textContent = new Date().toLocaleDateString('es-CO', {
+      weekday: 'long', day: 'numeric', month: 'long'
+    });
+  }
+
+  const profileBtn = document.getElementById('sidebarProfileBtn');
+  const profileDropdown = document.getElementById('profileDropdown');
+  const profileChevron = document.getElementById('profileChevron');
+  if (profileBtn && profileDropdown) {
+    profileBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      const isOpen = profileDropdown.classList.toggle('open');
+      profileChevron.style.transform = isOpen ? 'rotate(180deg)' : '';
+    });
+    document.addEventListener('click', function () {
+      profileDropdown.classList.remove('open');
+      profileChevron.style.transform = '';
+    });
+  }
+
+  const toggle = document.getElementById('sidebarToggle');
+  const sidebar = document.getElementById('studentSidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  if (toggle && sidebar && overlay) {
+    toggle.addEventListener('click', function () {
+      sidebar.classList.toggle('open');
+      overlay.classList.toggle('open');
+    });
+    overlay.addEventListener('click', function () {
+      sidebar.classList.remove('open');
+      overlay.classList.remove('open');
+    });
+  }
+
+  const darkToggle = document.getElementById('darkModeToggle');
+  const darkIcon   = document.getElementById('darkModeIcon');
+  function applyDark(on) {
+    document.body.classList.toggle('student-dark', on);
+    if (darkIcon) darkIcon.className = on ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
+  }
+  applyDark(localStorage.getItem('student_dark') === '1');
+  if (darkToggle) {
+    darkToggle.addEventListener('click', function () {
+      const on = !document.body.classList.contains('student-dark');
+      applyDark(on);
+      localStorage.setItem('student_dark', on ? '1' : '0');
+    });
+  }
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,254 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Imágenes de Rompecabezas — Manitos Creativas{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/teacher.css' %}">{% endblock %}
+
+{% block body_content %}
+<div class="teacher-layout">
+
+  {% include 'teacher/_sidebar.html' %}
+
+  <main class="teacher-main">
+
+    <div class="teacher-topbar">
+      <div style="display:flex;align-items:center;gap:.85rem;">
+        <button id="sidebar-toggle"
+          style="display:none;background:none;border:none;cursor:pointer;font-size:1.2rem;color:var(--t-text-mid);padding:.25rem;"
+          onclick="document.querySelector('.sidebar').classList.toggle('open')">
+          <i class="bi bi-list"></i>
+        </button>
+        <div class="teacher-topbar-title">Imágenes de Rompecabezas</div>
+      </div>
+    </div>
+
+    <div class="teacher-content">
+
+      {% if messages %}
+        {% for msg in messages %}
+        <div class="alert alert-{{ msg.tags }}" style="padding:.75rem 1.25rem;border-radius:8px;margin-bottom:1rem;
+          background:{% if 'success' in msg.tags %}#D1FAE5{% elif 'error' in msg.tags %}#FEE2E2{% else %}#E0F2FE{% endif %};
+          color:{% if 'success' in msg.tags %}#065F46{% elif 'error' in msg.tags %}#991B1B{% else %}#0369A1{% endif %};
+          font-weight:600;font-size:.9rem;">
+          {{ msg }}
+        </div>
+        {% endfor %}
+      {% endif %}
+
+      <!-- Upload form -->
+      <div class="upload-card">
+        <h2 class="upload-card-title">
+          <i class="bi bi-cloud-upload" style="color:#6366F1;margin-right:.5rem;"></i>Subir nueva imagen
+        </h2>
+        <form method="post" action="{% url 'puzzle_image_upload' %}" enctype="multipart/form-data"
+              style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end;">
+          {% csrf_token %}
+          <div style="flex:1;min-width:200px;">
+            <label class="form-label">Título de la imagen</label>
+            <input type="text" name="title" placeholder="Ej: Animales del bosque"
+              required maxlength="200" class="form-input">
+          </div>
+          <div style="flex:1;min-width:200px;">
+            <label class="form-label">Imagen del rompecabezas</label>
+            <div class="file-drop-area" id="drop-main">
+              <input type="file" name="image" accept="image/*" required
+                     class="file-drop-input"
+                     onchange="onFileSelected(this,'drop-main','main-preview','main-preview-wrap')">
+              <i class="bi bi-image-fill file-drop-icon"></i>
+              <span class="file-drop-label">Haz clic o arrastra aquí</span>
+              <span class="file-drop-hint">PNG · JPG · WEBP</span>
+              <span class="file-drop-name"></span>
+            </div>
+          </div>
+          <div style="flex:0 0 auto;">
+            <button type="submit" class="btn btn-primary" style="padding:.65rem 1.5rem;white-space:nowrap;">
+              <i class="bi bi-upload"></i> Subir imagen
+            </button>
+          </div>
+        </form>
+        <div id="main-preview-wrap" style="display:none;margin-top:1rem;">
+          <img id="main-preview" src="" alt="Vista previa"
+            style="max-height:130px;max-width:200px;border-radius:8px;border:2px solid var(--t-border);display:block;">
+          <div style="font-size:.75rem;color:var(--t-text-muted);margin-top:.35rem;">Vista previa</div>
+        </div>
+      </div>
+
+      <!-- Images grid -->
+      <div>
+        <h2 class="section-title">
+          <i class="bi bi-images" style="color:#6366F1;margin-right:.5rem;"></i>
+          Mis imágenes ({{ images.count }})
+        </h2>
+
+        {% if images %}
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1.25rem;">
+          {% for img in images %}
+          <div class="media-card">
+            <div class="media-card-img-bg">
+              <img src="{{ img.image.url }}" alt="{{ img.title }}"
+                style="width:100%;height:100%;object-fit:cover;display:block;">
+            </div>
+            <div style="padding:.9rem 1rem;">
+              <div class="media-card-title">{{ img.title }}</div>
+              <div class="media-card-date">{{ img.created_at|date:"d M Y" }}</div>
+              <div style="display:flex;gap:.5rem;">
+                <button type="button" class="media-edit-btn" style="flex:1;"
+                  data-action="{% url 'puzzle_image_edit' img.pk %}"
+                  data-title="{{ img.title|escapejs }}"
+                  data-img="{{ img.image.url }}"
+                  onclick="openEditModal(this)">
+                  <i class="bi bi-pencil"></i> Editar
+                </button>
+                <form method="post" action="{% url 'puzzle_image_delete' img.pk %}" style="flex:1;"
+                      onsubmit="return confirm('¿Eliminar la imagen «{{ img.title }}»?')">
+                  {% csrf_token %}
+                  <button type="submit" class="media-delete-btn" style="width:100%;">
+                    <i class="bi bi-trash3"></i> Eliminar
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="media-empty-state">
+          <div class="media-empty-state-icon"><i class="bi bi-image"></i></div>
+          <div class="media-empty-state-title">Aún no has subido imágenes</div>
+          <div style="font-size:.85rem;">
+            Sube imágenes arriba para que tus estudiantes puedan armar rompecabezas con ellas.
+          </div>
+        </div>
+        {% endif %}
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Edit modal (inside .teacher-layout so CSS vars are available) -->
+  <div class="media-modal-overlay" id="edit-modal" onclick="handleOverlayClick(event)">
+  <div class="media-modal">
+    <div class="media-modal-header">
+      <h3 class="media-modal-title">
+        <i class="bi bi-pencil" style="color:#6366F1;margin-right:.5rem;"></i>Editar imagen
+      </h3>
+      <button class="media-modal-close" onclick="closeEditModal()" type="button">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <form id="edit-form" method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <img id="modal-preview" src="" alt="Imagen actual" class="media-modal-preview">
+      <div style="margin-bottom:1rem;">
+        <label class="form-label">Título de la imagen</label>
+        <input type="text" name="title" id="modal-title" required maxlength="200" class="form-input">
+      </div>
+      <div>
+        <label class="form-label">
+          Reemplazar imagen
+          <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:.85em;color:var(--t-text-muted);">
+            — opcional
+          </span>
+        </label>
+        <div class="file-drop-area" id="drop-modal">
+          <input type="file" name="image" accept="image/*"
+                 class="file-drop-input"
+                 onchange="onFileSelected(this,'drop-modal','modal-preview',null)">
+          <i class="bi bi-image-fill file-drop-icon"></i>
+          <span class="file-drop-label">Haz clic o arrastra aquí</span>
+          <span class="file-drop-hint">PNG · JPG · WEBP · dejar vacío para conservar</span>
+          <span class="file-drop-name"></span>
+        </div>
+      </div>
+      <div class="media-modal-actions">
+        <button type="button" class="btn btn-outline" onclick="closeEditModal()">Cancelar</button>
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-check2"></i> Guardar cambios
+        </button>
+      </div>
+    </form>
+  </div>
+  </div>
+
+</div><!-- /.teacher-layout -->
+
+<script>
+/* ── File drop zone ── */
+function onFileSelected(input, areaId, previewId, wrapId) {
+  const area    = document.getElementById(areaId);
+  const nameEl  = area.querySelector('.file-drop-name');
+  const hintEl  = area.querySelector('.file-drop-hint');
+  const labelEl = area.querySelector('.file-drop-label');
+
+  if (input.files && input.files[0]) {
+    const file = input.files[0];
+    area.classList.add('has-file');
+    nameEl.textContent   = file.name;
+    nameEl.style.display = 'block';
+    hintEl.style.display = 'none';
+    labelEl.textContent  = 'Archivo seleccionado';
+
+    const reader = new FileReader();
+    reader.onload = e => {
+      if (previewId) {
+        const img = document.getElementById(previewId);
+        if (img) img.src = e.target.result;
+      }
+      if (wrapId) {
+        const wrap = document.getElementById(wrapId);
+        if (wrap) wrap.style.display = 'block';
+      }
+    };
+    reader.readAsDataURL(file);
+  } else {
+    resetDropArea(areaId);
+  }
+}
+
+function resetDropArea(areaId) {
+  const area = document.getElementById(areaId);
+  if (!area) return;
+  area.classList.remove('has-file');
+  area.querySelector('.file-drop-name').style.display  = 'none';
+  area.querySelector('.file-drop-hint').style.display  = '';
+  area.querySelector('.file-drop-label').textContent   = 'Haz clic o arrastra aquí';
+  area.querySelector('.file-drop-input').value         = '';
+}
+
+document.querySelectorAll('.file-drop-area').forEach(area => {
+  ['dragenter','dragover'].forEach(ev =>
+    area.addEventListener(ev, e => { e.preventDefault(); area.classList.add('drag-over'); })
+  );
+  area.addEventListener('dragleave', e => {
+    if (!area.contains(e.relatedTarget)) area.classList.remove('drag-over');
+  });
+  area.addEventListener('drop', e => {
+    e.preventDefault();
+    area.classList.remove('drag-over');
+    const input = area.querySelector('.file-drop-input');
+    if (e.dataTransfer.files.length) {
+      const dt = new DataTransfer();
+      dt.items.add(e.dataTransfer.files[0]);
+      input.files = dt.files;
+      input.dispatchEvent(new Event('change'));
+    }
+  });
+});
+
+/* ── Edit modal ── */
+function openEditModal(btn) {
+  document.getElementById('edit-form').action  = btn.dataset.action;
+  document.getElementById('modal-title').value = btn.dataset.title;
+  document.getElementById('modal-preview').src = btn.dataset.img;
+  resetDropArea('drop-modal');
+  document.getElementById('edit-modal').classList.add('open');
+}
+function closeEditModal() {
+  document.getElementById('edit-modal').classList.remove('open');
+}
+function handleOverlayClick(e) {
+  if (e.target === document.getElementById('edit-modal')) closeEditModal();
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeEditModal(); });
+</script>
+{% endblock %}

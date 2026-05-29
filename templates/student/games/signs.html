@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Lenguaje de Señas — Manitos Creativas{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/student.css' %}">{% endblock %}
+
+{% block body_content %}
+<div class="student-layout">
+
+  {% include 'student/_sidebar.html' with active_page='games' %}
+
+  <div class="student-main">
+    <header class="student-topbar">
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Abrir menú"><i class="bi bi-list"></i></button>
+      <div class="topbar-breadcrumb">
+        <a href="{% url 'games_home' %}" class="breadcrumb-link">Mis Juegos</a>
+        <i class="bi bi-chevron-right" style="font-size:.7rem;color:#9CA3AF;"></i>
+        <span class="bc-current">Lenguaje de Señas</span>
+      </div>
+      <div class="topbar-actions">
+        <div class="topbar-date"><i class="bi bi-calendar3"></i><span id="topbarDate"></span></div>
+        <div class="topbar-stars-chip"><i class="bi bi-star-fill"></i><span>{{ profile.total_stars|default:"0" }} estrellas</span></div>
+        <button class="dark-mode-toggle" id="darkModeToggle" aria-label="Cambiar modo"><i class="bi bi-moon-fill" id="darkModeIcon"></i></button>
+      </div>
+    </header>
+
+    <div class="student-scroll">
+      <div style="max-width:800px;margin:0 auto;">
+
+        <div class="game-page-header" style="background:linear-gradient(135deg,#7C3AED,#6D28D9);">
+          <div style="font-size:3rem;margin-bottom:.5rem;">🤟</div>
+          <div class="game-page-title">¡Lenguaje de Señas!</div>
+          <div class="game-page-sub">Aprende algunas señas básicas en LSC 🖐️</div>
+        </div>
+
+        <div class="game-score-display">
+          <div class="score-item"><span class="score-value" id="learned-count">0</span><span class="score-label">Señas aprendidas</span></div>
+          <div class="score-item"><span class="score-value" id="session-stars">0</span><span class="score-label"><i class="bi bi-star-fill" style="color:var(--accent-yellow);"></i> Estrellas</span></div>
+        </div>
+
+        <div class="game-area">
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:2rem;" id="signs-grid"></div>
+          <div style="text-align:center;">
+            <button id="save-btn" onclick="saveScore()" class="btn btn-primary" style="display:none;">
+              🌟 ¡Guardar mis estrellas!
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /student-scroll -->
+  </div><!-- /student-main -->
+</div><!-- /student-layout -->
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<style>
+.sign-card {
+  background: white;
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  text-align: center;
+  box-shadow: 0 4px 16px rgba(0,0,0,.06);
+  border: 2.5px solid transparent;
+  cursor: pointer;
+  transition: all .3s cubic-bezier(.34,1.56,.64,1);
+}
+.sign-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,.1); }
+body.student-dark .sign-card {
+  background: #0E1E30;
+  border-color: rgba(255,255,255,.055);
+}
+body.student-dark .sign-desc { color: #6B7280 !important; }
+</style>
+
+<script>
+const SIGNS = [
+  { word: 'Hola',     emoji: '👋', sign: '✋', desc: 'Agita la mano abierta de lado a lado', color: '#7C3AED' },
+  { word: 'Gracias',  emoji: '🙏', sign: '🙌', desc: 'Lleva la mano a la boca y bájala', color: '#EC4899' },
+  { word: 'Por favor',emoji: '🥺', sign: '🖐️', desc: 'Frota el pecho con la palma abierta', color: '#F97316' },
+  { word: 'Sí',       emoji: '✅', sign: '✊', desc: 'Cierra el puño y muévelo arriba-abajo', color: '#10B981' },
+  { word: 'No',       emoji: '❌', sign: '✌️', desc: 'Mueve índice y dedo medio en X', color: '#3B82F6' },
+  { word: 'Mamá',     emoji: '👩', sign: '🤚', desc: 'Toca la mejilla con los 5 dedos abiertos', color: '#FBBF24' },
+  { word: 'Papá',     emoji: '👨', sign: '🤙', desc: 'Toca la frente con la palma abierta', color: '#7C3AED' },
+  { word: 'Amor',     emoji: '💜', sign: '🤟', desc: 'Levanta pulgar, índice y meñique', color: '#EC4899' },
+  { word: 'Casa',     emoji: '🏠', sign: '🏠', desc: 'Forma un triángulo con ambas manos', color: '#F97316' },
+];
+
+let learned = new Set();
+const grid = document.getElementById('signs-grid');
+
+SIGNS.forEach((s, i) => {
+  const card = document.createElement('div');
+  card.className = 'sign-card';
+  card.innerHTML = `
+    <div style="font-size:2.5rem;margin-bottom:.5rem;">${s.sign}</div>
+    <div style="font-family:var(--font-display);font-size:1.3rem;color:${s.color};margin-bottom:.25rem;">${s.word}</div>
+    <div style="font-size:3rem;margin:.5rem 0;">${s.emoji}</div>
+    <div style="font-size:.78rem;color:var(--text-mid);line-height:1.5;display:none;" class="sign-desc">${s.desc}</div>
+  `;
+  card.addEventListener('click', () => {
+    card.querySelector('.sign-desc').style.display = 'block';
+    card.style.borderColor = s.color;
+    card.style.boxShadow = `0 8px 32px ${s.color}30`;
+    if (!learned.has(i)) {
+      learned.add(i);
+      document.getElementById('learned-count').textContent = learned.size;
+      document.getElementById('session-stars').textContent = Math.floor(learned.size / 2);
+      if (learned.size >= 2) document.getElementById('save-btn').style.display = 'inline-flex';
+      if ('speechSynthesis' in window) {
+        const utter = new SpeechSynthesisUtterance(s.word);
+        utter.lang = 'es-CO'; utter.rate = 0.8;
+        speechSynthesis.speak(utter);
+      }
+      if (window.Confetti && learned.size === SIGNS.length) Confetti.fire();
+    }
+  });
+  grid.appendChild(card);
+});
+
+function getCookie(name) {
+  for (let c of document.cookie.split(';')) {
+    const [k,v] = c.trim().split('=');
+    if (k === name) return decodeURIComponent(v);
+  }
+  return '';
+}
+function saveScore() {
+  const stars = Math.floor(learned.size / 2);
+  fetch('{% url "save_game_score" %}', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+    body: JSON.stringify({ game_type: 'signs', score: learned.size, stars_earned: stars }),
+  })
+  .then(r => r.json())
+  .then(() => {
+    if (window.Toast) Toast.show(`¡Guardado! ⭐ +${stars} estrellas`, 'success');
+    document.getElementById('save-btn').disabled = true;
+  });
+}
+
+// Layout init
+(function(){
+  var d=document.getElementById('topbarDate');
+  if(d)d.textContent=new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long'});
+  var pb=document.getElementById('sidebarProfileBtn'),pd=document.getElementById('profileDropdown'),pc=document.getElementById('profileChevron');
+  if(pb&&pd){pb.addEventListener('click',function(e){e.stopPropagation();var o=pd.classList.toggle('open');pc.style.transform=o?'rotate(180deg)':'';});document.addEventListener('click',function(){pd.classList.remove('open');pc.style.transform='';});}
+  var t=document.getElementById('sidebarToggle'),s=document.getElementById('studentSidebar'),ov=document.getElementById('sidebarOverlay');
+  if(t&&s&&ov){t.addEventListener('click',function(){s.classList.toggle('open');ov.classList.toggle('open');});ov.addEventListener('click',function(){s.classList.remove('open');ov.classList.remove('open');});}
+  var dt=document.getElementById('darkModeToggle'),di=document.getElementById('darkModeIcon');
+  function sd(on){document.body.classList.toggle('student-dark',on);if(di)di.className=on?'bi bi-sun-fill':'bi bi-moon-fill';}
+  sd(localStorage.getItem('student_dark')==='1');
+  if(dt)dt.addEventListener('click',function(){var on=!document.body.classList.contains('student-dark');sd(on);localStorage.setItem('student_dark',on?'1':'0');});
+})();
+</script>
+{% endblock %}

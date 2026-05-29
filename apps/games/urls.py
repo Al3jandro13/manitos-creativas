@@ -1,0 +1,27 @@
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.games_home, name='games_home'),
+    path('rompecabezas/', views.game_puzzle, name='game_puzzle'),
+    path('colorear/', views.game_coloring, name='game_coloring'),
+    path('colorear/imagenes/', views.coloring_images_list, name='coloring_images_list'),
+    path('colorear/imagenes/subir/', views.coloring_image_upload, name='coloring_image_upload'),
+    path('colorear/imagenes/editar/<int:pk>/', views.coloring_image_edit, name='coloring_image_edit'),
+    path('colorear/imagenes/eliminar/<int:pk>/', views.coloring_image_delete, name='coloring_image_delete'),
+    path('dibujo/', views.game_drawing, name='game_drawing'),
+    path('numeros/', views.game_numbers, name='game_numbers'),
+    path('consonantes/', views.game_consonants, name='game_consonants'),
+    path('matematicas/', views.game_math, name='game_math'),
+    path('puntillismo/', views.game_puntillismo, name='game_puntillismo'),
+    path('senas/', views.game_signs, name='game_signs'),
+    path('cuento/', views.game_story, name='game_story'),
+    path('serpiente/', views.game_snake, name='game_snake'),
+    path('sopa-de-letras/', views.game_wordsearch, name='game_wordsearch'),
+    path('api/guardar-puntaje/', views.save_game_score, name='save_game_score'),
+    # Teacher puzzle image management
+    path('rompecabezas/imagenes/', views.puzzle_images_list, name='puzzle_images_list'),
+    path('rompecabezas/imagenes/subir/', views.puzzle_image_upload, name='puzzle_image_upload'),
+    path('rompecabezas/imagenes/editar/<int:pk>/', views.puzzle_image_edit, name='puzzle_image_edit'),
+    path('rompecabezas/imagenes/eliminar/<int:pk>/', views.puzzle_image_delete, name='puzzle_image_delete'),
+]

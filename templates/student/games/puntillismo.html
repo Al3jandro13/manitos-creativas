@@ -1,0 +1,232 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Puntillismo — Manitos Creativas{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/student.css' %}">{% endblock %}
+
+{% block body_content %}
+<div class="student-layout">
+
+  {% include 'student/_sidebar.html' with active_page='games' %}
+
+  <div class="student-main">
+    <header class="student-topbar">
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Abrir menú"><i class="bi bi-list"></i></button>
+      <div class="topbar-breadcrumb">
+        <a href="{% url 'games_home' %}" class="breadcrumb-link">Mis Juegos</a>
+        <i class="bi bi-chevron-right" style="font-size:.7rem;color:#9CA3AF;"></i>
+        <span class="bc-current">Puntillismo</span>
+      </div>
+      <div class="topbar-actions">
+        <div class="topbar-date"><i class="bi bi-calendar3"></i><span id="topbarDate"></span></div>
+        <div class="topbar-stars-chip"><i class="bi bi-star-fill"></i><span>{{ profile.total_stars|default:"0" }} estrellas</span></div>
+        <button class="dark-mode-toggle" id="darkModeToggle" aria-label="Cambiar modo"><i class="bi bi-moon-fill" id="darkModeIcon"></i></button>
+      </div>
+    </header>
+
+    <div class="student-scroll">
+      <div style="max-width:860px;margin:0 auto;">
+
+        <div class="game-page-header" style="background:linear-gradient(135deg,#16A34A,#15803D);">
+          <div style="font-size:3.5rem;margin-bottom:.4rem;">🎨</div>
+          <div class="game-page-title">¡Puntillismo!</div>
+          <div class="game-page-sub">Haz clic para poner puntos de color y crear tu obra de arte 🖼️</div>
+        </div>
+
+        <div class="game-area">
+
+          <div class="drawing-tools" style="gap:1rem;margin-bottom:1.25rem;">
+            <div style="display:flex;flex-direction:column;gap:.45rem;">
+              <span style="font-size:.78rem;font-weight:800;color:var(--text-mid);font-family:var(--font-accent);">COLOR</span>
+              <div style="display:flex;gap:.5rem;flex-wrap:wrap;max-width:280px;">
+                <button class="color-btn selected" style="background:#7C3AED;" data-color="#7C3AED" title="Morado"></button>
+                <button class="color-btn" style="background:#EC4899;" data-color="#EC4899" title="Rosa"></button>
+                <button class="color-btn" style="background:#EF4444;" data-color="#EF4444" title="Rojo"></button>
+                <button class="color-btn" style="background:#F97316;" data-color="#F97316" title="Naranja"></button>
+                <button class="color-btn" style="background:#FBBF24;" data-color="#FBBF24" title="Amarillo"></button>
+                <button class="color-btn" style="background:#10B981;" data-color="#10B981" title="Verde"></button>
+                <button class="color-btn" style="background:#3B82F6;" data-color="#3B82F6" title="Azul"></button>
+                <button class="color-btn" style="background:#06B6D4;" data-color="#06B6D4" title="Celeste"></button>
+                <button class="color-btn" style="background:#8B5CF6;" data-color="#8B5CF6" title="Lila"></button>
+                <button class="color-btn" style="background:#F43F5E;" data-color="#F43F5E" title="Fucsia"></button>
+                <button class="color-btn" style="background:#1E1B4B;" data-color="#1E1B4B" title="Azul Oscuro"></button>
+                <button class="color-btn" style="background:#000000;" data-color="#000000" title="Negro"></button>
+              </div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:.45rem;align-items:flex-start;">
+              <span style="font-size:.78rem;font-weight:800;color:var(--text-mid);font-family:var(--font-accent);">TAMAÑO</span>
+              <div style="display:flex;gap:.6rem;align-items:center;">
+                <button class="dot-size-btn" data-size="6" title="Pequeño"><span class="dot-preview" style="width:8px;height:8px;"></span></button>
+                <button class="dot-size-btn selected" data-size="14" title="Mediano"><span class="dot-preview" style="width:14px;height:14px;"></span></button>
+                <button class="dot-size-btn" data-size="24" title="Grande"><span class="dot-preview" style="width:22px;height:22px;"></span></button>
+                <button class="dot-size-btn" data-size="38" title="Muy Grande"><span class="dot-preview" style="width:32px;height:32px;"></span></button>
+              </div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:.45rem;align-items:flex-start;margin-left:auto;">
+              <span style="font-size:.78rem;font-weight:800;color:var(--text-mid);font-family:var(--font-accent);">ACCIONES</span>
+              <div style="display:flex;gap:.5rem;">
+                <button class="tool-btn" id="btn-undo">↩️ Deshacer</button>
+                <button class="tool-btn" onclick="clearCanvas()">🗑️ Limpiar</button>
+                <button class="tool-btn" onclick="downloadCanvas()">💾 Guardar</button>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:1rem;margin-bottom:.75rem;font-family:var(--font-accent);font-weight:700;font-size:.88rem;color:var(--text-mid);">
+            <span>Puntos colocados: <strong id="dot-counter" style="color:var(--primary);font-size:1.05rem;">0</strong></span>
+            <div id="color-preview" style="width:28px;height:28px;border-radius:50%;background:#7C3AED;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,.2);transition:background .2s;"></div>
+          </div>
+
+          <canvas id="puntillismo-canvas" width="800" height="460"
+            style="width:100%;display:block;cursor:crosshair;touch-action:none;background:#FFFDF5;"></canvas>
+
+          <div style="text-align:center;margin-top:1.75rem;">
+            <button onclick="saveArtwork()" class="btn btn-secondary" style="font-size:1.05rem;padding:.8rem 2rem;">
+              🌟 ¡Guardar mi obra de arte!
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /student-scroll -->
+  </div><!-- /student-main -->
+</div><!-- /student-layout -->
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<script>
+const canvas = document.getElementById('puntillismo-canvas');
+const ctx    = canvas.getContext('2d');
+let dotColor = '#7C3AED';
+let dotSize  = 14;
+let isPointing = false;
+let dotHistory = [];
+let dotCount = 0;
+
+ctx.fillStyle = '#FFFDF5';
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+function getPos(e) {
+  const rect   = canvas.getBoundingClientRect();
+  const scaleX = canvas.width  / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const src    = e.touches ? e.touches[0] : e;
+  return { x: (src.clientX - rect.left) * scaleX, y: (src.clientY - rect.top) * scaleY };
+}
+
+function placeDot(x, y) {
+  ctx.beginPath();
+  ctx.arc(x, y, dotSize / 2, 0, Math.PI * 2);
+  ctx.fillStyle = dotColor;
+  ctx.fill();
+  dotHistory.push({ x, y, color: dotColor, size: dotSize });
+  dotCount++;
+  document.getElementById('dot-counter').textContent = dotCount;
+}
+
+canvas.addEventListener('mousedown', e => { isPointing = true; placeDot(...Object.values(getPos(e))); });
+canvas.addEventListener('mousemove', e => {
+  if (!isPointing) return;
+  const { x, y } = getPos(e);
+  const last = dotHistory[dotHistory.length - 1];
+  if (last) { const dx = x - last.x, dy = y - last.y; if (Math.sqrt(dx*dx + dy*dy) < dotSize * 0.9) return; }
+  placeDot(x, y);
+});
+canvas.addEventListener('mouseup',    () => { isPointing = false; });
+canvas.addEventListener('mouseleave', () => { isPointing = false; });
+canvas.addEventListener('touchstart', e => { e.preventDefault(); isPointing = true; placeDot(...Object.values(getPos(e))); }, { passive: false });
+canvas.addEventListener('touchmove', e => {
+  e.preventDefault();
+  if (!isPointing) return;
+  const { x, y } = getPos(e);
+  const last = dotHistory[dotHistory.length - 1];
+  if (last) { const dx = x - last.x, dy = y - last.y; if (Math.sqrt(dx*dx + dy*dy) < dotSize * 0.9) return; }
+  placeDot(x, y);
+}, { passive: false });
+canvas.addEventListener('touchend', () => { isPointing = false; });
+
+document.querySelectorAll('.color-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    dotColor = btn.dataset.color;
+    document.getElementById('color-preview').style.background = dotColor;
+  });
+});
+
+document.querySelectorAll('.dot-size-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.dot-size-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    dotSize = parseInt(btn.dataset.size);
+  });
+});
+
+document.getElementById('btn-undo').addEventListener('click', () => {
+  if (!dotHistory.length) return;
+  dotHistory.pop();
+  dotCount = Math.max(0, dotCount - 1);
+  document.getElementById('dot-counter').textContent = dotCount;
+  ctx.fillStyle = '#FFFDF5';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  dotHistory.forEach(d => {
+    ctx.beginPath();
+    ctx.arc(d.x, d.y, d.size / 2, 0, Math.PI * 2);
+    ctx.fillStyle = d.color;
+    ctx.fill();
+  });
+});
+
+function clearCanvas() {
+  ctx.fillStyle = '#FFFDF5';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  dotHistory = []; dotCount = 0;
+  document.getElementById('dot-counter').textContent = 0;
+}
+
+function downloadCanvas() {
+  const a = document.createElement('a');
+  a.download = 'mi-puntillismo.png';
+  a.href = canvas.toDataURL('image/png');
+  a.click();
+}
+
+function getCookie(name) {
+  for (let c of document.cookie.split(';')) {
+    const [k, v] = c.trim().split('=');
+    if (k === name) return decodeURIComponent(v);
+  }
+  return '';
+}
+
+function saveArtwork() {
+  if (dotCount < 5) { if (window.Toast) Toast.show('¡Pon más puntos primero! 🎨', 'warning'); return; }
+  fetch('{% url "save_game_score" %}', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+    body: JSON.stringify({ game_type: 'puntillismo', score: dotCount, stars_earned: 4 }),
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (window.Confetti) Confetti.fire();
+    if (window.Toast) Toast.show('¡Obra guardada! ⭐ +4 estrellas', 'success');
+  })
+  .catch(() => { if (window.Toast) Toast.show('¡Arte guardado! 🎨', 'success'); });
+}
+
+// Layout init
+(function(){
+  var d=document.getElementById('topbarDate');
+  if(d)d.textContent=new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long'});
+  var pb=document.getElementById('sidebarProfileBtn'),pd=document.getElementById('profileDropdown'),pc=document.getElementById('profileChevron');
+  if(pb&&pd){pb.addEventListener('click',function(e){e.stopPropagation();var o=pd.classList.toggle('open');pc.style.transform=o?'rotate(180deg)':'';});document.addEventListener('click',function(){pd.classList.remove('open');pc.style.transform='';});}
+  var t=document.getElementById('sidebarToggle'),s=document.getElementById('studentSidebar'),ov=document.getElementById('sidebarOverlay');
+  if(t&&s&&ov){t.addEventListener('click',function(){s.classList.toggle('open');ov.classList.toggle('open');});ov.addEventListener('click',function(){s.classList.remove('open');ov.classList.remove('open');});}
+  var dt=document.getElementById('darkModeToggle'),di=document.getElementById('darkModeIcon');
+  function sd(on){document.body.classList.toggle('student-dark',on);if(di)di.className=on?'bi bi-sun-fill':'bi bi-moon-fill';}
+  sd(localStorage.getItem('student_dark')==='1');
+  if(dt)dt.addEventListener('click',function(){var on=!document.body.classList.contains('student-dark');sd(on);localStorage.setItem('student_dark',on?'1':'0');});
+})();
+</script>
+{% endblock %}

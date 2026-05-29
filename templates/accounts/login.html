@@ -1,0 +1,788 @@
+﻿{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Ingresar — Manitos Creativas{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Reset de body para pantalla completa ── */
+body {
+  margin: 0;
+  padding: 0;
+  background: #1E1B4B;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── Layout principal split-screen ── */
+.login-split {
+  display: grid;
+  grid-template-columns: 55% 45%;
+  min-height: 100vh;
+}
+
+/* ════════════════════════════════════════
+   PANEL IZQUIERDO — decorativo
+   ════════════════════════════════════════ */
+.login-deco {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(145deg, #5B21B6 0%, #7C3AED 30%, #C026D3 65%, #EC4899 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 3.5rem;
+  clip-path: polygon(0 0, 92% 0, 100% 50%, 92% 100%, 0 100%);
+}
+
+/* Fondo de manchas de pintura decorativas */
+.login-deco::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 320px 220px at 15% 20%, rgba(251,191,36,.22) 0%, transparent 70%),
+    radial-gradient(ellipse 280px 280px at 80% 75%, rgba(16,185,129,.18) 0%, transparent 70%),
+    radial-gradient(ellipse 200px 200px at 60% 10%, rgba(59,130,246,.2) 0%, transparent 70%),
+    radial-gradient(ellipse 250px 180px at 25% 85%, rgba(249,115,22,.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* Patrón de puntos sutil */
+.login-deco::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(255,255,255,.08) 1px, transparent 1px);
+  background-size: 28px 28px;
+  pointer-events: none;
+}
+
+/* ── Logo y marca ── */
+.deco-brand {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  animation: deco-enter .9s cubic-bezier(.34,1.56,.64,1) both;
+}
+
+.deco-logo-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 170px;
+  height: 170px;
+  background: rgba(255,255,255,.18);
+  backdrop-filter: blur(12px);
+  border-radius: 44px;
+  border: 2px solid rgba(255,255,255,.3);
+  margin-bottom: 1.5rem;
+  box-shadow: 0 20px 60px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.3);
+  animation: logo-breathe 3s ease-in-out infinite;
+}
+
+.deco-logo-wrap img {
+  width: 120px;
+  height: auto;
+  filter: drop-shadow(0 4px 16px rgba(0,0,0,.3));
+}
+
+@keyframes logo-breathe {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  50%       { transform: scale(1.04) rotate(-2deg); }
+}
+
+.deco-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: 2.8rem;
+  color: #fff;
+  line-height: 1.1;
+  margin-bottom: .6rem;
+  text-shadow: 0 4px 20px rgba(0,0,0,.2);
+  letter-spacing: -.5px;
+}
+
+.deco-subtitle {
+  font-family: 'Nunito', sans-serif;
+  font-size: 1.05rem;
+  color: rgba(255,255,255,.82);
+  max-width: 300px;
+  line-height: 1.5;
+  margin-bottom: 2.5rem;
+}
+
+/* ── Paleta de colores decorativa ── */
+.deco-palette {
+  display: flex;
+  gap: .75rem;
+  justify-content: center;
+  margin-bottom: 2.5rem;
+  position: relative;
+  z-index: 2;
+}
+
+.deco-color-dot {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 3px solid rgba(255,255,255,.5);
+  box-shadow: 0 6px 20px rgba(0,0,0,.2);
+  cursor: default;
+  transition: transform .25s cubic-bezier(.34,1.56,.64,1);
+  animation: dot-pop .6s cubic-bezier(.34,1.56,.64,1) both;
+}
+.deco-color-dot:hover { transform: scale(1.25) translateY(-4px); }
+.deco-color-dot:nth-child(1) { background: #FBBF24; animation-delay: .1s; }
+.deco-color-dot:nth-child(2) { background: #10B981; animation-delay: .2s; }
+.deco-color-dot:nth-child(3) { background: #3B82F6; animation-delay: .3s; }
+.deco-color-dot:nth-child(4) { background: #F97316; animation-delay: .4s; }
+.deco-color-dot:nth-child(5) { background: #EC4899; animation-delay: .5s; }
+
+@keyframes dot-pop {
+  from { opacity: 0; transform: scale(0) rotate(180deg); }
+  to   { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+
+/* ── Tarjetas de características ── */
+.deco-features {
+  display: flex;
+  flex-direction: column;
+  gap: .75rem;
+  width: 100%;
+  max-width: 300px;
+  position: relative;
+  z-index: 2;
+}
+
+.deco-feat {
+  display: flex;
+  align-items: center;
+  gap: .9rem;
+  background: rgba(255,255,255,.13);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 16px;
+  padding: .75rem 1rem;
+  animation: feat-slide .7s cubic-bezier(.34,1.56,.64,1) both;
+}
+.deco-feat:nth-child(1) { animation-delay: .2s; }
+.deco-feat:nth-child(2) { animation-delay: .35s; }
+.deco-feat:nth-child(3) { animation-delay: .5s; }
+
+.deco-feat-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,.2);
+  border-radius: 10px;
+  color: #fff;
+}
+
+.deco-feat-text {
+  font-family: 'Nunito', sans-serif;
+  font-size: .88rem;
+  font-weight: 700;
+  color: rgba(255,255,255,.92);
+  line-height: 1.3;
+}
+
+@keyframes feat-slide {
+  from { opacity: 0; transform: translateX(-24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ── Elementos flotantes de arte ── */
+.deco-float {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1;
+  opacity: .35;
+  font-size: 1.8rem;
+  color: rgba(255,255,255,.9);
+  animation: art-float ease-in-out infinite;
+}
+
+@keyframes art-float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  33%       { transform: translateY(-14px) rotate(8deg); }
+  66%       { transform: translateY(7px) rotate(-5deg); }
+}
+
+/* Manchas de pintura SVG animadas */
+.paint-blob {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1;
+  opacity: .25;
+  animation: blob-drift ease-in-out infinite;
+}
+
+@keyframes blob-drift {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  50%       { transform: scale(1.08) rotate(12deg); }
+}
+
+@keyframes deco-enter {
+  from { opacity: 0; transform: translateY(40px) scale(.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ════════════════════════════════════════
+   PANEL DERECHO — formulario
+   ════════════════════════════════════════ */
+.login-form-panel {
+  background: #FAFAFA;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Fondo suave */
+.login-form-panel::before {
+  content: '';
+  position: absolute;
+  top: -100px;
+  right: -100px;
+  width: 350px;
+  height: 350px;
+  background: radial-gradient(circle, rgba(167,139,250,.12) 0%, transparent 70%);
+  border-radius: 50%;
+}
+.login-form-panel::after {
+  content: '';
+  position: absolute;
+  bottom: -80px;
+  left: -80px;
+  width: 280px;
+  height: 280px;
+  background: radial-gradient(circle, rgba(236,72,153,.08) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.login-form-inner {
+  width: 100%;
+  max-width: 380px;
+  position: relative;
+  z-index: 1;
+  animation: form-enter .8s cubic-bezier(.34,1.56,.64,1) .15s both;
+}
+
+@keyframes form-enter {
+  from { opacity: 0; transform: translateX(30px) scale(.97); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+/* ── Encabezado del formulario ── */
+.form-greeting {
+  margin-bottom: 2rem;
+}
+
+.form-eyebrow {
+  font-family: 'Baloo 2', cursive;
+  font-size: .8rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #7C3AED;
+  margin-bottom: .4rem;
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+}
+
+.form-eyebrow::before {
+  content: '';
+  display: inline-block;
+  width: 24px;
+  height: 2px;
+  background: linear-gradient(90deg, #7C3AED, #EC4899);
+  border-radius: 2px;
+}
+
+.form-main-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: 2.2rem;
+  color: #1E1B4B;
+  line-height: 1.1;
+  margin-bottom: .5rem;
+}
+
+.form-desc {
+  font-family: 'Nunito', sans-serif;
+  font-size: .92rem;
+  color: #6B7280;
+  line-height: 1.5;
+}
+
+/* ── Alerta de error ── */
+.auth-error-box {
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+  background: #FEF2F2;
+  border: 1.5px solid #FECACA;
+  border-radius: 14px;
+  padding: .85rem 1rem;
+  margin-bottom: 1.5rem;
+  font-family: 'Nunito', sans-serif;
+  font-size: .88rem;
+  color: #DC2626;
+  font-weight: 600;
+  animation: shake .4s cubic-bezier(.36,.07,.19,.97);
+}
+
+@keyframes shake {
+  10%, 90% { transform: translateX(-3px); }
+  20%, 80% { transform: translateX(4px); }
+  30%, 70% { transform: translateX(-4px); }
+  40%, 60% { transform: translateX(3px); }
+  50%       { transform: translateX(-2px); }
+}
+
+/* ── Inputs del formulario ── */
+.lf-group {
+  margin-bottom: 1.25rem;
+}
+
+.lf-label {
+  display: flex;
+  align-items: center;
+  gap: .35rem;
+  font-family: 'Baloo 2', cursive;
+  font-weight: 700;
+  font-size: .85rem;
+  color: #374151;
+  margin-bottom: .45rem;
+  letter-spacing: .3px;
+}
+
+.lf-label i { color: #7C3AED; font-size: .9rem; }
+
+.lf-input-wrap {
+  position: relative;
+}
+
+.lf-input {
+  width: 100%;
+  padding: .85rem 1rem;
+  font-family: 'Nunito', sans-serif;
+  font-size: .95rem;
+  color: #1E1B4B;
+  background: #fff;
+  border: 2px solid #E5E7EB;
+  border-radius: 14px;
+  outline: none;
+  transition: border-color .2s, box-shadow .2s;
+  box-sizing: border-box;
+}
+
+.lf-input:focus {
+  border-color: #7C3AED;
+  box-shadow: 0 0 0 4px rgba(124,58,237,.1);
+}
+
+.lf-input::placeholder { color: #D1D5DB; }
+
+.lf-eye-btn {
+  position: absolute;
+  right: .85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.1rem;
+  color: #9CA3AF;
+  padding: .25rem;
+  border-radius: 6px;
+  transition: color .2s, background .2s;
+  display: flex;
+  align-items: center;
+}
+
+.lf-eye-btn:hover { color: #7C3AED; background: rgba(124,58,237,.08); }
+
+/* ── Botón de submit ── */
+.lf-submit {
+  width: 100%;
+  padding: 1rem 1.5rem;
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.1rem;
+  letter-spacing: .5px;
+  color: #fff;
+  background: linear-gradient(135deg, #7C3AED 0%, #C026D3 60%, #EC4899 100%);
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: transform .2s cubic-bezier(.34,1.56,.64,1), box-shadow .2s;
+  box-shadow: 0 8px 28px rgba(124,58,237,.38);
+  margin-top: .5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+}
+
+.lf-submit::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,.15) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity .2s;
+}
+
+.lf-submit:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 14px 36px rgba(124,58,237,.48);
+}
+.lf-submit:hover::before { opacity: 1; }
+.lf-submit:active { transform: translateY(0) scale(.99); }
+
+/* ── Divisor ── */
+.lf-divider {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  margin: 1.5rem 0 1.25rem;
+}
+
+.lf-divider-line {
+  flex: 1;
+  height: 1px;
+  background: #E5E7EB;
+}
+
+.lf-divider-text {
+  font-family: 'Nunito', sans-serif;
+  font-size: .8rem;
+  color: #9CA3AF;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+/* ── Links de registro ── */
+.lf-register-links {
+  display: flex;
+  flex-direction: column;
+  gap: .6rem;
+}
+
+.lf-reg-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  padding: .75rem 1rem;
+  font-family: 'Baloo 2', cursive;
+  font-size: .88rem;
+  font-weight: 700;
+  border-radius: 14px;
+  text-decoration: none;
+  transition: transform .2s, background .2s, box-shadow .2s;
+  border: 2px solid transparent;
+}
+
+.lf-reg-btn.student {
+  background: rgba(124,58,237,.08);
+  color: #7C3AED;
+  border-color: rgba(124,58,237,.2);
+}
+.lf-reg-btn.student:hover {
+  background: rgba(124,58,237,.14);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(124,58,237,.2);
+}
+
+.lf-reg-btn.teacher {
+  background: rgba(236,72,153,.06);
+  color: #9D174D;
+  border-color: rgba(236,72,153,.15);
+}
+.lf-reg-btn.teacher:hover {
+  background: rgba(236,72,153,.12);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(236,72,153,.2);
+}
+
+/* ── Botón Google ── */
+.lf-google-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .65rem;
+  width: 100%;
+  padding: .85rem 1rem;
+  font-family: 'Baloo 2', cursive;
+  font-size: .95rem;
+  font-weight: 700;
+  color: #374151;
+  background: #fff;
+  border: 2px solid #E5E7EB;
+  border-radius: 14px;
+  text-decoration: none;
+  transition: border-color .2s, box-shadow .2s, transform .2s;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+.lf-google-btn:hover {
+  border-color: #4285F4;
+  box-shadow: 0 4px 16px rgba(66,133,244,.18);
+  transform: translateY(-1px);
+}
+
+/* ── Volver al inicio ── */
+.lf-back {
+  text-align: center;
+  margin-top: 1.5rem;
+}
+
+.lf-back a {
+  font-family: 'Nunito', sans-serif;
+  font-size: .82rem;
+  color: #9CA3AF;
+  text-decoration: none;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  transition: color .2s;
+}
+.lf-back a:hover { color: #7C3AED; }
+
+/* ════════════════════════════════════════
+   RESPONSIVE — móvil
+   ════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .login-split {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  .login-deco {
+    clip-path: polygon(0 0, 100% 0, 100% 85%, 50% 100%, 0 85%);
+    padding: 2.5rem 2rem 3.5rem;
+    min-height: auto;
+  }
+
+  .deco-logo-wrap { width: 120px; height: 120px; border-radius: 32px; }
+  .deco-logo-wrap img { width: 80px; }
+  .deco-title { font-size: 2rem; }
+  .deco-subtitle { display: none; }
+  .deco-features { display: none; }
+  .deco-palette { margin-bottom: 1rem; }
+  .deco-color-dot { width: 36px; height: 36px; }
+
+  .login-form-panel {
+    padding: 2.5rem 1.5rem;
+  }
+}
+</style>
+{% endblock %}
+
+{% block body_content %}
+
+<div class="login-split">
+
+  <!-- ══════════════ PANEL IZQUIERDO ══════════════ -->
+  <div class="login-deco">
+
+    <!-- Manchas de pintura SVG decorativas -->
+    <svg class="paint-blob" style="top:-5%;left:-8%;width:220px;height:220px;animation-duration:9s;" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <path fill="#FBBF24" d="M47.3,-61.7C59.4,-51.6,66,-35.1,69.2,-18.2C72.3,-1.3,72,16,65.4,30.4C58.9,44.8,46.1,56.3,31.4,63.3C16.6,70.3,-0.1,72.8,-17.2,69.3C-34.3,65.8,-51.8,56.4,-62.2,42.3C-72.7,28.2,-76.1,9.5,-72.3,-7.4C-68.5,-24.4,-57.6,-39.5,-44,-50.2C-30.4,-60.9,-15.2,-67.2,1.2,-68.7C17.7,-70.2,35.3,-71.9,47.3,-61.7Z" transform="translate(100 100)"/>
+    </svg>
+
+    <svg class="paint-blob" style="bottom:5%;right:8%;width:180px;height:180px;animation-duration:11s;animation-delay:2s;" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <path fill="#10B981" d="M43.6,-55.2C56.2,-44.5,65.8,-30.2,69.4,-14.3C73.1,1.6,70.8,19.2,63.2,33.8C55.5,48.4,42.4,60,27.2,66.4C12,72.7,-5.3,73.8,-21.8,69.2C-38.3,64.5,-54,54.2,-63.1,39.9C-72.2,25.6,-74.7,7.3,-71.3,-9.9C-67.8,-27.1,-58.4,-43.3,-45.3,-53.9C-32.1,-64.5,-16.1,-69.6,0.4,-70.1C16.9,-70.5,31,-65.9,43.6,-55.2Z" transform="translate(100 100)"/>
+    </svg>
+
+    <svg class="paint-blob" style="top:40%;left:-5%;width:130px;height:130px;animation-duration:7s;animation-delay:1s;" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <path fill="#3B82F6" d="M39.5,-51.4C51.1,-41.5,60.4,-28.6,64.8,-13.6C69.2,1.4,68.7,18.5,61.5,32C54.3,45.5,40.4,55.4,25.4,61.3C10.3,67.2,-5.9,69,-20.8,65C-35.7,61,-49.2,51.2,-57.5,37.9C-65.7,24.6,-68.6,7.8,-65.7,-7.6C-62.8,-23,-54.1,-37,-42.3,-46.9C-30.5,-56.8,-15.3,-62.6,-0.2,-62.3C14.8,-62.1,27.9,-61.3,39.5,-51.4Z" transform="translate(100 100)"/>
+    </svg>
+
+    <!-- Elementos flotantes de arte (Bootstrap Icons) -->
+    <div class="deco-float" style="top:7%;left:6%;animation-duration:5s;animation-delay:.5s;"><i class="bi bi-palette2"></i></div>
+    <div class="deco-float" style="top:12%;right:10%;font-size:1.4rem;animation-duration:6s;animation-delay:1.2s;"><i class="bi bi-stars"></i></div>
+    <div class="deco-float" style="top:72%;left:5%;font-size:1.6rem;animation-duration:4.5s;animation-delay:.8s;"><i class="bi bi-pencil"></i></div>
+    <div class="deco-float" style="top:80%;right:9%;font-size:1.5rem;animation-duration:7s;animation-delay:2s;"><i class="bi bi-brush"></i></div>
+    <div class="deco-float" style="top:45%;left:3%;font-size:1.3rem;animation-duration:5.5s;animation-delay:1.8s;"><i class="bi bi-scissors"></i></div>
+    <div class="deco-float" style="top:30%;right:6%;font-size:1.4rem;animation-duration:6.5s;animation-delay:.3s;"><i class="bi bi-pen"></i></div>
+
+    <!-- Contenido de marca -->
+    <div class="deco-brand">
+      <div class="deco-logo-wrap">
+        <img src="{% static 'images/logo.png' %}" alt="Manitos Creativas">
+      </div>
+      <h2 class="deco-title">Manitos<br>Creativas</h2>
+      <p class="deco-subtitle">
+        ¡El lugar donde los pequeños artistas dan vida a su imaginación!
+      </p>
+    </div>
+
+    <!-- Paleta de colores -->
+    <div class="deco-palette">
+      <div class="deco-color-dot" title="Amarillo creativo"></div>
+      <div class="deco-color-dot" title="Verde naturaleza"></div>
+      <div class="deco-color-dot" title="Azul cielo"></div>
+      <div class="deco-color-dot" title="Naranja energía"></div>
+      <div class="deco-color-dot" title="Rosa alegría"></div>
+    </div>
+
+    <!-- Tarjetas de características -->
+    <div class="deco-features">
+      <div class="deco-feat">
+        <span class="deco-feat-icon"><i class="bi bi-palette-fill"></i></span>
+        <span class="deco-feat-text">Actividades creativas para niños de 3 a 7 años</span>
+      </div>
+      <div class="deco-feat">
+        <span class="deco-feat-icon"><i class="bi bi-award-fill"></i></span>
+        <span class="deco-feat-text">Aprende jugando y gana recompensas especiales</span>
+      </div>
+      <div class="deco-feat">
+        <span class="deco-feat-icon"><i class="bi bi-mortarboard-fill"></i></span>
+        <span class="deco-feat-text">Docentes guías en cada paso del aprendizaje</span>
+      </div>
+    </div>
+
+  </div><!-- / .login-deco -->
+
+
+  <!-- ══════════════ PANEL DERECHO ══════════════ -->
+  <div class="login-form-panel">
+    <div class="login-form-inner">
+
+      <!-- Encabezado -->
+      <div class="form-greeting">
+        <div class="form-eyebrow">Bienvenido/a de vuelta</div>
+        <h1 class="form-main-title">¡Hola de nuevo!</h1>
+        <p class="form-desc">Ingresa tus datos para continuar tu aventura creativa.</p>
+      </div>
+
+      <!-- Error -->
+      {% if form.errors %}
+      <div class="auth-error-box">
+        <i class="bi bi-x-circle-fill" style="font-size:1.1rem;flex-shrink:0;"></i>
+        <span>Usuario o contraseña incorrectos. ¡Inténtalo de nuevo!</span>
+      </div>
+      {% endif %}
+
+      <!-- Formulario -->
+      <form method="post" novalidate>
+        {% csrf_token %}
+
+        <div class="lf-group">
+          <label class="lf-label" for="{{ form.username.id_for_label }}">
+            <i class="bi bi-person-fill"></i> Usuario
+          </label>
+          <div class="lf-input-wrap">
+            <input
+              type="text"
+              id="{{ form.username.id_for_label }}"
+              name="{{ form.username.html_name }}"
+              class="lf-input"
+              placeholder="Tu nombre de usuario"
+              value="{{ form.username.value|default:'' }}"
+              autocomplete="username"
+              required
+              autofocus
+            >
+          </div>
+        </div>
+
+        <div class="lf-group">
+          <label class="lf-label" for="{{ form.password.id_for_label }}">
+            <i class="bi bi-lock-fill"></i> Contraseña
+          </label>
+          <div class="lf-input-wrap">
+            <input
+              type="password"
+              id="{{ form.password.id_for_label }}"
+              name="{{ form.password.html_name }}"
+              class="lf-input"
+              placeholder="••••••••"
+              autocomplete="current-password"
+              required
+              style="padding-right: 3rem;"
+            >
+            <button
+              type="button"
+              class="lf-eye-btn"
+              onclick="togglePass(this)"
+              title="Mostrar/ocultar contraseña"
+            >
+              <i class="bi bi-eye-fill"></i>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="lf-submit">
+          <i class="bi bi-box-arrow-in-right"></i>
+          Ingresar
+        </button>
+      </form>
+
+      <!-- Google OAuth -->
+      <div class="lf-divider">
+        <div class="lf-divider-line"></div>
+        <span class="lf-divider-text">o continúa con</span>
+        <div class="lf-divider-line"></div>
+      </div>
+
+      <a href="{% url 'social:begin' 'google-oauth2' %}" class="lf-google-btn">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908C16.457 14.013 17.64 11.773 17.64 9.2z" fill="#4285F4"/>
+          <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z" fill="#34A853"/>
+          <path d="M3.964 10.707A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.707V4.961H.957C.347 6.175 0 7.55 0 9s.348 2.825.957 4.039l3.007-2.332z" fill="#FBBC05"/>
+          <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 6.293C4.672 4.166 6.656 3.58 9 3.58z" fill="#EA4335"/>
+        </svg>
+        Continuar con Google
+      </a>
+
+      <!-- Divisor -->
+      <div class="lf-divider" style="margin-top:1.25rem;">
+        <div class="lf-divider-line"></div>
+        <span class="lf-divider-text">¿Eres nuevo aquí?</span>
+        <div class="lf-divider-line"></div>
+      </div>
+
+      <!-- Link de registro -->
+      <div class="lf-register-links">
+        <a href="{% url 'register_student' %}" class="lf-reg-btn student">
+          <i class="bi bi-person-plus-fill"></i>
+          ¿Primera vez? Registrar estudiante
+        </a>
+      </div>
+
+      <!-- Volver al inicio -->
+      <div class="lf-back">
+        <a href="/">
+          <i class="bi bi-arrow-left"></i>
+          Volver al inicio
+        </a>
+      </div>
+
+    </div>
+  </div><!-- / .login-form-panel -->
+
+</div><!-- / .login-split -->
+
+<script>
+function togglePass(btn) {
+  const input = btn.previousElementSibling;
+  input.type = input.type === 'password' ? 'text' : 'password';
+  btn.innerHTML = input.type === 'password'
+    ? '<i class="bi bi-eye-fill"></i>'
+    : '<i class="bi bi-eye-slash-fill"></i>';
+}
+</script>
+
+{% endblock %}
