@@ -326,11 +326,6 @@ body {
   box-shadow: 0 8px 24px rgba(0,0,0,.25);
 }
 
-.role-card.teacher-card:hover {
-  border-color: rgba(124,58,237,.35);
-  background: rgba(124,58,237,.07);
-}
-
 .role-card.student-card:hover {
   border-color: rgba(16,185,129,.35);
   background: rgba(16,185,129,.06);
@@ -345,11 +340,6 @@ body {
   justify-content: center;
   font-size: 1.35rem;
   flex-shrink: 0;
-}
-
-.teacher-card .role-icon {
-  background: rgba(124,58,237,.12);
-  border: 1px solid rgba(124,58,237,.2);
 }
 
 .student-card .role-icon {
@@ -387,8 +377,7 @@ body {
   transform: translateX(3px);
 }
 
-.teacher-card:hover .role-arrow { color: rgba(167,139,250,.7); }
-.student-card:hover .role-arrow  { color: rgba(52,211,153,.7); }
+.student-card:hover .role-arrow { color: rgba(52,211,153,.7); }
 
 /* ── Link de regreso ── */
 .auth-back {
@@ -448,8 +437,7 @@ body {
   background: #F3F4F6;
   border-color: #D1D5DB;
 }
-[data-theme="light"] .teacher-card:hover { border-color: rgba(124,58,237,.4); background: rgba(124,58,237,.05); }
-[data-theme="light"] .student-card:hover  { border-color: rgba(16,185,129,.4); background: rgba(16,185,129,.04); }
+[data-theme="light"] .student-card:hover { border-color: rgba(16,185,129,.4); background: rgba(16,185,129,.04); }
 [data-theme="light"] .role-name  { color: #1E1B4B; }
 [data-theme="light"] .role-desc  { color: #6B7280; }
 [data-theme="light"] .role-arrow { color: #D1D5DB; }
@@ -524,23 +512,14 @@ body {
     </div>
     {% endif %}
 
-    <p class="options-label">¿Con qué perfil quieres registrarte?</p>
+    <p class="options-label">¿Quieres crear una cuenta?</p>
 
     <div class="role-cards">
-
-      <a href="{% url 'register_teacher' %}" class="role-card teacher-card">
-        <div class="role-icon">🎨</div>
-        <div class="role-info">
-          <div class="role-name">Soy profesora / profesor</div>
-          <div class="role-desc">Crea cursos, gestiona estudiantes y conecta Gmail</div>
-        </div>
-        <i class="bi bi-chevron-right role-arrow"></i>
-      </a>
 
       <a href="{% url 'register_student' %}" class="role-card student-card">
         <div class="role-icon">⭐</div>
         <div class="role-info">
-          <div class="role-name">Soy estudiante</div>
+          <div class="role-name">Registrarme como estudiante</div>
           <div class="role-desc">Explora cursos, gana logros y muestra tu arte</div>
         </div>
         <i class="bi bi-chevron-right role-arrow"></i>
