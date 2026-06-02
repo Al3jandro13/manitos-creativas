@@ -263,6 +263,68 @@ h1 {
   margin: 0 auto;
 }
 
+/* ── YA PAGUÉ ── */
+.paid-card {
+  background: rgba(124,58,237,.07);
+  border: 1px solid rgba(124,58,237,.22);
+  border-radius: 16px;
+  padding: 1.4rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+}
+
+.paid-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  background: rgba(124,58,237,.18);
+  border: 1px solid rgba(124,58,237,.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+
+.paid-text { flex: 1; }
+
+.paid-title {
+  font-size: .94rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: .2rem;
+}
+
+.paid-sub {
+  font-size: .8rem;
+  color: rgba(255,255,255,.42);
+  line-height: 1.45;
+}
+
+.paid-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  margin-top: .85rem;
+  padding: .65rem 1.3rem;
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-family: 'Outfit', sans-serif;
+  font-size: .875rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: opacity .2s, transform .15s;
+  box-shadow: 0 4px 18px rgba(124,58,237,.35);
+}
+
+.paid-btn:hover { opacity: .88; transform: translateY(-1px); }
+
+.paid-btn svg { width: 16px; height: 16px; fill: #fff; }
+
 /* ── SOPORTE ── */
 .support-card {
   background: rgba(255,255,255,.04);
@@ -400,6 +462,19 @@ h1 {
         <div class="pm-label">Davivienda — número de cuenta</div>
         <div class="pm-value">#0190 0007 4518</div>
       </div>
+    </div>
+  </div>
+
+  <!-- Ya pagué -->
+  <div class="paid-card">
+    <div class="paid-icon">✅</div>
+    <div class="paid-text">
+      <div class="paid-title">¿Ya realizaste el pago?</div>
+      <div class="paid-sub">Si tu pago ya fue confirmado, vuelve a acceder al programa normalmente.</div>
+      <a href="/" class="paid-btn">
+        <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+        Ingresar al programa
+      </a>
     </div>
   </div>
 
