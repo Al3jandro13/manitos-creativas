@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Servicio Suspendido — Manitos Creativas</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #08091A;
+  font-family: 'Outfit', sans-serif;
+  padding: 2rem 1rem;
+  position: relative;
+  overflow: hidden;
+}
+
+body::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 40%, #3b0a0a44 0%, transparent 60%);
+}
+
+.card {
+  position: relative;
+  z-index: 1;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(239,68,68,.2);
+  border-radius: 24px;
+  padding: 3rem 2.5rem;
+  width: 100%;
+  max-width: 460px;
+  text-align: center;
+  backdrop-filter: blur(16px);
+}
+
+.icon-wrap {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ef4444, #b91c1c);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+  box-shadow: 0 0 50px #ef444455;
+  animation: pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 50px #ef444455; }
+  50% { box-shadow: 0 0 70px #ef444488; }
+}
+
+.icon-wrap svg {
+  width: 38px;
+  height: 38px;
+  fill: #fff;
+}
+
+h1 {
+  color: #fff;
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: .6rem;
+  letter-spacing: -.4px;
+}
+
+.subtitle {
+  color: rgba(255,255,255,.5);
+  font-size: .95rem;
+  line-height: 1.6;
+  margin-bottom: 2.2rem;
+}
+
+.contact-box {
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 14px;
+  padding: 1.2rem 1.4rem;
+  color: rgba(255,255,255,.55);
+  font-size: .87rem;
+  line-height: 1.6;
+}
+
+.contact-box strong {
+  color: rgba(255,255,255,.85);
+  font-weight: 600;
+}
+
+.divider {
+  width: 40px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #ef4444, transparent);
+  margin: 1.5rem auto;
+}
+
+.brand {
+  color: rgba(255,255,255,.2);
+  font-size: .78rem;
+  margin-top: 1.8rem;
+  letter-spacing: .5px;
+}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="icon-wrap">
+    <svg viewBox="0 0 24 24"><path d="M12 1C8.676 1 6 3.676 6 7v1H4v15h16V8h-2V7c0-3.324-2.676-6-6-6zm0 2c2.276 0 4 1.724 4 4v1H8V7c0-2.276 1.724-4 4-4zm0 9a2 2 0 1 1 0 4 2 2 0 0 1 0-4z"/></svg>
+  </div>
+
+  <h1>Servicio Suspendido</h1>
+  <p class="subtitle">El acceso a Manitos Creativas está temporalmente suspendido. Por favor contáctanos para restablecer el servicio.</p>
+
+  <div class="divider"></div>
+
+  <div class="contact-box">
+    Para reactivar tu acceso, comunícate con el administrador del sistema.<br><br>
+    <strong>Manitos Creativas</strong> — Equipo de soporte
+  </div>
+
+  <div class="brand">MANITOS CREATIVAS &copy; 2025</div>
+</div>
+</body>
+</html>

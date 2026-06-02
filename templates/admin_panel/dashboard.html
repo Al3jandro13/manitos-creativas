@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel Admin — Manitos Creativas</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  min-height: 100vh;
+  background: #08091A;
+  font-family: 'Outfit', sans-serif;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  position: relative;
+  overflow: hidden;
+}
+
+body::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 70% 60% at 15% 15%, #1a0a3e55 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 85% 85%, #2d1b6933 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.topbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 2rem;
+  background: rgba(8,9,26,.85);
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  backdrop-filter: blur(12px);
+  z-index: 100;
+}
+
+.topbar-brand {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  font-weight: 700;
+  font-size: 1rem;
+  color: #fff;
+}
+
+.topbar-brand .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #7c3aed;
+  box-shadow: 0 0 10px #7c3aed;
+}
+
+.logout-btn {
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 8px;
+  color: rgba(255,255,255,.7);
+  font-size: .82rem;
+  font-family: inherit;
+  padding: .45rem .9rem;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background .2s, color .2s;
+}
+
+.logout-btn:hover {
+  background: rgba(255,255,255,.12);
+  color: #fff;
+}
+
+.main {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 520px;
+  margin-top: 5rem;
+}
+
+.status-card {
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 20px;
+  padding: 2.5rem 2rem;
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.status-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.2rem;
+  transition: background .4s, box-shadow .4s;
+}
+
+.status-icon.active {
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 0 40px #10b98155;
+}
+
+.status-icon.blocked {
+  background: linear-gradient(135deg, #ef4444, #b91c1c);
+  box-shadow: 0 0 40px #ef444455;
+}
+
+.status-icon svg {
+  width: 38px;
+  height: 38px;
+  fill: #fff;
+}
+
+.status-label {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin-bottom: .3rem;
+}
+
+.status-label.active { color: #34d399; }
+.status-label.blocked { color: #f87171; }
+
+.status-desc {
+  color: rgba(255,255,255,.45);
+  font-size: .87rem;
+  margin-bottom: 2rem;
+  line-height: 1.5;
+}
+
+.action-btn {
+  display: inline-block;
+  width: 100%;
+  padding: .9rem;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.02rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity .2s, transform .1s;
+  letter-spacing: .3px;
+}
+
+.action-btn:active { transform: scale(.98); }
+.action-btn:hover { opacity: .88; }
+
+.action-btn.block-btn {
+  background: linear-gradient(135deg, #ef4444, #b91c1c);
+  color: #fff;
+  box-shadow: 0 4px 24px #ef444433;
+}
+
+.action-btn.unblock-btn {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  box-shadow: 0 4px 24px #10b98133;
+}
+
+.info-card {
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 14px;
+  padding: 1.1rem 1.4rem;
+  display: flex;
+  align-items: center;
+  gap: .8rem;
+  color: rgba(255,255,255,.45);
+  font-size: .83rem;
+  line-height: 1.5;
+}
+
+.info-card svg {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  fill: rgba(255,255,255,.3);
+}
+
+.pulse {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 40px #10b98155; }
+  50% { box-shadow: 0 0 60px #10b98188; }
+}
+
+.pulse-red {
+  animation: pulse-red 2s ease-in-out infinite;
+}
+
+@keyframes pulse-red {
+  0%, 100% { box-shadow: 0 0 40px #ef444455; }
+  50% { box-shadow: 0 0 60px #ef444488; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-brand">
+    <div class="dot"></div>
+    Panel de Administración
+  </div>
+  <a href="{% url 'admin_panel:logout' %}" class="logout-btn">Cerrar sesión</a>
+</div>
+
+<div class="main">
+  <div class="status-card">
+    {% if config.is_blocked %}
+      <div class="status-icon blocked pulse-red">
+        <svg viewBox="0 0 24 24"><path d="M12 1C8.676 1 6 3.676 6 7v1H4v15h16V8h-2V7c0-3.324-2.676-6-6-6zm0 2c2.276 0 4 1.724 4 4v1H8V7c0-2.276 1.724-4 4-4zm0 9a2 2 0 1 1 0 4 2 2 0 0 1 0-4z"/></svg>
+      </div>
+      <div class="status-label blocked">Servicio Bloqueado</div>
+      <p class="status-desc">El acceso para estudiantes y profesores está suspendido. Solo tú puedes ver el sistema.</p>
+      <form method="post" action="{% url 'admin_panel:toggle_block' %}">
+        {% csrf_token %}
+        <button type="submit" class="action-btn unblock-btn">Activar servicio</button>
+      </form>
+    {% else %}
+      <div class="status-icon active pulse">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm-1.5 14.5l-4-4 1.414-1.414L10.5 13.672l5.586-5.586L17.5 9.5l-7 7z"/></svg>
+      </div>
+      <div class="status-label active">Servicio Activo</div>
+      <p class="status-desc">Estudiantes y profesores tienen acceso normal a la plataforma.</p>
+      <form method="post" action="{% url 'admin_panel:toggle_block' %}">
+        {% csrf_token %}
+        <button type="submit" class="action-btn block-btn">Bloquear acceso</button>
+      </form>
+    {% endif %}
+  </div>
+
+  <div class="info-card">
+    <svg viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+    Al bloquear el servicio, ningún estudiante ni profesor podrá iniciar sesión o acceder a sus paneles. Tu sesión de administrador siempre permanece activa.
+  </div>
+</div>
+
+</body>
+</html>

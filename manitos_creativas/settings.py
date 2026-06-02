@@ -42,6 +42,7 @@ LOCAL_APPS = [
     'apps.classroom',
     'apps.reports',
     'apps.core',
+    'apps.admin_panel',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -97,6 +98,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'social_django.middleware.SocialAuthExceptionMiddleware',
+    'apps.admin_panel.middleware.SystemBlockMiddleware',
 ]
 
 ROOT_URLCONF = 'manitos_creativas.urls'

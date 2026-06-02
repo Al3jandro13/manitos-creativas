@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Manitos Creativas</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #08091A;
+  font-family: 'Outfit', sans-serif;
+  position: relative;
+  overflow: hidden;
+}
+
+body::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 70% 60% at 20% 20%, #1a0a3e55 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 80% 80%, #2d1b6933 0%, transparent 60%);
+}
+
+.card {
+  position: relative;
+  z-index: 1;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 20px;
+  padding: 2.8rem 2.5rem;
+  width: 100%;
+  max-width: 420px;
+  backdrop-filter: blur(16px);
+}
+
+.icon-wrap {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7c3aed, #4f46e5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.4rem;
+  box-shadow: 0 0 32px #7c3aed55;
+}
+
+.icon-wrap svg {
+  width: 32px;
+  height: 32px;
+  fill: #fff;
+}
+
+h1 {
+  color: #fff;
+  font-size: 1.55rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: .35rem;
+  letter-spacing: -.3px;
+}
+
+.subtitle {
+  color: rgba(255,255,255,.45);
+  font-size: .85rem;
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+label {
+  display: block;
+  color: rgba(255,255,255,.7);
+  font-size: .82rem;
+  font-weight: 500;
+  margin-bottom: .45rem;
+  letter-spacing: .3px;
+}
+
+input {
+  width: 100%;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 10px;
+  padding: .72rem 1rem;
+  color: #fff;
+  font-size: .95rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color .2s;
+  margin-bottom: 1.2rem;
+}
+
+input:focus { border-color: #7c3aed; }
+input::placeholder { color: rgba(255,255,255,.3); }
+
+.error-box {
+  background: rgba(239,68,68,.12);
+  border: 1px solid rgba(239,68,68,.35);
+  border-radius: 10px;
+  padding: .7rem 1rem;
+  color: #fca5a5;
+  font-size: .85rem;
+  margin-bottom: 1.2rem;
+  text-align: center;
+}
+
+button {
+  width: 100%;
+  padding: .8rem;
+  background: linear-gradient(135deg, #7c3aed, #4f46e5);
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity .2s, transform .1s;
+  letter-spacing: .3px;
+}
+
+button:hover { opacity: .9; }
+button:active { transform: scale(.98); }
+
+.badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .4rem;
+  margin-top: 1.5rem;
+  color: rgba(255,255,255,.3);
+  font-size: .78rem;
+}
+
+.badge span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #7c3aed;
+  display: inline-block;
+}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="icon-wrap">
+    <svg viewBox="0 0 24 24"><path d="M12 1C8.676 1 6 3.676 6 7v1H4v15h16V8h-2V7c0-3.324-2.676-6-6-6zm0 2c2.276 0 4 1.724 4 4v1H8V7c0-2.276 1.724-4 4-4zm0 9a2 2 0 1 1 0 4 2 2 0 0 1 0-4z"/></svg>
+  </div>
+  <h1>Panel de Administración</h1>
+  <p class="subtitle">Manitos Creativas — Acceso restringido</p>
+
+  {% if error %}
+  <div class="error-box">{{ error }}</div>
+  {% endif %}
+
+  <form method="post">
+    {% csrf_token %}
+    <label for="username">Usuario</label>
+    <input type="text" id="username" name="username" placeholder="Ingresa el usuario" autocomplete="off" required>
+
+    <label for="password">Contraseña</label>
+    <input type="password" id="password" name="password" placeholder="••••••••••" required>
+
+    <button type="submit">Ingresar</button>
+  </form>
+
+  <div class="badge"><span></span> Área privada — solo administradores <span></span></div>
+</div>
+</body>
+</html>
