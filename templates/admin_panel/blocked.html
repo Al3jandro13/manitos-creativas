@@ -135,7 +135,7 @@ h1 {
 }
 
 .pm-icon.nequi      { background: rgba(103,58,183,.25); }
-.pm-icon.breb       { background: rgba(59,130,246,.2); }
+.pm-icon.breb       { background: rgba(59,130,246,.15); }
 .pm-icon.davivienda { background: rgba(220,38,38,.2); }
 
 .pm-icon img {
@@ -155,28 +155,112 @@ h1 {
   letter-spacing: .5px;
 }
 
-/* ── QR ── */
-.qr-card {
-  background: rgba(255,255,255,.04);
-  border: 1px solid rgba(255,255,255,.09);
-  border-radius: 16px;
-  padding: 1.5rem;
-  text-align: center;
+.qr-link {
+  font-size: .82rem;
+  color: #a78bfa;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: inherit;
+  padding: 0;
+  margin-top: .25rem;
+  display: inline-block;
+  transition: color .2s;
 }
 
-.qr-card img {
-  width: 180px;
-  height: 180px;
+.qr-link:hover { color: #c4b5fd; }
+
+/* ── MODAL ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.75);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .25s;
+  padding: 1rem;
+}
+
+.modal-overlay.open {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.modal {
+  background: #13142a;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 20px;
+  padding: 2rem 1.8rem;
+  text-align: center;
+  max-width: 320px;
+  width: 100%;
+  transform: scale(.92);
+  transition: transform .25s;
+  position: relative;
+}
+
+.modal-overlay.open .modal { transform: scale(1); }
+
+.modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: rgba(255,255,255,.08);
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: rgba(255,255,255,.6);
+  font-size: 1.1rem;
+  line-height: 1;
+  transition: background .2s;
+}
+
+.modal-close:hover { background: rgba(255,255,255,.15); }
+
+.modal-logo {
+  width: 40px;
+  height: 40px;
   border-radius: 10px;
+  object-fit: contain;
+  background: rgba(103,58,183,.25);
+  padding: 4px;
+  margin: 0 auto .8rem;
+  display: block;
+}
+
+.modal-title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: .25rem;
+}
+
+.modal-sub {
+  color: rgba(255,255,255,.4);
+  font-size: .8rem;
+  margin-bottom: 1.2rem;
+}
+
+.modal-qr {
+  width: 200px;
+  height: 200px;
+  border-radius: 12px;
   background: #fff;
   padding: 8px;
+  object-fit: contain;
   display: block;
-  margin: 0 auto .8rem;
-}
-
-.qr-label {
-  color: rgba(255,255,255,.45);
-  font-size: .82rem;
+  margin: 0 auto;
 }
 
 /* ── SOPORTE ── */
@@ -239,6 +323,18 @@ h1 {
 </style>
 </head>
 <body>
+
+<!-- Modal QR Nequi -->
+<div class="modal-overlay" id="qrModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <img src="/static/img/nequi.png" alt="Nequi" class="modal-logo">
+    <div class="modal-title">Pagar con Nequi</div>
+    <div class="modal-sub">Escaneá el código con tu app</div>
+    <img src="/static/img/codigoqr.jpeg" alt="QR Nequi" class="modal-qr">
+  </div>
+</div>
+
 <div class="container">
 
   <!-- Cabecera -->
@@ -263,12 +359,15 @@ h1 {
         <img src="/static/img/nequi.png" alt="Nequi">
       </div>
       <div class="pm-info">
-        <div class="pm-label">Nequi — escanea el QR</div>
-        <div class="pm-value">Ver código más abajo</div>
+        <div class="pm-label">Nequi</div>
+        <div class="pm-value">Pago con código QR</div>
+        <button class="qr-link" onclick="openModal()">Ver código QR para pagar</button>
       </div>
     </div>
     <div class="payment-method">
-      <div class="pm-icon breb">🔑</div>
+      <div class="pm-icon breb">
+        <img src="/static/img/bre-b.jfif" alt="Bre-B">
+      </div>
       <div class="pm-info">
         <div class="pm-label">Bre-B — llave de pago</div>
         <div class="pm-value">1109671427</div>
@@ -283,12 +382,6 @@ h1 {
         <div class="pm-value">#0190 0007 4518</div>
       </div>
     </div>
-  </div>
-
-  <!-- QR Nequi -->
-  <div class="qr-card">
-    <img src="/static/img/codigoqr.jpeg" alt="QR Nequi">
-    <div class="qr-label">Escaneá con Nequi para pagar</div>
   </div>
 
   <!-- Soporte -->
@@ -331,5 +424,25 @@ h1 {
 
   <div class="brand">MANITOS CREATIVAS &copy; 2025</div>
 </div>
+
+<script>
+  const overlay = document.getElementById('qrModal');
+
+  function openModal() {
+    overlay.classList.add('open');
+  }
+
+  function closeModal() {
+    overlay.classList.remove('open');
+  }
+
+  overlay.addEventListener('click', function(e) {
+    if (e.target === overlay) closeModal();
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeModal();
+  });
+</script>
 </body>
 </html>
