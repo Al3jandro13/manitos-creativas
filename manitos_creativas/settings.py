@@ -77,6 +77,10 @@ SOCIAL_AUTH_PIPELINE = (
 )
 SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/dashboard/'
 SOCIAL_AUTH_NEW_USER_REDIRECT_URL = '/dashboard/'
+SOCIAL_AUTH_REDIRECT_IS_HTTPS = True
+
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Email (Gmail SMTP)
 EMAIL_BACKEND   = 'django.core.mail.backends.smtp.EmailBackend'
