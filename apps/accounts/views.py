@@ -134,6 +134,17 @@ def logout_view(request):
     return redirect('landing')
 
 
+def google_no_account_view(request):
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+    google_email = request.session.get('google_login_email', '')
+    google_name = request.session.get('google_login_name', '')
+    return render(request, 'accounts/google_no_account.html', {
+        'google_email': google_email,
+        'google_name': google_name,
+    })
+
+
 def register_student_view(request):
     if request.user.is_authenticated:
         return redirect('dashboard')

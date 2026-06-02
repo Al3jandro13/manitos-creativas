@@ -69,6 +69,7 @@ SOCIAL_AUTH_PIPELINE = (
     'social_core.pipeline.social_auth.social_user',
     'social_core.pipeline.user.get_username',
     'apps.accounts.pipeline.use_logged_in_user',
+    'apps.accounts.pipeline.require_existing_account',
     'social_core.pipeline.user.create_user',
     'apps.accounts.pipeline.set_teacher_role',
     'social_core.pipeline.social_auth.associate_user',
