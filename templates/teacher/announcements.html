@@ -7,6 +7,7 @@
 <div class="teacher-layout">
   {% include 'teacher/_sidebar.html' %}
   <main class="teacher-main">
+
     <div class="teacher-topbar">
       <div style="display:flex;align-items:center;gap:.85rem;">
         <button id="sidebar-toggle"
@@ -16,39 +17,14 @@
         </button>
         <div class="teacher-topbar-title"><i class="bi bi-megaphone"></i> Anuncios</div>
       </div>
-    </div>
-    <div class="teacher-content">
-
-      <div class="teacher-form" style="margin-bottom:2rem;">
-        <div class="form-title"><i class="bi bi-pencil"></i> Publicar Anuncio</div>
-        <form method="post" novalidate>
-          {% csrf_token %}
-          <div class="form-row-2">
-            <div class="form-group" style="grid-column:1/-1">
-              <label class="form-label"><i class="bi bi-pin"></i> Título</label>
-              <input type="text" name="title" class="form-input" placeholder="Título del anuncio..." required>
-            </div>
-            <div class="form-group">
-              <label class="form-label"><i class="bi bi-tag"></i> Tipo</label>
-              <select name="announcement_type" class="form-select">
-                <option value="info">Información</option>
-                <option value="celebration">Celebración</option>
-                <option value="reminder">Recordatorio</option>
-                <option value="important">Importante</option>
-              </select>
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label"><i class="bi bi-chat"></i> Mensaje</label>
-            <textarea name="message" class="form-textarea" rows="4" placeholder="Escribe el mensaje del anuncio..." required></textarea>
-          </div>
-          <div class="form-actions">
-            <button type="submit" class="btn btn-primary"><i class="bi bi-megaphone"></i> Publicar Anuncio</button>
-          </div>
-        </form>
+      <div class="topbar-actions">
+        <button class="btn btn-primary" id="btnNuevoAnuncio" style="font-size:.85rem;">
+          <i class="bi bi-plus-circle"></i> Nuevo Anuncio
+        </button>
       </div>
+    </div>
 
-      <!-- List -->
+    <div class="teacher-content">
       <div style="font-family:var(--t-font-serif);font-size:1.25rem;font-weight:600;color:var(--t-text);margin-bottom:1rem;letter-spacing:-.01em;">Mis Anuncios</div>
       <div class="panel-card">
         <div class="panel-body">
@@ -71,19 +47,79 @@
           <div class="empty-state" style="padding:3rem;">
             <div class="empty-state-icon"><i class="bi bi-megaphone"></i></div>
             <div class="empty-state-title">Sin anuncios publicados</div>
+            <p style="font-size:.82rem;color:var(--t-text-muted);margin-top:.25rem;">Usa el botón "Nuevo Anuncio" para crear el primero.</p>
           </div>
           {% endif %}
         </div>
       </div>
-
     </div>
+
+    <!-- Modal Nuevo Anuncio (dentro de teacher-main para heredar variables CSS) -->
+    <div id="modalAnuncio" style="display:none;position:fixed;inset:0;z-index:1000;align-items:center;justify-content:center;">
+      <div id="modalBackdrop" style="position:absolute;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(3px);"></div>
+      <div style="position:relative;z-index:1;width:100%;max-width:520px;margin:1rem;background:var(--t-surface);border-radius:var(--t-radius-lg);box-shadow:0 24px 48px rgba(0,0,0,.25);border:1px solid var(--t-border);overflow:hidden;">
+
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:1.1rem 1.35rem;border-bottom:1px solid var(--t-border);">
+          <div style="font-family:var(--t-font-serif);font-size:1.05rem;font-weight:700;color:var(--t-text);letter-spacing:-.01em;">
+            <i class="bi bi-megaphone" style="color:var(--t-indigo);margin-right:.4rem;"></i> Nuevo Anuncio
+          </div>
+          <button id="btnCerrarModal" style="background:none;border:none;cursor:pointer;font-size:1.1rem;color:var(--t-text-muted);line-height:1;padding:.2rem;" aria-label="Cerrar">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+
+        <form method="post" novalidate style="padding:1.35rem;">
+          {% csrf_token %}
+          <div class="form-group">
+            <label class="form-label"><i class="bi bi-pin"></i> Título</label>
+            <input type="text" name="title" class="form-input" placeholder="Título del anuncio..." required>
+          </div>
+          <div class="form-group">
+            <label class="form-label"><i class="bi bi-tag"></i> Tipo</label>
+            <select name="announcement_type" class="form-select">
+              <option value="info">💬 Información</option>
+              <option value="celebration">🎉 Celebración</option>
+              <option value="reminder">⏰ Recordatorio</option>
+              <option value="important">🔴 Importante</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label"><i class="bi bi-chat"></i> Mensaje</label>
+            <textarea name="message" class="form-textarea" rows="4" placeholder="Escribe el mensaje del anuncio..." required></textarea>
+          </div>
+          <div class="form-actions" style="margin-top:1.1rem;">
+            <button type="button" id="btnCancelar" class="btn btn-outline">Cancelar</button>
+            <button type="submit" class="btn btn-primary"><i class="bi bi-megaphone"></i> Publicar Anuncio</button>
+          </div>
+        </form>
+
+      </div>
+    </div>
+
   </main>
 </div>
+
 <script>
 if (window.innerWidth <= 768) document.getElementById('sidebar-toggle').style.display = 'block';
 window.addEventListener('resize', () => {
   const tog = document.getElementById('sidebar-toggle');
   if (tog) tog.style.display = window.innerWidth <= 768 ? 'block' : 'none';
 });
+
+const modal = document.getElementById('modalAnuncio');
+function openModal() {
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  modal.querySelector('input[name="title"]').focus();
+}
+function closeModal() {
+  modal.style.display = 'none';
+  document.body.style.overflow = '';
+}
+document.getElementById('btnNuevoAnuncio').addEventListener('click', openModal);
+document.getElementById('btnCerrarModal').addEventListener('click', closeModal);
+document.getElementById('btnCancelar').addEventListener('click', closeModal);
+document.getElementById('modalBackdrop').addEventListener('click', closeModal);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 </script>
 {% endblock %}

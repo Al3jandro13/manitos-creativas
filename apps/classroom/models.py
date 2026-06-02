@@ -2,6 +2,27 @@ from django.db import models
 from apps.accounts.models import CustomUser
 
 
+class Course(models.Model):
+    name = models.CharField(max_length=100, verbose_name='Nombre del curso')
+    description = models.TextField(blank=True, verbose_name='Descripción')
+    teacher = models.ForeignKey(
+        CustomUser, on_delete=models.CASCADE, related_name='courses'
+    )
+    students = models.ManyToManyField(
+        CustomUser, related_name='enrolled_courses', blank=True
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = 'Curso'
+        verbose_name_plural = 'Cursos'
+        ordering = ['name']
+
+    def __str__(self):
+        return f"{self.name} — {self.teacher.get_full_name()}"
+
+
 class Announcement(models.Model):
     TYPE_CHOICES = [
         ('info', '💬 Información'),
@@ -36,8 +57,14 @@ class FameBoardEntry(models.Model):
     ]
     student = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='fame_entries')
     teacher = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='fame_given')
+    submission = models.ForeignKey(
+        'activities.ActivitySubmission',
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name='fame_entries',
+    )
     title = models.CharField(max_length=200)
-    description = models.TextField()
+    description = models.TextField(blank=True)
     image = models.ImageField(upload_to='fame_board/', blank=True, null=True)
     medal_type = models.CharField(max_length=20, choices=MEDAL_CHOICES, default='star')
     created_at = models.DateTimeField(auto_now_add=True)

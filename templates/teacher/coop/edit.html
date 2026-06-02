@@ -1,0 +1,318 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Editar — {{ coop.title }}{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/teacher.css' %}">{% endblock %}
+
+{% block body_content %}
+<div class="teacher-layout">
+  {% include 'teacher/_sidebar.html' %}
+  <main class="teacher-main">
+
+    <div class="teacher-topbar">
+      <div style="display:flex;align-items:center;gap:.85rem;">
+        <button id="sidebar-toggle"
+          style="display:none;background:none;border:none;cursor:pointer;font-size:1.2rem;color:var(--t-text-mid);padding:.25rem;"
+          onclick="document.querySelector('.sidebar').classList.toggle('open')">
+          <i class="bi bi-list"></i>
+        </button>
+        <a href="{% url 'coop_detail' coop.pk %}" style="font-size:.8rem;color:var(--t-text-muted);text-decoration:none;display:flex;align-items:center;gap:.3rem;">
+          <i class="bi bi-chevron-left"></i> {{ coop.title }}
+        </a>
+        <div class="teacher-topbar-title" style="font-size:.95rem;"><i class="bi bi-pencil-square"></i> Editar actividad en pareja</div>
+      </div>
+    </div>
+
+    <div class="teacher-content">
+      <div class="teacher-form">
+        <div class="form-title"><i class="bi bi-people"></i> Modificar datos</div>
+
+        <form method="post" novalidate id="coopForm">
+          {% csrf_token %}
+
+          <div class="form-group">
+            <label class="form-label"><i class="bi bi-pin"></i> Título *</label>
+            <input type="text" name="title" class="form-input" required value="{{ coop.title }}">
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label"><i class="bi bi-tag"></i> Categoría *</label>
+              <select name="category" id="categorySelect" class="form-select" required>
+                <option value="">Seleccionar...</option>
+                {% for cat in categories %}
+                <option value="{{ cat.id }}" data-name="{{ cat.name }}"
+                  {% if coop.category_id == cat.id %}selected{% endif %}>
+                  {{ cat }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label"><i class="bi bi-star"></i> Estrellas de recompensa</label>
+              <input type="number" name="reward_stars" class="form-input" min="0" max="20" value="{{ coop.reward_stars }}">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label"><i class="bi bi-toggles"></i> Estado</label>
+            <select name="status" class="form-select">
+              <option value="draft" {% if coop.status == 'draft' %}selected{% endif %}>Borrador</option>
+              <option value="published" {% if coop.status == 'published' %}selected{% endif %}>Publicada</option>
+              <option value="archived" {% if coop.status == 'archived' %}selected{% endif %}>Archivada</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label"><i class="bi bi-text-paragraph"></i> Descripción</label>
+            <textarea name="description" class="form-textarea" rows="3">{{ coop.description }}</textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label"><i class="bi bi-info-circle"></i> Instrucciones adicionales</label>
+            <textarea name="instructions" class="form-textarea" rows="2">{{ coop.instructions }}</textarea>
+          </div>
+
+          <!-- Selector imagen colorear (dinámico) -->
+          <div class="form-group" id="coloringImageGroup" style="display:none;">
+            <label class="form-label">
+              <i class="bi bi-image" style="color:var(--t-indigo);"></i>
+              Imagen base para colorear
+            </label>
+            {% if coloring_images %}
+            <div class="coloring-picker">
+              {% for img in coloring_images %}
+              <label class="coloring-pick" for="ci_{{ img.id }}">
+                <input type="radio" name="coloring_image" id="ci_{{ img.id }}" value="{{ img.id }}"
+                  {% if coop.coloring_image_id == img.id %}checked{% endif %}>
+                <div class="coloring-pick-card">
+                  <div class="coloring-pick-img">
+                    <img src="{{ img.image.url }}" alt="{{ img.title }}">
+                    <div class="coloring-pick-seam"></div>
+                  </div>
+                  <div class="coloring-pick-title">{{ img.title }}</div>
+                  <div class="coloring-pick-check"><i class="bi bi-check-circle-fill"></i></div>
+                </div>
+              </label>
+              {% endfor %}
+            </div>
+            {% else %}
+            <div style="background:var(--t-amber-light);border:1px solid #FCD34D;color:var(--t-amber);padding:.85rem 1rem;border-radius:10px;font-size:.85rem;">
+              No hay imágenes para colorear. Súbelas primero en Gestión de Juegos.
+            </div>
+            {% endif %}
+          </div>
+
+          <!-- Selector puzzle (dinámico) -->
+          <div class="form-group" id="puzzleImageGroup" style="display:none;">
+            <label class="form-label">
+              <i class="bi bi-puzzle" style="color:var(--t-teal);"></i>
+              Imagen del rompecabezas
+            </label>
+            {% if puzzle_images %}
+            <div class="coloring-picker">
+              {% for img in puzzle_images %}
+              <label class="coloring-pick" for="pi_{{ img.id }}">
+                <input type="radio" name="puzzle_image" id="pi_{{ img.id }}" value="{{ img.id }}"
+                  {% if coop.puzzle_image_id == img.id %}checked{% endif %}>
+                <div class="coloring-pick-card">
+                  <div class="coloring-pick-img">
+                    <img src="{{ img.image.url }}" alt="{{ img.title }}">
+                    <div class="coloring-pick-seam"></div>
+                  </div>
+                  <div class="coloring-pick-title">{{ img.title }}</div>
+                  <div class="coloring-pick-check"><i class="bi bi-check-circle-fill"></i></div>
+                </div>
+              </label>
+              {% endfor %}
+            </div>
+            <div class="form-row-2" style="margin-top:.85rem;">
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label" style="font-size:.78rem;">Filas</label>
+                <select name="puzzle_rows" class="form-select">
+                  <option value="2" {% if coop.puzzle_rows == 2 %}selected{% endif %}>2 filas</option>
+                  <option value="3" {% if coop.puzzle_rows == 3 %}selected{% endif %}>3 filas</option>
+                  <option value="4" {% if coop.puzzle_rows == 4 %}selected{% endif %}>4 filas</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label" style="font-size:.78rem;">Columnas (par)</label>
+                <select name="puzzle_cols" class="form-select">
+                  <option value="2" {% if coop.puzzle_cols == 2 %}selected{% endif %}>2 columnas</option>
+                  <option value="4" {% if coop.puzzle_cols == 4 %}selected{% endif %}>4 columnas</option>
+                  <option value="6" {% if coop.puzzle_cols == 6 %}selected{% endif %}>6 columnas</option>
+                </select>
+              </div>
+            </div>
+            {% else %}
+            <div style="background:var(--t-amber-light);border:1px solid #FCD34D;color:var(--t-amber);padding:.85rem 1rem;border-radius:10px;font-size:.85rem;">
+              No hay imágenes de rompecabezas.
+            </div>
+            {% endif %}
+          </div>
+
+          <!-- Selector pareja -->
+          <div style="background:var(--t-indigo-light);border-radius:var(--t-radius-lg);padding:1.1rem 1.2rem;margin-bottom:1.1rem;border:1px solid #C7D2FE;">
+            <div style="font-family:var(--t-font-serif);font-size:.95rem;font-weight:700;color:var(--t-indigo);margin-bottom:.5rem;display:flex;align-items:center;gap:.5rem;">
+              <i class="bi bi-people-fill"></i> Pareja
+            </div>
+            <div style="font-size:.78rem;color:var(--t-text-mid);margin-bottom:.85rem;line-height:1.5;">
+              <i class="bi bi-exclamation-triangle-fill" style="color:var(--t-amber);"></i>
+              Si cambias los estudiantes, las entregas existentes se eliminarán y se reiniciará la actividad.
+            </div>
+            <div class="form-row-2">
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label">
+                  <span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;background:var(--t-indigo);color:#fff;border-radius:50%;font-size:.65rem;font-weight:700;">1</span>
+                  Estudiante 1 *
+                </label>
+                <select name="student1" id="student1Select" class="form-select" required>
+                  {% for s in students %}
+                  <option value="{{ s.id }}" {% if coop.student1_id == s.id %}selected{% endif %}>
+                    {{ s.get_full_name|default:s.username }}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label">
+                  <span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;background:var(--t-teal);color:#fff;border-radius:50%;font-size:.65rem;font-weight:700;">2</span>
+                  Estudiante 2 *
+                </label>
+                <select name="student2" id="student2Select" class="form-select" required>
+                  {% for s in students %}
+                  <option value="{{ s.id }}" {% if coop.student2_id == s.id %}selected{% endif %}>
+                    {{ s.get_full_name|default:s.username }}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <div id="samePairError" style="display:none;margin-top:.65rem;font-size:.8rem;color:var(--t-rose);font-weight:600;align-items:center;gap:.35rem;">
+              <i class="bi bi-exclamation-triangle-fill"></i> Los dos estudiantes deben ser diferentes.
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-check-circle"></i> Guardar cambios
+            </button>
+            <a href="{% url 'coop_detail' coop.pk %}" class="btn btn-outline">Cancelar</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+</div>
+
+<style>
+.coloring-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: .8rem;
+}
+.coloring-pick { cursor: pointer; display: block; }
+.coloring-pick input { position: absolute; opacity: 0; pointer-events: none; }
+.coloring-pick-card {
+  position: relative;
+  background: var(--t-surface);
+  border: 2px solid var(--t-border);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all .18s ease;
+}
+.coloring-pick:hover .coloring-pick-card {
+  border-color: var(--t-indigo);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(79,70,229,.15);
+}
+.coloring-pick input:checked + .coloring-pick-card {
+  border-color: var(--t-indigo);
+  box-shadow: 0 0 0 3px rgba(79,70,229,.25), 0 6px 16px rgba(79,70,229,.2);
+}
+.coloring-pick-img {
+  position: relative;
+  aspect-ratio: 1;
+  background: #FAFAF7;
+  padding: 6px;
+  overflow: hidden;
+}
+.coloring-pick-img img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.coloring-pick-seam {
+  position: absolute;
+  top: 8%; bottom: 8%; left: 50%;
+  width: 1.5px;
+  background: repeating-linear-gradient(180deg, transparent, transparent 4px, rgba(79,70,229,.35) 4px, rgba(79,70,229,.35) 8px);
+  transform: translateX(-50%);
+}
+.coloring-pick-title {
+  padding: .55rem .7rem;
+  font-size: .8rem; font-weight: 600;
+  color: var(--t-text);
+  border-top: 1px solid var(--t-border);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.coloring-pick-check {
+  position: absolute;
+  top: 8px; right: 8px;
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: var(--t-indigo);
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem;
+  opacity: 0;
+  transform: scale(.7);
+  transition: all .2s ease;
+  box-shadow: 0 4px 10px rgba(79,70,229,.4);
+}
+.coloring-pick input:checked + .coloring-pick-card .coloring-pick-check {
+  opacity: 1; transform: scale(1);
+}
+body.teacher-dark .coloring-pick-card { background: var(--t-surface); border-color: var(--t-border); }
+body.teacher-dark .coloring-pick-title { color: var(--t-text); border-top-color: var(--t-border); }
+</style>
+
+<script>
+if (window.innerWidth <= 768) document.getElementById('sidebar-toggle').style.display = 'block';
+window.addEventListener('resize', () => {
+  const tog = document.getElementById('sidebar-toggle');
+  if (tog) tog.style.display = window.innerWidth <= 768 ? 'block' : 'none';
+});
+
+const s1 = document.getElementById('student1Select');
+const s2 = document.getElementById('student2Select');
+const errorEl = document.getElementById('samePairError');
+const form = document.getElementById('coopForm');
+const catSelect = document.getElementById('categorySelect');
+const coloringGroup = document.getElementById('coloringImageGroup');
+const puzzleGroup = document.getElementById('puzzleImageGroup');
+
+function checkPair() {
+  if (s1.value && s2.value && s1.value === s2.value) {
+    errorEl.style.display = 'flex';
+    return false;
+  }
+  errorEl.style.display = 'none';
+  return true;
+}
+
+function togglePickers() {
+  const opt = catSelect.options[catSelect.selectedIndex];
+  const name = opt ? opt.getAttribute('data-name') : '';
+  coloringGroup.style.display = (name === 'colorear') ? '' : 'none';
+  puzzleGroup.style.display   = (name === 'rompecabezas') ? '' : 'none';
+}
+
+s1.addEventListener('change', checkPair);
+s2.addEventListener('change', checkPair);
+catSelect.addEventListener('change', togglePickers);
+togglePickers();
+
+form.addEventListener('submit', function(e) {
+  if (!checkPair()) {
+    e.preventDefault();
+    s2.focus();
+  }
+});
+</script>
+{% endblock %}

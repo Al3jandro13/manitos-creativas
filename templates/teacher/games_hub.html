@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Juegos — Manitos Creativas{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/teacher.css' %}">{% endblock %}
+
+{% block body_content %}
+<div class="teacher-layout">
+  {% include 'teacher/_sidebar.html' %}
+  <main class="teacher-main">
+
+    <div class="teacher-topbar">
+      <div style="display:flex;align-items:center;gap:.85rem;">
+        <button id="sidebar-toggle"
+          style="display:none;background:none;border:none;cursor:pointer;font-size:1.2rem;color:var(--t-text-mid);padding:.25rem;"
+          onclick="document.querySelector('.sidebar').classList.toggle('open')">
+          <i class="bi bi-list"></i>
+        </button>
+        <div class="teacher-topbar-title"><i class="bi bi-controller"></i> Juegos</div>
+      </div>
+    </div>
+
+    <div class="teacher-content">
+
+      <div style="font-family:var(--t-font-serif);font-size:1.25rem;font-weight:600;color:var(--t-text);margin-bottom:.35rem;letter-spacing:-.01em;">
+        Gestión de Contenido
+      </div>
+      <p style="font-size:.85rem;color:var(--t-text-muted);margin-bottom:1.75rem;">
+        Sube y administra las imágenes que los estudiantes usan en los juegos.
+      </p>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1.25rem;">
+
+        <!-- Rompecabezas -->
+        <a href="{% url 'puzzle_images_list' %}" style="text-decoration:none;">
+          <div class="panel-card" style="cursor:pointer;transition:box-shadow .18s,transform .18s;padding:0;overflow:hidden;">
+            <div style="height:110px;background:linear-gradient(135deg,#4F46E5 0%,#7C3AED 100%);display:flex;align-items:center;justify-content:center;">
+              <i class="bi bi-puzzle-fill" style="font-size:3rem;color:rgba(255,255,255,.9);filter:drop-shadow(0 2px 6px rgba(0,0,0,.2));"></i>
+            </div>
+            <div style="padding:1.1rem 1.2rem 1.25rem;">
+              <div style="font-family:var(--t-font-serif);font-size:1.05rem;font-weight:700;color:var(--t-text);margin-bottom:.3rem;letter-spacing:-.01em;">
+                Imágenes de Rompecabezas
+              </div>
+              <div style="font-size:.82rem;color:var(--t-text-muted);line-height:1.5;margin-bottom:.9rem;">
+                Sube las fotos que los estudiantes armarán como rompecabezas.
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <span style="font-size:.75rem;font-weight:600;color:var(--t-indigo);background:var(--t-indigo-light);padding:.25rem .65rem;border-radius:var(--t-radius-pill);">
+                  {{ puzzle_count }} imagen{{ puzzle_count|pluralize:"es" }}
+                </span>
+                <span style="font-size:.8rem;color:var(--t-indigo);font-weight:500;">
+                  Gestionar <i class="bi bi-arrow-right"></i>
+                </span>
+              </div>
+            </div>
+          </div>
+        </a>
+
+        <!-- Colorear -->
+        <a href="{% url 'coloring_images_list' %}" style="text-decoration:none;">
+          <div class="panel-card" style="cursor:pointer;transition:box-shadow .18s,transform .18s;padding:0;overflow:hidden;">
+            <div style="height:110px;background:linear-gradient(135deg,#0D9488 0%,#059669 100%);display:flex;align-items:center;justify-content:center;">
+              <i class="bi bi-palette-fill" style="font-size:3rem;color:rgba(255,255,255,.9);filter:drop-shadow(0 2px 6px rgba(0,0,0,.2));"></i>
+            </div>
+            <div style="padding:1.1rem 1.2rem 1.25rem;">
+              <div style="font-family:var(--t-font-serif);font-size:1.05rem;font-weight:700;color:var(--t-text);margin-bottom:.3rem;letter-spacing:-.01em;">
+                Bocetos para Colorear
+              </div>
+              <div style="font-size:.82rem;color:var(--t-text-muted);line-height:1.5;margin-bottom:.9rem;">
+                Sube los dibujos en blanco y negro que los estudiantes colorearán.
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <span style="font-size:.75rem;font-weight:600;color:var(--t-teal);background:var(--t-teal-light);padding:.25rem .65rem;border-radius:var(--t-radius-pill);">
+                  {{ coloring_count }} boceto{{ coloring_count|pluralize:"s" }}
+                </span>
+                <span style="font-size:.8rem;color:var(--t-teal);font-weight:500;">
+                  Gestionar <i class="bi bi-arrow-right"></i>
+                </span>
+              </div>
+            </div>
+          </div>
+        </a>
+
+      </div>
+    </div>
+
+  </main>
+</div>
+<script>
+if (window.innerWidth <= 768) document.getElementById('sidebar-toggle').style.display = 'block';
+window.addEventListener('resize', () => {
+  const tog = document.getElementById('sidebar-toggle');
+  if (tog) tog.style.display = window.innerWidth <= 768 ? 'block' : 'none';
+});
+</script>
+{% endblock %}

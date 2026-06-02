@@ -1,0 +1,320 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Teatro de Sombras — Manitos Creativas{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/student.css' %}">
+<style>
+.sh-wrap { max-width:720px; margin:0 auto; padding-bottom:2rem; }
+.game-page-header { background:linear-gradient(135deg,#1C1917,#44403C); border-radius:24px; padding:1.5rem 1rem 1.25rem; text-align:center; margin-bottom:1.25rem; color:#fff; box-shadow:0 6px 24px rgba(0,0,0,.5); }
+.game-page-title { font-family:var(--font-display); font-size:1.9rem; }
+.game-page-sub   { font-family:var(--font-accent); font-size:.85rem; opacity:.88; margin-top:.25rem; }
+
+.game-score-display { display:flex; gap:.75rem; margin-bottom:1.25rem; }
+.score-item { flex:1; background:#fff; border:2px solid #E2E8F0; border-radius:14px; padding:.65rem .5rem; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,.04); }
+.score-value { display:block; font-family:var(--font-display); font-size:1.6rem; line-height:1.1; color:#1C1917; }
+.score-label { display:block; font-family:var(--font-accent); font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:#94A3B8; margin-top:.1rem; }
+
+/* Stage */
+.sh-stage {
+  background:radial-gradient(ellipse 55% 60% at 50% 45%, #FFFBEB 0%, #FEF3C7 35%, #1C1917 80%);
+  border-radius:24px; padding:2rem 1rem; text-align:center; margin-bottom:1rem;
+  min-height:280px; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  position:relative; overflow:hidden; box-shadow:inset 0 0 60px rgba(0,0,0,.6);
+}
+.sh-stage::before,
+.sh-stage::after { content:''; position:absolute; top:0; bottom:0; width:40px; background:#1C1917; }
+.sh-stage::before { left:0; }
+.sh-stage::after  { right:0; }
+
+.sh-silhouette { position:relative; z-index:2; }
+.sh-silhouette svg { filter:drop-shadow(0 0 30px rgba(255,251,235,.4)); }
+
+.sh-question {
+  font-family:var(--font-display); font-size:1.2rem; color:#FFFBEB; margin-top:.75rem;
+  position:relative; z-index:2; text-shadow:0 2px 8px rgba(0,0,0,.8);
+}
+
+.sh-listen { background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.3); color:#FFFBEB; border-radius:16px; padding:.35rem .9rem; font-family:var(--font-accent); font-size:.75rem; font-weight:700; cursor:pointer; margin-top:.5rem; position:relative; z-index:2; display:inline-flex; align-items:center; gap:.35rem; }
+.sh-listen:hover { background:rgba(255,255,255,.25); }
+
+/* Options */
+.sh-options { display:grid; grid-template-columns:repeat(4,1fr); gap:.65rem; margin-bottom:1rem; }
+@media(max-width:480px){ .sh-options { grid-template-columns:1fr 1fr; } }
+
+.sh-opt {
+  background:#fff; border:3px solid #E2E8F0; border-radius:18px; padding:.85rem .4rem;
+  cursor:pointer; transition:all .15s; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,.06);
+  display:flex; flex-direction:column; align-items:center; gap:.3rem;
+}
+.sh-opt:hover:not(:disabled) { transform:translateY(-3px); border-color:#1C1917; box-shadow:0 8px 20px rgba(0,0,0,.15); }
+.sh-opt:disabled { cursor:not-allowed; }
+.sh-opt .sh-opt-emoji { font-size:2.2rem; line-height:1; }
+.sh-opt .sh-opt-name  { font-family:var(--font-display); font-size:.78rem; color:#374151; }
+.sh-opt.correct { border-color:#86EFAC !important; background:#F0FDF4; }
+.sh-opt.wrong   { border-color:#FCA5A5 !important; background:#FEF2F2; }
+@keyframes sh-shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
+.sh-opt.shaking { animation:sh-shake .35s ease; }
+
+/* Emoji silhouette */
+.sh-emoji { font-size:9rem; line-height:1; user-select:none; filter:brightness(0) drop-shadow(0 0 25px rgba(255,251,235,.45)); transition:filter .8s ease; }
+.sh-emoji.revealed { filter:none; }
+@media(max-width:480px){ .sh-emoji { font-size:6.5rem; } }
+
+/* Feedback */
+.sh-feedback { text-align:center; font-family:var(--font-accent); font-size:.9rem; font-weight:700; min-height:1.4rem; margin-bottom:.5rem; }
+.sh-feedback.ok  { color:#15803D; }
+.sh-feedback.err { color:#DC2626; }
+
+/* Progress */
+.sh-progress { display:flex; align-items:center; justify-content:space-between; font-family:var(--font-accent); font-size:.82rem; font-weight:700; color:#6B7280; margin-bottom:.75rem; }
+.sh-dots { display:flex; gap:.3rem; }
+.sh-dot  { width:11px; height:11px; border-radius:50%; background:#E2E8F0; transition:background .3s; }
+.sh-dot.done { background:#1C1917; }
+
+.sh-actions { display:flex; justify-content:center; }
+
+body.student-dark .score-item  { background:#0E1E30; border-color:rgba(255,255,255,.07); }
+body.student-dark .score-value { color:#CBD5E1; }
+body.student-dark .sh-opt      { background:#0A1726; border-color:rgba(255,255,255,.08); }
+body.student-dark .sh-opt .sh-opt-name { color:#CBD5E1; }
+body.student-dark .sh-progress { color:#64748B; }
+</style>
+{% endblock %}
+
+{% block body_content %}
+<div class="student-layout">
+  {% include 'student/_sidebar.html' with active_page='games' %}
+  <div class="student-main">
+    <header class="student-topbar">
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Abrir menú"><i class="bi bi-list"></i></button>
+      <div class="topbar-breadcrumb">
+        <a href="{% url 'games_home' %}" class="breadcrumb-link">Mis Juegos</a>
+        <i class="bi bi-chevron-right" style="font-size:.7rem;color:#9CA3AF;"></i>
+        <span class="bc-current">Teatro de Sombras</span>
+      </div>
+      <div class="topbar-actions">
+        <div class="topbar-date"><i class="bi bi-calendar3"></i><span id="topbarDate"></span></div>
+        <div class="topbar-stars-chip"><i class="bi bi-star-fill"></i><span>{{ profile.total_stars|default:"0" }} estrellas</span></div>
+        <button class="dark-mode-toggle" id="darkModeToggle" aria-label="Cambiar modo"><i class="bi bi-moon-fill" id="darkModeIcon"></i></button>
+      </div>
+    </header>
+    <div class="student-scroll">
+      {% include 'student/games/_activity_banner.html' %}
+      <div class="sh-wrap">
+        <div class="game-page-header">
+          <div style="font-size:3.5rem;margin-bottom:.4rem;">🎭</div>
+          <div class="game-page-title">Teatro de Sombras</div>
+          <div class="game-page-sub">Adivina que animal se esconde en la sombra</div>
+        </div>
+
+        <div class="game-score-display">
+          <div class="score-item">
+            <span class="score-value" id="shScore">0</span>
+            <span class="score-label">Puntos</span>
+          </div>
+          <div class="score-item">
+            <span class="score-value" id="shAciertos">0</span>
+            <span class="score-label">Aciertos</span>
+          </div>
+          <div class="score-item">
+            <span class="score-value" id="shStars">⭐ 0</span>
+            <span class="score-label">Estrellas</span>
+          </div>
+        </div>
+
+        <div class="sh-progress">
+          <span id="shRoundLabel">Ronda 1 / 10</span>
+          <div class="sh-dots" id="shDots"></div>
+        </div>
+
+        <div class="sh-stage">
+          <div class="sh-silhouette" id="shSilhouette"></div>
+          <div class="sh-question" id="shQuestion">¿Quien soy yo? ¡Adivíname!</div>
+          <button class="sh-listen" onclick="hablarPregunta()"><i class="bi bi-volume-up-fill"></i> Escuchar</button>
+        </div>
+
+        <div class="sh-feedback" id="shFeedback"></div>
+        <div class="sh-options" id="shOptions"></div>
+
+        <div class="sh-actions">
+          <button class="btn btn-secondary" id="shSaveBtn" style="display:none">
+            <i class="bi bi-floppy-fill"></i> Guardar estrellas
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<script>
+const SILUETAS = [
+  { nombre:'Elefante', emoji:'🐘', distractores:['🦒','🐬','🦅','🐊'] },
+  { nombre:'Pez',      emoji:'🐟', distractores:['🐘','🦜','🐢','🐸'] },
+  { nombre:'Loro',     emoji:'🦜', distractores:['🐟','🐘','🦔','🐢'] },
+  { nombre:'Mariposa', emoji:'🦋', distractores:['🐟','🐘','🦜','🐝'] },
+  { nombre:'Tortuga',  emoji:'🐢', distractores:['🦋','🐟','🦜','🐘'] },
+  { nombre:'Conejo',   emoji:'🐰', distractores:['🐢','🦊','🐱','🐹'] },
+  { nombre:'Zorro',    emoji:'🦊', distractores:['🐰','🐱','🐶','🐻'] },
+  { nombre:'Gato',     emoji:'🐱', distractores:['🦊','🐰','🐶','🐯'] },
+  { nombre:'Pato',     emoji:'🦆', distractores:['🦢','🐔','🦜','🦅'] },
+  { nombre:'Perro',    emoji:'🐶', distractores:['🐱','🦊','🐰','🐻'] },
+  { nombre:'Leon',     emoji:'🦁', distractores:['🐯','🐱','🐻','🐶'] },
+  { nombre:'Caballo',  emoji:'🐴', distractores:['🦓','🐮','🐷','🐶'] },
+  { nombre:'Rana',     emoji:'🐸', distractores:['🐢','🐟','🦎','🐰'] },
+  { nombre:'Abeja',    emoji:'🐝', distractores:['🦋','🐞','🐜','🦗'] },
+  { nombre:'Pinguino', emoji:'🐧', distractores:['🦆','🐔','🦢','🐦'] },
+  { nombre:'Pulpo',    emoji:'🐙', distractores:['🦀','🐟','🦑','🐠'] },
+  { nombre:'Cangrejo', emoji:'🦀', distractores:['🐙','🦞','🐢','🐠'] },
+  { nombre:'Caracol',  emoji:'🐌', distractores:['🐛','🐝','🐜','🦋'] },
+  { nombre:'Vaca',     emoji:'🐮', distractores:['🐷','🐴','🐶','🐯'] },
+  { nombre:'Cerdo',    emoji:'🐷', distractores:['🐮','🐶','🐰','🐭'] },
+];
+
+function shuffle(a) { const b=[...a]; for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];} return b; }
+
+const TOTAL = 10;
+const ROUNDS = shuffle(SILUETAS).slice(0, TOTAL);
+let round = 0, score = 0, aciertos = 0, saved = false;
+
+function calcStars() {
+  if (aciertos >= 9) return 3;
+  if (aciertos >= 6) return 2;
+  if (round > 0)     return 1;
+  return 0;
+}
+
+function buildDots() {
+  const c = document.getElementById('shDots');
+  c.innerHTML = '';
+  for (let i = 0; i < TOTAL; i++) {
+    const d = document.createElement('div');
+    d.className = 'sh-dot' + (i < round ? ' done' : '');
+    c.appendChild(d);
+  }
+}
+
+function hablar(txt, r = 0.7) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(txt);
+  u.lang = 'es-CO'; u.rate = r; u.pitch = 1.1;
+  window.speechSynthesis.speak(u);
+}
+
+function hablarPregunta() { hablar('¿Quién soy yo? ¡Adivíname!'); }
+
+function loadRound() {
+  if (round >= TOTAL) { finishGame(); return; }
+  const s = ROUNDS[round];
+  document.getElementById('shRoundLabel').textContent = 'Ronda ' + (round + 1) + ' / ' + TOTAL;
+  document.getElementById('shFeedback').textContent = '';
+  document.getElementById('shFeedback').className = 'sh-feedback';
+  buildDots();
+
+  // Show silhouette (emoji turned black)
+  const sil = document.getElementById('shSilhouette');
+  sil.innerHTML = `<div class="sh-emoji" id="shEmoji">${s.emoji}</div>`;
+
+  // Build options: correct + 3 random distractors
+  const opts = shuffle([
+    { nombre: s.nombre, emoji: s.emoji, correct: true },
+    ...s.distractores.slice(0, 3).map(e => ({ nombre: e, emoji: e, correct: false }))
+  ]);
+  const grid = document.getElementById('shOptions');
+  grid.innerHTML = '';
+  opts.forEach(opt => {
+    const btn = document.createElement('div');
+    btn.className = 'sh-opt';
+    btn.innerHTML = `<span class="sh-opt-emoji">${opt.emoji}</span><span class="sh-opt-name">${opt.nombre}</span>`;
+    btn.addEventListener('click', () => answer(btn, opt, s));
+    grid.appendChild(btn);
+  });
+
+  setTimeout(hablarPregunta, 400);
+}
+
+function answer(btn, opt, sil) {
+  document.querySelectorAll('.sh-opt').forEach(b => b.disabled = true);
+  const fb = document.getElementById('shFeedback');
+
+  if (opt.correct) {
+    btn.classList.add('correct');
+    aciertos++;
+    score += 10;
+    fb.textContent = '¡Correcto! Soy ' + sil.nombre + ' ' + sil.emoji;
+    fb.className = 'sh-feedback ok';
+    // Reveal the real colored emoji
+    const emojiEl = document.getElementById('shEmoji');
+    if (emojiEl) emojiEl.classList.add('revealed');
+    hablar('¡Sí! Soy ' + sil.nombre, 0.85);
+    if (window.Confetti) Confetti.fire();
+    if (window.Toast) Toast.show('¡Muy bien! 🌟', 'success');
+  } else {
+    btn.classList.add('shaking');
+    btn.classList.add('wrong');
+    setTimeout(() => btn.classList.remove('shaking'), 400);
+    // Highlight correct
+    document.querySelectorAll('.sh-opt').forEach(b => {
+      if (b.querySelector('.sh-opt-name').textContent === sil.nombre) b.classList.add('correct');
+    });
+    fb.textContent = 'Era ' + sil.nombre + ' ' + sil.emoji + ' ¡Mira bien la sombra!';
+    fb.className = 'sh-feedback err';
+    hablar('Hmm, mira bien la silueta', 0.8);
+    if (window.Toast) Toast.show('¡Casi! Fíjate en la forma 🔍', 'warning');
+    // Reveal the real colored emoji anyway
+    const emojiEl2 = document.getElementById('shEmoji');
+    if (emojiEl2) emojiEl2.classList.add('revealed');
+  }
+
+  updateHUD();
+  round++;
+  buildDots();
+  setTimeout(loadRound, 2000);
+}
+
+function updateHUD() {
+  document.getElementById('shScore').textContent    = score;
+  document.getElementById('shAciertos').textContent = aciertos;
+  document.getElementById('shStars').textContent    = '⭐ ' + calcStars();
+}
+
+function finishGame() {
+  document.getElementById('shRoundLabel').textContent = '¡Completado!';
+  document.getElementById('shSaveBtn').style.display = '';
+  updateHUD();
+  if (window.Confetti) Confetti.fire();
+  hablar('¡Felicitaciones! Completaste el Teatro de Sombras.', 0.85);
+}
+
+function getCookie(n) { for(let c of document.cookie.split(';')){const[k,v]=c.trim().split('=');if(k===n)return decodeURIComponent(v);}return ''; }
+
+document.getElementById('shSaveBtn').addEventListener('click', function() {
+  if (saved) return; saved = true;
+  const stars = calcStars();
+  fetch('{% url "save_game_score" %}', {
+    method:'POST',
+    headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},
+    body:JSON.stringify({ game_type:'shadows', score, stars_earned:stars, activity_id:{{ activity_id|default:'null' }}, drawing_data:'' })
+  }).then(r=>r.json()).then(d=>{
+    if(window.Toast) Toast.show('¡Guardado! +' + (d.stars_earned||stars) + ' estrellas', 'success');
+    this.disabled = true;
+    this.innerHTML = '<i class="bi bi-check-circle-fill"></i> Guardado';
+  }).catch(()=>{ if(window.Toast) Toast.show('Error al guardar.','error'); });
+});
+
+loadRound();
+
+(function(){
+  const d=document.getElementById('topbarDate');
+  if(d)d.textContent=new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long'});
+  const pb=document.getElementById('sidebarProfileBtn'),pd=document.getElementById('profileDropdown'),pc=document.getElementById('profileChevron');
+  if(pb&&pd){pb.addEventListener('click',function(e){e.stopPropagation();const o=pd.classList.toggle('open');if(pc)pc.style.transform=o?'rotate(180deg)':'';});document.addEventListener('click',function(){pd.classList.remove('open');if(pc)pc.style.transform='';});}
+  const t=document.getElementById('sidebarToggle'),s=document.getElementById('studentSidebar'),ov=document.getElementById('sidebarOverlay');
+  if(t&&s&&ov){t.addEventListener('click',function(){s.classList.toggle('open');ov.classList.toggle('open');});ov.addEventListener('click',function(){s.classList.remove('open');ov.classList.remove('open');});}
+  const dt=document.getElementById('darkModeToggle'),di=document.getElementById('darkModeIcon');
+  function sd(on){document.body.classList.toggle('student-dark',on);if(di)di.className=on?'bi bi-sun-fill':'bi bi-moon-fill';}
+  sd(localStorage.getItem('student_dark')==='1');
+  if(dt)dt.addEventListener('click',function(){const on=!document.body.classList.contains('student-dark');sd(on);localStorage.setItem('student_dark',on?'1':'0');});
+})();
+</script>
+{% endblock %}

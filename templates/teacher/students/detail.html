@@ -1,0 +1,264 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ student.get_full_name }} — Manitos Creativas{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/teacher.css' %}">{% endblock %}
+
+{% block body_content %}
+<div class="teacher-layout">
+  {% include 'teacher/_sidebar.html' %}
+  <main class="teacher-main">
+
+    <div class="teacher-topbar">
+      <div style="display:flex;align-items:center;gap:.85rem;">
+        <button id="sidebar-toggle"
+          style="display:none;background:none;border:none;cursor:pointer;font-size:1.2rem;color:var(--t-text-mid);padding:.25rem;"
+          onclick="document.querySelector('.sidebar').classList.toggle('open')">
+          <i class="bi bi-list"></i>
+        </button>
+        <a href="{% url 'teacher_students' %}" style="color:var(--t-text-muted);font-size:.85rem;text-decoration:none;display:flex;align-items:center;gap:.3rem;">
+          <i class="bi bi-arrow-left"></i> Usuarios
+        </a>
+        <span style="color:var(--t-border);">/</span>
+        <div class="teacher-topbar-title">{{ student.get_full_name|default:student.username }}</div>
+      </div>
+      <div class="topbar-actions">
+        <a href="{% url 'teacher_student_edit' student.pk %}" class="btn btn-outline">
+          <i class="bi bi-pencil"></i> Editar
+        </a>
+        <button type="button" class="btn btn-primary"
+          style="background:var(--t-rose);border-color:var(--t-rose);"
+          onclick="openDelete()">
+          <i class="bi bi-trash"></i> Eliminar
+        </button>
+      </div>
+    </div>
+
+    <div class="teacher-content">
+      <div class="dashboard-grid">
+
+        <div style="display:flex;flex-direction:column;gap:1.25rem;">
+
+          <!-- Profile card -->
+          <div class="panel-card">
+            <div class="panel-header">
+              <div class="panel-title"><i class="bi bi-person-circle"></i> Perfil del estudiante</div>
+            </div>
+            <div class="panel-body" style="padding:1.4rem;">
+              <div style="display:flex;align-items:flex-start;gap:1.1rem;margin-bottom:1.25rem;">
+                <div style="width:3.6rem;height:3.6rem;border-radius:50%;background:var(--t-indigo-light);color:var(--t-indigo);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.4rem;flex-shrink:0;">
+                  {{ student.first_name|first|upper }}{{ student.last_name|first|upper }}
+                </div>
+                <div style="min-width:0;">
+                  <div style="font-family:var(--t-font-serif);font-size:1.15rem;font-weight:700;color:var(--t-text);line-height:1.2;">
+                    {{ student.get_full_name|default:student.username }}
+                  </div>
+                  <div style="font-size:.8rem;color:var(--t-text-muted);margin-top:.2rem;">@{{ student.username }}</div>
+                  <div style="margin-top:.45rem;display:flex;gap:.4rem;flex-wrap:wrap;">
+                    {% if profile %}
+                    <span class="badge badge-blue">Nivel {{ profile.get_level_display }}</span>
+                    <span class="badge badge-purple">
+                      {% if profile.selected_avatar == 'mochi' %}Mochi 🩷
+                      {% elif profile.selected_avatar == 'kiko' %}Kiko 🧡
+                      {% elif profile.selected_avatar == 'star' %}Estrella ⭐
+                      {% else %}Nube ☁️{% endif %}
+                    </span>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:.7rem;">
+                {% if student.email %}
+                <div style="display:flex;align-items:center;gap:.6rem;font-size:.85rem;">
+                  <i class="bi bi-envelope" style="color:var(--t-text-muted);width:1rem;text-align:center;"></i>
+                  <span style="color:var(--t-text);">{{ student.email }}</span>
+                </div>
+                {% endif %}
+                {% if profile %}
+                <div style="display:flex;align-items:center;gap:.6rem;font-size:.85rem;">
+                  <i class="bi bi-cake2" style="color:var(--t-text-muted);width:1rem;text-align:center;"></i>
+                  <span style="color:var(--t-text);">{{ profile.age }} años</span>
+                </div>
+                <div style="border-top:1px solid var(--t-border);padding-top:.75rem;margin-top:.2rem;">
+                  <div style="font-size:.73rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--t-text-muted);margin-bottom:.6rem;">Acudiente</div>
+                  <div style="display:flex;flex-direction:column;gap:.5rem;">
+                    <div style="display:flex;align-items:center;gap:.6rem;font-size:.85rem;">
+                      <i class="bi bi-person" style="color:var(--t-text-muted);width:1rem;text-align:center;"></i>
+                      <span style="color:var(--t-text);">{{ profile.parent_name|default:"—" }}</span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:.6rem;font-size:.85rem;">
+                      <i class="bi bi-envelope-at" style="color:var(--t-text-muted);width:1rem;text-align:center;"></i>
+                      <span style="color:var(--t-text);">{{ profile.parent_email|default:"—" }}</span>
+                    </div>
+                    {% if profile.parent_phone %}
+                    <div style="display:flex;align-items:center;gap:.6rem;font-size:.85rem;">
+                      <i class="bi bi-phone" style="color:var(--t-text-muted);width:1rem;text-align:center;"></i>
+                      <span style="color:var(--t-text);">{{ profile.parent_phone }}</span>
+                    </div>
+                    {% endif %}
+                  </div>
+                </div>
+                {% endif %}
+                <div style="font-size:.75rem;color:var(--t-text-muted);margin-top:.25rem;">
+                  Registrado el {{ student.created_at|date:"d M Y" }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Courses -->
+          <div class="panel-card">
+            <div class="panel-header">
+              <div class="panel-title"><i class="bi bi-mortarboard-fill"></i> Cursos</div>
+              <a href="{% url 'teacher_courses' %}" class="panel-link">Gestionar →</a>
+            </div>
+            <div class="panel-body">
+              {% if courses %}
+                {% for course in courses %}
+                <div class="student-item">
+                  <div class="student-avatar" style="background:var(--t-teal-light);color:var(--t-teal);">
+                    <i class="bi bi-mortarboard-fill" style="font-size:.85rem;"></i>
+                  </div>
+                  <div>
+                    <div class="student-name">{{ course.name }}</div>
+                    {% if course.description %}
+                    <div class="student-level">{{ course.description|truncatechars:45 }}</div>
+                    {% endif %}
+                  </div>
+                </div>
+                {% endfor %}
+              {% else %}
+                <div class="empty-state" style="padding:1.2rem;">
+                  <div style="font-size:1.3rem;opacity:.35;margin-bottom:.4rem;"><i class="bi bi-mortarboard"></i></div>
+                  <div class="empty-state-title" style="margin-bottom:0;font-size:.85rem;">Sin cursos asignados</div>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:1.25rem;">
+
+          <!-- Stats -->
+          <div class="stats-grid" style="grid-template-columns:repeat(2,1fr);">
+            <div class="stat-card">
+              <div class="stat-icon stat-icon-yellow"><i class="bi bi-star-fill"></i></div>
+              <div class="stat-number">{% if profile %}{{ profile.total_stars }}{% else %}0{% endif %}</div>
+              <div class="stat-label">Estrellas</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon stat-icon-pink"><i class="bi bi-award-fill"></i></div>
+              <div class="stat-number">{% if profile %}{{ profile.total_medals }}{% else %}0{% endif %}</div>
+              <div class="stat-label">Medallas</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon stat-icon-green"><i class="bi bi-check-circle-fill"></i></div>
+              <div class="stat-number">{{ activities_done }}</div>
+              <div class="stat-label">Actividades</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon stat-icon-purple"><i class="bi bi-controller"></i></div>
+              <div class="stat-number">{{ games_played }}</div>
+              <div class="stat-label">Juegos</div>
+            </div>
+          </div>
+
+          <!-- Recent submissions -->
+          <div class="panel-card">
+            <div class="panel-header">
+              <div class="panel-title"><i class="bi bi-inbox-fill"></i> Actividades Recientes</div>
+            </div>
+            <div class="panel-body">
+              {% if recent_submissions %}
+                {% for sub in recent_submissions %}
+                <div class="activity-row">
+                  <div class="activity-row-icon">
+                    {% if sub.status == 'approved' %}<i class="bi bi-check-circle-fill" style="color:var(--t-teal);"></i>
+                    {% elif sub.status == 'reviewed' %}<i class="bi bi-eye-fill" style="color:var(--t-indigo);"></i>
+                    {% elif sub.status == 'submitted' %}<i class="bi bi-send-fill" style="color:var(--t-amber);"></i>
+                    {% else %}<i class="bi bi-hourglass-split" style="color:var(--t-text-muted);"></i>{% endif %}
+                  </div>
+                  <div class="activity-row-info">
+                    <div class="activity-row-name">{{ sub.activity.title|truncatechars:32 }}</div>
+                    <div class="activity-row-meta">
+                      <span class="badge badge-{% if sub.status == 'approved' %}green{% elif sub.status == 'reviewed' %}blue{% elif sub.status == 'submitted' %}yellow{% else %}purple{% endif %}">
+                        {{ sub.get_status_display }}
+                      </span>
+                      {% if sub.submitted_at %}
+                      <span style="font-size:.72rem;color:var(--t-text-muted);">{{ sub.submitted_at|date:"d M Y" }}</span>
+                      {% endif %}
+                    </div>
+                  </div>
+                  {% if sub.stars_awarded %}
+                  <div style="font-size:.8rem;color:var(--t-amber);font-weight:600;display:flex;align-items:center;gap:.2rem;flex-shrink:0;">
+                    <i class="bi bi-star-fill" style="font-size:.7rem;"></i>+{{ sub.stars_awarded }}
+                  </div>
+                  {% endif %}
+                </div>
+                {% endfor %}
+              {% else %}
+                <div class="empty-state" style="padding:1.2rem;">
+                  <div style="font-size:1.3rem;opacity:.35;margin-bottom:.4rem;"><i class="bi bi-inbox"></i></div>
+                  <div class="empty-state-title" style="margin-bottom:0;font-size:.85rem;">Sin entregas aún</div>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Eliminar -->
+    <div id="modalDelete" style="display:none;position:fixed;inset:0;z-index:1000;align-items:center;justify-content:center;">
+      <div class="modal-backdrop" onclick="closeDelete()"></div>
+      <div class="modal-box" style="max-width:420px;">
+        <div class="modal-header">
+          <div class="modal-title"><i class="bi bi-trash" style="color:var(--t-rose);margin-right:.4rem;"></i> Eliminar estudiante</div>
+          <button onclick="closeDelete()" class="modal-close"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <div style="padding:1.35rem;">
+          <p style="font-size:.9rem;color:var(--t-text-mid);line-height:1.6;margin-bottom:1.25rem;">
+            ¿Eliminar a <strong style="color:var(--t-text);">{{ student.get_full_name|default:student.username }}</strong>? Esta acción no se puede deshacer y eliminará todas sus actividades y datos asociados.
+          </p>
+          <form method="post" action="{% url 'teacher_student_delete' student.pk %}">
+            {% csrf_token %}
+            <div class="form-actions">
+              <button type="button" onclick="closeDelete()" class="btn btn-outline">Cancelar</button>
+              <button type="submit" class="btn btn-primary" style="background:var(--t-rose);border-color:var(--t-rose);">
+                <i class="bi bi-trash"></i> Sí, eliminar
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<style>
+.modal-backdrop { position:absolute;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(3px); }
+.modal-box { position:relative;z-index:1;width:100%;margin:1rem;background:var(--t-surface);border-radius:var(--t-radius-lg);box-shadow:0 24px 48px rgba(0,0,0,.25);border:1px solid var(--t-border);overflow:hidden; }
+.modal-header { display:flex;align-items:center;justify-content:space-between;padding:1.1rem 1.35rem;border-bottom:1px solid var(--t-border); }
+.modal-title { font-family:var(--t-font-serif);font-size:1.05rem;font-weight:700;color:var(--t-text);letter-spacing:-.01em; }
+.modal-close { background:none;border:none;cursor:pointer;font-size:1.1rem;color:var(--t-text-muted);line-height:1;padding:.2rem; }
+</style>
+
+<script>
+if (window.innerWidth <= 768) document.getElementById('sidebar-toggle').style.display = 'block';
+window.addEventListener('resize', () => {
+  const tog = document.getElementById('sidebar-toggle');
+  if (tog) tog.style.display = window.innerWidth <= 768 ? 'block' : 'none';
+});
+function openDelete() {
+  document.getElementById('modalDelete').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+function closeDelete() {
+  document.getElementById('modalDelete').style.display = 'none';
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDelete(); });
+</script>
+{% endblock %}

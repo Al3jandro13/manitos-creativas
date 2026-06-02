@@ -1,0 +1,359 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Memoria Visual — Manitos Creativas{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/student.css' %}">
+<style>
+  .mem-page { max-width: 780px; margin: 0 auto; padding-bottom: 2rem; }
+
+  .mem-header {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 1rem; margin-bottom: 1.25rem; flex-wrap: wrap;
+  }
+  .mem-title {
+    font-family: var(--font-display);
+    font-size: 2rem; color: #1E3A5F; line-height: 1; margin: 0;
+  }
+  .mem-diff-row { display: flex; gap: .5rem; flex-wrap: wrap; }
+  .mem-diff-btn {
+    padding: .4rem .9rem; border-radius: 10px;
+    border: 2px solid #E2E8F0; background: #fff;
+    font-family: var(--font-accent); font-size: .8rem; font-weight: 700;
+    cursor: pointer; transition: all .15s;
+    color: #475569;
+  }
+  .mem-diff-btn:hover { border-color: #818CF8; color: #4F46E5; }
+  .mem-diff-btn.active {
+    background: #4F46E5; border-color: #4F46E5; color: #fff;
+  }
+
+  .mem-stats {
+    display: flex; gap: .75rem; margin-bottom: 1.25rem;
+  }
+  .mem-stat {
+    flex: 1; background: #fff; border: 2px solid #E2E8F0;
+    border-radius: 14px; padding: .65rem .75rem; text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,.04);
+  }
+  .mem-stat-val {
+    display: block; font-family: var(--font-display);
+    font-size: 1.6rem; line-height: 1.1; color: #4F46E5;
+  }
+  .mem-stat-lbl {
+    display: block; font-family: var(--font-accent);
+    font-size: .7rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .07em; color: #94A3B8; margin-top: .1rem;
+  }
+
+  /* Grid de cartas */
+  #memGrid {
+    display: grid;
+    gap: .6rem;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+  }
+
+  .mem-card {
+    aspect-ratio: 1;
+    border-radius: 14px;
+    cursor: pointer;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform .4s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,.1);
+  }
+  .mem-card.flipped  { transform: rotateY(180deg); }
+  .mem-card.matched  { transform: rotateY(180deg); pointer-events: none; }
+  .mem-card.matched .mem-card-front { box-shadow: 0 0 0 3px #86EFAC inset; }
+
+  .mem-card-back, .mem-card-front {
+    position: absolute; inset: 0; border-radius: 14px;
+    backface-visibility: hidden; -webkit-backface-visibility: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .mem-card-back {
+    background: linear-gradient(135deg, #4F46E5, #7C3AED);
+    font-size: 1.5rem;
+  }
+  .mem-card-back::after {
+    content: '?';
+    font-family: var(--font-display);
+    font-size: 1.8rem;
+    color: rgba(255,255,255,.5);
+  }
+  .mem-card-front {
+    transform: rotateY(180deg);
+    background: #fff;
+    border: 2px solid #E2E8F0;
+    font-size: 2.5rem;
+  }
+
+  /* Banner de victoria */
+  .mem-win {
+    display: none;
+    background: #fff; border: 2px solid #BBF7D0;
+    border-radius: 18px; padding: 2rem 1.5rem;
+    text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,.06);
+    margin-bottom: 1.5rem;
+  }
+  .mem-win-icon { font-size: 2.5rem; color: #D97706; margin-bottom: .5rem; }
+  .mem-win h3 {
+    font-family: var(--font-display); font-size: 1.6rem;
+    color: #1E3A5F; margin: 0 0 .5rem;
+  }
+  .mem-win p {
+    font-family: var(--font-accent); font-size: .95rem;
+    color: #64748B; margin: 0 0 1.25rem;
+  }
+  .mem-win-btns { display: flex; gap: .75rem; flex-wrap: wrap; justify-content: center; }
+
+  /* Dark mode */
+  body.student-dark .mem-title { color: #93C5FD; }
+  body.student-dark .mem-diff-btn { background: #0A1726; border-color: rgba(255,255,255,.08); color: #CBD5E1; }
+  body.student-dark .mem-diff-btn:hover { border-color: #818CF8; color: #A5B4FC; }
+  body.student-dark .mem-diff-btn.active { background: #4F46E5; border-color: #4F46E5; color: #fff; }
+  body.student-dark .mem-stat { background: #0E1E30; border-color: rgba(255,255,255,.07); }
+  body.student-dark .mem-stat-val { color: #60A5FA; }
+  body.student-dark .mem-card-front { background: #0E1E30; border-color: rgba(255,255,255,.1); }
+  body.student-dark .mem-win { background: #0E1E30; border-color: rgba(134,239,172,.2); }
+  body.student-dark .mem-win h3 { color: #93C5FD; }
+  body.student-dark .mem-win p  { color: #4B5563; }
+
+  @media (max-width: 600px) {
+    .mem-title { font-size: 1.5rem; }
+    .mem-stats  { gap: .5rem; }
+  }
+</style>
+{% endblock %}
+
+{% block body_content %}
+<div class="student-layout">
+  {% include 'student/_sidebar.html' with active_page='games' %}
+
+  <div class="student-main">
+    <header class="student-topbar">
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Abrir menú"><i class="bi bi-list"></i></button>
+      <div class="topbar-breadcrumb">
+        <a href="{% url 'games_home' %}" class="breadcrumb-link">Mis Juegos</a>
+        <i class="bi bi-chevron-right" style="font-size:.7rem;color:#9CA3AF;"></i>
+        <span class="bc-current">Memoria Visual</span>
+      </div>
+      <div class="topbar-actions">
+        <div class="topbar-date"><i class="bi bi-calendar3"></i><span id="topbarDate"></span></div>
+        <div class="topbar-stars-chip"><i class="bi bi-star-fill"></i><span>{{ profile.total_stars|default:"0" }} estrellas</span></div>
+        <button class="dark-mode-toggle" id="darkModeToggle" aria-label="Cambiar modo"><i class="bi bi-moon-fill" id="darkModeIcon"></i></button>
+      </div>
+    </header>
+
+    <div class="student-scroll">
+      {% include 'student/games/_activity_banner.html' %}
+      <div class="mem-page">
+
+        <div class="mem-header">
+          <div>
+            <h1 class="mem-title">🃏 Memoria Visual</h1>
+          </div>
+          <div>
+            <div style="font-family:var(--font-accent);font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#94A3B8;margin-bottom:.35rem;">Dificultad</div>
+            <div class="mem-diff-row">
+              <button class="mem-diff-btn active" data-pairs="6">Fácil (6)</button>
+              <button class="mem-diff-btn" data-pairs="8">Medio (8)</button>
+              <button class="mem-diff-btn" data-pairs="10">Difícil (10)</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="mem-stats">
+          <div class="mem-stat">
+            <span class="mem-stat-val" id="movVal">0</span>
+            <span class="mem-stat-lbl">Movimientos</span>
+          </div>
+          <div class="mem-stat">
+            <span class="mem-stat-val" id="pairVal">0/0</span>
+            <span class="mem-stat-lbl">Parejas</span>
+          </div>
+          <div class="mem-stat">
+            <span class="mem-stat-val" id="starsVal">0</span>
+            <span class="mem-stat-lbl"><i class="bi bi-star-fill" style="color:#D97706;font-size:.75em;"></i> Estrellas</span>
+          </div>
+          <div class="mem-stat">
+            <span class="mem-stat-val" id="timeVal">0:00</span>
+            <span class="mem-stat-lbl">Tiempo</span>
+          </div>
+        </div>
+
+        <!-- Banner de victoria -->
+        <div class="mem-win" id="winBanner">
+          <div class="mem-win-icon"><i class="bi bi-trophy-fill"></i></div>
+          <h3>¡Memoria completada!</h3>
+          <p id="winMsg"></p>
+          <div class="mem-win-btns">
+            <button class="btn btn-primary" id="newGameBtn2"><i class="bi bi-arrow-repeat"></i> Nuevo juego</button>
+            <button class="btn btn-secondary" id="saveBtn">
+              <i class="bi bi-floppy-fill"></i> Guardar estrellas
+            </button>
+          </div>
+        </div>
+
+        <!-- Grid de cartas -->
+        <div id="memGrid"></div>
+
+        <div style="text-align:center;margin-top:1rem;">
+          <button class="btn btn-outline" id="newGameBtn"><i class="bi bi-arrow-repeat"></i> Nuevo juego</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<script>
+const EMOJIS = [
+  '🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼',
+  '🐨','🐯','🦁','🐮','🐸','🦋','🐝','🦄',
+  '🌸','🍎','🍕','⭐','🎸','🚀','🌈','🏆',
+  '🎨','🦜','🐬','🦋','🍀','🌻','🎯','🎪',
+];
+
+let totalPairs = 6;
+let cards = [], flipped = [], matched = 0, moves = 0;
+let blocked = false, saved = false;
+let timerInterval = null, seconds = 0;
+
+function init() {
+  clearInterval(timerInterval);
+  seconds = 0; moves = 0; matched = 0;
+  flipped = []; blocked = false; saved = false;
+  updateHUD();
+
+  const pairs = EMOJIS.slice(0, totalPairs);
+  cards = [...pairs, ...pairs].sort(() => Math.random() - .5);
+
+  const grid = document.getElementById('memGrid');
+  const cols = totalPairs <= 6 ? 4 : totalPairs <= 8 ? 4 : 5;
+  grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  grid.style.maxWidth = (cols * 100 + (cols - 1) * 10) + 'px';
+
+  grid.innerHTML = '';
+  cards.forEach((emoji, i) => {
+    const card = document.createElement('div');
+    card.className = 'mem-card';
+    card.dataset.idx = i;
+    card.dataset.emoji = emoji;
+    card.innerHTML = `
+      <div class="mem-card-back"></div>
+      <div class="mem-card-front">${emoji}</div>
+    `;
+    card.addEventListener('click', () => flipCard(card));
+    grid.appendChild(card);
+  });
+
+  document.getElementById('winBanner').style.display = 'none';
+  timerInterval = setInterval(() => {
+    seconds++;
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    document.getElementById('timeVal').textContent = m + ':' + String(s).padStart(2, '0');
+  }, 1000);
+}
+
+function flipCard(card) {
+  if (blocked || card.classList.contains('flipped') || card.classList.contains('matched')) return;
+  card.classList.add('flipped');
+  flipped.push(card);
+  if (flipped.length === 2) {
+    blocked = true; moves++;
+    updateHUD();
+    setTimeout(checkMatch, 700);
+  }
+}
+
+function checkMatch() {
+  const [a, b] = flipped;
+  if (a.dataset.emoji === b.dataset.emoji) {
+    a.classList.add('matched'); b.classList.add('matched');
+    matched++;
+    if (window.Toast) Toast.show('¡Pareja encontrada! ' + a.dataset.emoji, 'success');
+    if (matched === totalPairs) setTimeout(gameComplete, 400);
+  } else {
+    a.classList.remove('flipped'); b.classList.remove('flipped');
+  }
+  flipped = []; blocked = false;
+  updateHUD();
+}
+
+function calcStars() {
+  clearInterval(timerInterval);
+  const maxMoves = totalPairs * 3;
+  const timeBonus = seconds < totalPairs * 8 ? 1 : 0;
+  const moveBonus = moves <= maxMoves ? 2 : moves <= maxMoves * 1.5 ? 1 : 0;
+  return Math.min(5, 2 + moveBonus + timeBonus);
+}
+
+function updateHUD() {
+  document.getElementById('movVal').textContent  = moves;
+  document.getElementById('pairVal').textContent = matched + '/' + totalPairs;
+  document.getElementById('starsVal').textContent = matched === totalPairs ? calcStars() : Math.floor(matched / totalPairs * 3);
+}
+
+function gameComplete() {
+  const stars = calcStars();
+  if (window.Confetti) Confetti.fire();
+  document.getElementById('winMsg').textContent =
+    'Completaste ' + totalPairs + ' parejas en ' + moves + ' movimientos. ¡Ganaste ' + stars + ' estrella' + (stars !== 1 ? 's' : '') + '!';
+  document.getElementById('winBanner').style.display = 'block';
+  document.getElementById('winBanner').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function getCookie(n) {
+  for (let c of document.cookie.split(';')) {
+    const [k, v] = c.trim().split('=');
+    if (k === n) return decodeURIComponent(v);
+  }
+  return '';
+}
+
+document.getElementById('saveBtn').addEventListener('click', function () {
+  if (saved) return; saved = true;
+  const stars = calcStars();
+  fetch('{% url "save_game_score" %}', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+    body: JSON.stringify({ game_type: 'memory', score: moves, stars_earned: stars, activity_id: {{ activity_id|default:'null' }} }),
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (window.Toast) Toast.show('¡Guardado! +' + (data.stars_earned || stars) + ' estrellas ⭐', 'success');
+    this.disabled = true;
+    this.innerHTML = '<i class="bi bi-check-circle-fill"></i> Guardado';
+  })
+  .catch(() => { saved = false; if (window.Toast) Toast.show('Error al guardar.', 'error'); });
+});
+
+document.querySelectorAll('.mem-diff-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.mem-diff-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    totalPairs = +btn.dataset.pairs;
+    init();
+  });
+});
+document.getElementById('newGameBtn').addEventListener('click', init);
+document.getElementById('newGameBtn2').addEventListener('click', init);
+
+init();
+
+(function () {
+  var d = document.getElementById('topbarDate');
+  if (d) d.textContent = new Date().toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' });
+  var pb = document.getElementById('sidebarProfileBtn'), pd = document.getElementById('profileDropdown'), pc = document.getElementById('profileChevron');
+  if (pb && pd) { pb.addEventListener('click', function (e) { e.stopPropagation(); var o = pd.classList.toggle('open'); if (pc) pc.style.transform = o ? 'rotate(180deg)' : ''; }); document.addEventListener('click', function () { pd.classList.remove('open'); if (pc) pc.style.transform = ''; }); }
+  var t = document.getElementById('sidebarToggle'), s = document.getElementById('studentSidebar'), ov = document.getElementById('sidebarOverlay');
+  if (t && s && ov) { t.addEventListener('click', function () { s.classList.toggle('open'); ov.classList.toggle('open'); }); ov.addEventListener('click', function () { s.classList.remove('open'); ov.classList.remove('open'); }); }
+  var dt = document.getElementById('darkModeToggle'), di = document.getElementById('darkModeIcon');
+  function sd(on) { document.body.classList.toggle('student-dark', on); if (di) di.className = on ? 'bi bi-sun-fill' : 'bi bi-moon-fill'; }
+  sd(localStorage.getItem('student_dark') === '1');
+  if (dt) dt.addEventListener('click', function () { var on = !document.body.classList.contains('student-dark'); sd(on); localStorage.setItem('student_dark', on ? '1' : '0'); });
+})();
+</script>
+{% endblock %}

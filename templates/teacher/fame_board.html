@@ -7,6 +7,7 @@
 <div class="teacher-layout">
   {% include 'teacher/_sidebar.html' %}
   <main class="teacher-main">
+
     <div class="teacher-topbar">
       <div style="display:flex;align-items:center;gap:.85rem;">
         <button id="sidebar-toggle"
@@ -16,13 +17,88 @@
         </button>
         <div class="teacher-topbar-title"><i class="bi bi-trophy"></i> Tablero de Fama</div>
       </div>
+      <div class="topbar-actions">
+        <button class="btn btn-primary" id="btnAgregar" style="font-size:.85rem;">
+          <i class="bi bi-plus-circle"></i> Agregar
+        </button>
+      </div>
     </div>
+
     <div class="teacher-content">
 
-      <!-- Add entry form -->
-      <div class="teacher-form" style="margin-bottom:2rem;">
-        <div class="form-title"><i class="bi bi-star"></i> Agregar al Tablero</div>
-        <form method="post" novalidate>
+      <div style="font-family:var(--t-font-serif);font-size:1.25rem;font-weight:600;color:var(--t-text);margin-bottom:1rem;letter-spacing:-.01em;display:flex;align-items:center;gap:.5rem;">
+        <i class="bi bi-star" style="color:var(--t-amber);font-size:1rem;"></i> Nuestros Campeones
+      </div>
+
+      {% if entries %}
+      <div class="fame-admin-grid">
+        {% for entry in entries %}
+        <div class="fame-admin-card" style="padding:0;overflow:hidden;">
+
+          {% if entry.submission and entry.submission.drawing_data and entry.submission.drawing_data != 'null' %}
+          <div style="height:140px;overflow:hidden;">
+            <img src="{{ entry.submission.drawing_data }}" alt="Trabajo de {{ entry.student.first_name }}"
+              style="width:100%;height:100%;object-fit:cover;">
+          </div>
+          {% endif %}
+
+          <div style="padding:1rem;">
+            <div style="font-size:1.6rem;margin-bottom:.5rem;line-height:1;">
+              {% if entry.medal_type == 'gold' %}<i class="bi bi-trophy-fill" style="color:#D97706;"></i>
+              {% elif entry.medal_type == 'silver' %}<i class="bi bi-trophy-fill" style="color:#94A3B8;"></i>
+              {% elif entry.medal_type == 'bronze' %}<i class="bi bi-trophy-fill" style="color:#92400E;"></i>
+              {% elif entry.medal_type == 'heart' %}<i class="bi bi-heart-fill" style="color:#E11D48;"></i>
+              {% elif entry.medal_type == 'rainbow' %}<span>🌈</span>
+              {% else %}<i class="bi bi-star-fill" style="color:#D97706;"></i>{% endif %}
+            </div>
+            <div style="font-family:var(--t-font-serif);font-size:1rem;font-weight:600;color:var(--t-text);margin-bottom:.2rem;letter-spacing:-.01em;">
+              {{ entry.student.get_full_name|default:entry.student.username }}
+            </div>
+            {% if entry.student.student_profile %}
+            <div style="font-size:.7rem;color:var(--t-text-muted);margin-bottom:.4rem;">Transición {{ entry.student.student_profile.level }}</div>
+            {% endif %}
+            {% if entry.submission %}
+            <div style="font-size:.7rem;color:var(--t-indigo);margin-bottom:.4rem;"><i class="bi bi-tag"></i> {{ entry.submission.activity.title|truncatechars:30 }}</div>
+            {% endif %}
+            <div style="font-weight:600;font-size:.855rem;color:var(--t-text);margin-bottom:.3rem;">{{ entry.title }}</div>
+            {% if entry.description %}
+            <div style="font-size:.8rem;color:var(--t-text-mid);line-height:1.5;">{{ entry.description|truncatechars:80 }}</div>
+            {% endif %}
+            {% if entry.submission and entry.submission.content %}
+            <div style="font-size:.78rem;color:var(--t-text-mid);background:var(--t-indigo-light);border-radius:var(--t-radius);padding:.35rem .55rem;margin-top:.4rem;line-height:1.45;">
+              {{ entry.submission.content|truncatechars:60 }}
+            </div>
+            {% endif %}
+            <div style="font-size:.68rem;color:var(--t-text-muted);margin-top:.7rem;">{{ entry.created_at|date:"d M Y" }}</div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-state-icon"><i class="bi bi-trophy"></i></div>
+        <div class="empty-state-title">Aún no hay entradas en el tablero</div>
+        <p style="font-size:.82rem;color:var(--t-text-muted);margin-top:.25rem;">¡Reconoce el esfuerzo de tus estudiantes!</p>
+      </div>
+      {% endif %}
+
+    </div>
+
+    <!-- Modal Agregar al Tablero -->
+    <div id="modalAgregar" style="display:none;position:fixed;inset:0;z-index:1000;align-items:center;justify-content:center;">
+      <div id="modalBackdrop" style="position:absolute;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(3px);"></div>
+      <div style="position:relative;z-index:1;width:100%;max-width:520px;margin:1rem;background:var(--t-surface);border-radius:var(--t-radius-lg);box-shadow:0 24px 48px rgba(0,0,0,.25);border:1px solid var(--t-border);overflow:hidden;">
+
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:1.1rem 1.35rem;border-bottom:1px solid var(--t-border);">
+          <div style="font-family:var(--t-font-serif);font-size:1.05rem;font-weight:700;color:var(--t-text);letter-spacing:-.01em;">
+            <i class="bi bi-trophy" style="color:var(--t-amber);margin-right:.4rem;"></i> Agregar al Tablero
+          </div>
+          <button id="btnCerrar" style="background:none;border:none;cursor:pointer;font-size:1.1rem;color:var(--t-text-muted);line-height:1;padding:.2rem;" aria-label="Cerrar">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+
+        <form method="post" novalidate style="padding:1.35rem;">
           {% csrf_token %}
           <div class="form-row-2">
             <div class="form-group">
@@ -40,12 +116,12 @@
             <div class="form-group">
               <label class="form-label"><i class="bi bi-award"></i> Tipo de Medalla</label>
               <select name="medal_type" class="form-select">
-                <option value="gold">Medalla de Oro</option>
-                <option value="silver">Medalla de Plata</option>
-                <option value="bronze">Medalla de Bronce</option>
-                <option value="star" selected>Estrella</option>
-                <option value="heart">Corazón</option>
-                <option value="rainbow">Arcoíris</option>
+                <option value="gold">🥇 Medalla de Oro</option>
+                <option value="silver">🥈 Medalla de Plata</option>
+                <option value="bronze">🥉 Medalla de Bronce</option>
+                <option value="star" selected>⭐ Estrella</option>
+                <option value="heart">❤️ Corazón</option>
+                <option value="rainbow">🌈 Arcoíris</option>
               </select>
             </div>
           </div>
@@ -57,59 +133,15 @@
             <label class="form-label"><i class="bi bi-chat"></i> Descripción (opcional)</label>
             <textarea name="description" class="form-textarea" rows="3" placeholder="Cuéntales a todos por qué merece este reconocimiento..."></textarea>
           </div>
-          <div class="form-actions">
+          <div class="form-actions" style="margin-top:1.1rem;">
+            <button type="button" id="btnCancelar" class="btn btn-outline">Cancelar</button>
             <button type="submit" class="btn btn-primary"><i class="bi bi-trophy"></i> Agregar al Tablero</button>
           </div>
         </form>
-      </div>
 
-      <!-- Entries heading -->
-      <div style="font-family:var(--t-font-serif);font-size:1.25rem;font-weight:600;color:var(--t-text);margin-bottom:1rem;letter-spacing:-.01em;display:flex;align-items:center;gap:.5rem;">
-        <i class="bi bi-star" style="color:var(--t-amber);font-size:1rem;"></i> Nuestros Campeones
       </div>
-
-      {% if entries %}
-      <div class="fame-admin-grid">
-        {% for entry in entries %}
-        <div class="fame-admin-card">
-          <div style="font-size:2rem;margin-bottom:.6rem;line-height:1;">
-            {% if entry.medal_type == 'gold' %}
-              <i class="bi bi-trophy-fill" style="color:#D97706;"></i>
-            {% elif entry.medal_type == 'silver' %}
-              <i class="bi bi-trophy-fill" style="color:#94A3B8;"></i>
-            {% elif entry.medal_type == 'bronze' %}
-              <i class="bi bi-trophy-fill" style="color:#92400E;"></i>
-            {% elif entry.medal_type == 'star' %}
-              <i class="bi bi-star-fill" style="color:#D97706;"></i>
-            {% elif entry.medal_type == 'heart' %}
-              <i class="bi bi-heart-fill" style="color:#E11D48;"></i>
-            {% else %}
-              <i class="bi bi-stars" style="color:var(--t-indigo);"></i>
-            {% endif %}
-          </div>
-          <div style="font-family:var(--t-font-serif);font-size:1rem;font-weight:600;color:var(--t-text);margin-bottom:.2rem;letter-spacing:-.01em;">
-            {{ entry.student.get_full_name|default:entry.student.username }}
-          </div>
-          {% if entry.student.student_profile %}
-          <div style="font-size:.7rem;color:var(--t-text-muted);margin-bottom:.55rem;letter-spacing:.02em;">Transición {{ entry.student.student_profile.level }}</div>
-          {% endif %}
-          <div style="font-weight:600;font-size:.855rem;color:var(--t-text);margin-bottom:.35rem;font-family:var(--t-font-sans);">{{ entry.title }}</div>
-          {% if entry.description %}
-          <div style="font-size:.8rem;color:var(--t-text-mid);line-height:1.5;">{{ entry.description }}</div>
-          {% endif %}
-          <div style="font-size:.68rem;color:var(--t-text-muted);margin-top:.85rem;letter-spacing:.02em;">{{ entry.created_at|date:"d M Y" }}</div>
-        </div>
-        {% endfor %}
-      </div>
-      {% else %}
-      <div class="empty-state">
-        <div class="empty-state-icon"><i class="bi bi-trophy"></i></div>
-        <div class="empty-state-title">Aún no hay entradas en el tablero</div>
-        <p style="font-size:.82rem;color:var(--t-text-muted);margin-top:.25rem;">¡Reconoce el esfuerzo de tus estudiantes!</p>
-      </div>
-      {% endif %}
-
     </div>
+
   </main>
 </div>
 <script>
@@ -118,5 +150,20 @@ window.addEventListener('resize', () => {
   const tog = document.getElementById('sidebar-toggle');
   if (tog) tog.style.display = window.innerWidth <= 768 ? 'block' : 'none';
 });
+
+const modal = document.getElementById('modalAgregar');
+function openModal() {
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+function closeModal() {
+  modal.style.display = 'none';
+  document.body.style.overflow = '';
+}
+document.getElementById('btnAgregar').addEventListener('click', openModal);
+document.getElementById('btnCerrar').addEventListener('click', closeModal);
+document.getElementById('btnCancelar').addEventListener('click', closeModal);
+document.getElementById('modalBackdrop').addEventListener('click', closeModal);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 </script>
 {% endblock %}

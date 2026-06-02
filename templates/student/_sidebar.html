@@ -27,45 +27,15 @@
       <span class="sidebar-nav-badge">{{ pending_tasks }}</span>
       {% endif %}
     </a>
+    <a href="{% url 'student_coop_list' %}" class="sidebar-nav-item {% if active_page == 'coop' or 'parejas' in request.path %}active{% endif %}">
+      <span class="sidebar-nav-icon"><i class="bi bi-people-fill"></i></span>
+      <span>Murales en Pareja</span>
+    </a>
     <a href="{% url 'student_logros' %}" class="sidebar-nav-item {% if active_page == 'logros' %}active{% endif %}">
       <span class="sidebar-nav-icon"><i class="bi bi-trophy-fill"></i></span>
       <span>Mis Logros</span>
     </a>
   </nav>
-
-  <!-- Recent activities -->
-  <div class="sidebar-activities-section">
-    <div class="sidebar-section-title">ACTIVIDADES RECIENTES</div>
-    {% if recent_submissions %}
-      {% for sub in recent_submissions|slice:":3" %}
-      <div class="sidebar-activity-item">
-        <div class="sidebar-activity-icon">
-          {% if sub.activity.category.name == 'colorear' %}🖍️
-          {% elif sub.activity.category.name == 'dibujo_libre' %}✏️
-          {% elif sub.activity.category.name == 'puntillismo' %}🎨
-          {% elif sub.activity.category.name == 'rompecabezas' %}🧩
-          {% elif sub.activity.category.name == 'cuento' %}📖
-          {% elif sub.activity.category.name == 'consonantes' %}🔤
-          {% elif sub.activity.category.name == 'numeros' %}🔢
-          {% elif sub.activity.category.name == 'sumas' %}➕
-          {% else %}⭐{% endif %}
-        </div>
-        <div class="sidebar-activity-info">
-          <div class="sidebar-activity-name">{{ sub.activity.title|truncatechars:22 }}</div>
-          <div class="sidebar-activity-status done">Completada</div>
-        </div>
-      </div>
-      {% endfor %}
-    {% else %}
-    <div class="sidebar-activity-empty">
-      <i class="bi bi-clipboard2"></i>
-      <span>Sin actividades recientes</span>
-    </div>
-    {% endif %}
-    <a href="{% url 'student_activities' %}" class="sidebar-activities-link">
-      Ver todas <i class="bi bi-arrow-right"></i>
-    </a>
-  </div>
 
   <div style="flex:1;"></div>
 
@@ -96,3 +66,10 @@
   </div>
 
 </aside>
+
+<script>
+(function () {
+  var saved = localStorage.getItem('student_dark') === '1';
+  document.body.classList.toggle('student-dark', saved);
+})();
+</script>

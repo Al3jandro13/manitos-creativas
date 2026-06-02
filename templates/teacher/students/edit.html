@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Editar {{ student.get_full_name }} — Manitos Creativas{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/teacher.css' %}">{% endblock %}
+
+{% block body_content %}
+<div class="teacher-layout">
+  {% include 'teacher/_sidebar.html' %}
+  <main class="teacher-main">
+
+    <div class="teacher-topbar">
+      <div style="display:flex;align-items:center;gap:.85rem;">
+        <button id="sidebar-toggle"
+          style="display:none;background:none;border:none;cursor:pointer;font-size:1.2rem;color:var(--t-text-mid);padding:.25rem;"
+          onclick="document.querySelector('.sidebar').classList.toggle('open')">
+          <i class="bi bi-list"></i>
+        </button>
+        <a href="{% url 'teacher_student_detail' student.pk %}" style="color:var(--t-text-muted);font-size:.85rem;text-decoration:none;display:flex;align-items:center;gap:.3rem;">
+          <i class="bi bi-arrow-left"></i> {{ student.get_full_name|default:student.username }}
+        </a>
+        <span style="color:var(--t-border);">/</span>
+        <div class="teacher-topbar-title">Editar</div>
+      </div>
+    </div>
+
+    <div class="teacher-content" style="max-width:720px;">
+
+      {% if messages %}
+      {% for msg in messages %}
+      <div style="margin-bottom:1rem;padding:.85rem 1.1rem;border-radius:var(--t-radius);background:var(--t-teal-light);color:var(--t-teal);font-size:.88rem;display:flex;align-items:center;gap:.6rem;">
+        <i class="bi bi-check-circle-fill"></i> {{ msg }}
+      </div>
+      {% endfor %}
+      {% endif %}
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+
+        <div class="panel-card" style="margin-bottom:1.25rem;">
+          <div class="panel-header">
+            <div class="panel-title"><i class="bi bi-person-fill"></i> Datos de la cuenta</div>
+          </div>
+          <div class="panel-body" style="padding:1.35rem;">
+            <div class="form-row-2">
+              <div class="form-group">
+                <label class="form-label">Nombre *</label>
+                <input type="text" name="first_name" value="{{ student.first_name }}" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Apellido *</label>
+                <input type="text" name="last_name" value="{{ student.last_name }}" class="form-input" required>
+              </div>
+            </div>
+            <div class="form-row-2">
+              <div class="form-group">
+                <label class="form-label">Nombre de usuario *</label>
+                <input type="text" name="username" value="{{ student.username }}" class="form-input" required
+                  {% if errors.username %}style="border-color:var(--t-rose);"{% endif %}>
+                {% if errors.username %}
+                <div style="font-size:.78rem;color:var(--t-rose);margin-top:.3rem;">{{ errors.username }}</div>
+                {% endif %}
+              </div>
+              <div class="form-group">
+                <label class="form-label">Correo electrónico</label>
+                <input type="email" name="email" value="{{ student.email }}" class="form-input">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel-card" style="margin-bottom:1.25rem;">
+          <div class="panel-header">
+            <div class="panel-title"><i class="bi bi-mortarboard-fill"></i> Información académica</div>
+          </div>
+          <div class="panel-body" style="padding:1.35rem;">
+            <div class="form-row-2">
+              <div class="form-group">
+                <label class="form-label">Nivel</label>
+                <select name="level" class="form-select">
+                  {% for val, label in level_choices %}
+                  <option value="{{ val }}" {% if profile.level == val %}selected{% endif %}>{{ label }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Edad</label>
+                <input type="number" name="age" value="{{ profile.age }}" min="3" max="10" class="form-input">
+              </div>
+            </div>
+            <div class="form-group" style="margin-top:.2rem;">
+              <label class="form-label">Avatar</label>
+              <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-top:.4rem;">
+                {% for val, label in avatar_choices %}
+                <label style="display:flex;align-items:center;gap:.4rem;cursor:pointer;padding:.5rem .75rem;border-radius:var(--t-radius);border:2px solid {% if profile.selected_avatar == val %}var(--t-indigo){% else %}var(--t-border){% endif %};background:{% if profile.selected_avatar == val %}var(--t-indigo-light){% else %}transparent{% endif %};font-size:.87rem;transition:all .15s;" id="avatar-label-{{ val }}">
+                  <input type="radio" name="selected_avatar" value="{{ val }}" {% if profile.selected_avatar == val %}checked{% endif %} style="display:none;" onchange="updateAvatarLabel(this)">
+                  {{ label }}
+                </label>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel-card" style="margin-bottom:1.25rem;">
+          <div class="panel-header">
+            <div class="panel-title"><i class="bi bi-house-heart-fill"></i> Información del acudiente</div>
+          </div>
+          <div class="panel-body" style="padding:1.35rem;">
+            <div class="form-row-2">
+              <div class="form-group">
+                <label class="form-label">Nombre del acudiente *</label>
+                <input type="text" name="parent_name" value="{{ profile.parent_name }}" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Correo del acudiente *</label>
+                <input type="email" name="parent_email" value="{{ profile.parent_email }}" class="form-input" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Teléfono del acudiente</label>
+              <input type="text" name="parent_phone" value="{{ profile.parent_phone }}" class="form-input" placeholder="300 000 0000">
+            </div>
+          </div>
+        </div>
+
+        <div class="panel-card" style="margin-bottom:1.5rem;">
+          <div class="panel-header">
+            <div class="panel-title"><i class="bi bi-lock-fill"></i> Cambiar contraseña</div>
+            <span style="font-size:.77rem;color:var(--t-text-muted);">Dejar en blanco para no cambiar</span>
+          </div>
+          <div class="panel-body" style="padding:1.35rem;">
+            <div class="form-row-2">
+              <div class="form-group">
+                <label class="form-label">Nueva contraseña</label>
+                <input type="password" name="new_password" class="form-input" placeholder="••••••••" autocomplete="new-password">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-actions" style="justify-content:flex-end;gap:.6rem;">
+          <a href="{% url 'teacher_student_detail' student.pk %}" class="btn btn-outline">Cancelar</a>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check-circle"></i> Guardar cambios
+          </button>
+        </div>
+
+      </form>
+    </div>
+
+  </main>
+</div>
+
+<script>
+if (window.innerWidth <= 768) document.getElementById('sidebar-toggle').style.display = 'block';
+window.addEventListener('resize', () => {
+  const tog = document.getElementById('sidebar-toggle');
+  if (tog) tog.style.display = window.innerWidth <= 768 ? 'block' : 'none';
+});
+function updateAvatarLabel(radio) {
+  document.querySelectorAll('[id^="avatar-label-"]').forEach(lbl => {
+    lbl.style.borderColor = 'var(--t-border)';
+    lbl.style.background = 'transparent';
+  });
+  const lbl = document.getElementById('avatar-label-' + radio.value);
+  if (lbl) {
+    lbl.style.borderColor = 'var(--t-indigo)';
+    lbl.style.background = 'var(--t-indigo-light)';
+  }
+}
+</script>
+{% endblock %}

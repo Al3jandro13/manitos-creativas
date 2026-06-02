@@ -1,0 +1,465 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Figuras Geométricas — Manitos Creativas{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/student.css' %}">
+<style>
+  .shp-page { max-width: 760px; margin: 0 auto; padding-bottom: 2rem; }
+
+  .shp-title { font-family: var(--font-display); font-size: 2rem; color: #1E3A5F; margin: 0 0 1.25rem; }
+
+  /* Modo: explorar / quiz */
+  .shp-mode-row { display: flex; gap: .5rem; margin-bottom: 1.25rem; }
+  .shp-mode-btn {
+    padding: .45rem 1rem; border-radius: 10px;
+    border: 2px solid #E2E8F0; background: #fff;
+    font-family: var(--font-accent); font-size: .82rem; font-weight: 700;
+    cursor: pointer; transition: all .15s; color: #475569;
+  }
+  .shp-mode-btn:hover { border-color: #818CF8; color: #4F46E5; }
+  .shp-mode-btn.active { background: #4F46E5; border-color: #4F46E5; color: #fff; }
+
+  /* ── MODO EXPLORAR ─────────────────────── */
+  #explorePanel .shp-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .shp-card {
+    background: #fff;
+    border: 2.5px solid #E2E8F0;
+    border-radius: 18px;
+    padding: 1.25rem .75rem 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all .2s;
+    box-shadow: 0 2px 8px rgba(0,0,0,.04);
+    position: relative;
+    overflow: hidden;
+  }
+  .shp-card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,.1); }
+  .shp-card.explored {
+    border-color: var(--shp-color);
+    box-shadow: 0 0 0 3px rgba(var(--shp-rgb), .15), 0 4px 16px rgba(0,0,0,.07);
+  }
+  .shp-card-icon {
+    width: 72px; height: 72px;
+    margin: 0 auto .75rem;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .shp-card-icon svg { width: 100%; height: 100%; }
+  .shp-card-name {
+    font-family: var(--font-display); font-size: 1rem;
+    color: #1E3A5F; margin-bottom: .2rem;
+  }
+  .shp-card-sides {
+    font-family: var(--font-accent); font-size: .72rem;
+    font-weight: 700; color: #94A3B8; text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .shp-card-badge {
+    position: absolute; top: .5rem; right: .5rem;
+    width: 20px; height: 20px; border-radius: 50%;
+    background: #4ADE80; color: #fff;
+    display: none; align-items: center; justify-content: center;
+    font-size: .65rem;
+  }
+  .shp-card.explored .shp-card-badge { display: flex; }
+
+  /* Detail panel */
+  .shp-detail {
+    background: linear-gradient(135deg, #EEF2FF, #F0FDFA);
+    border: 2px solid #C7D2FE;
+    border-radius: 18px; padding: 1.5rem 1.25rem;
+    margin-bottom: 1.5rem; display: none;
+  }
+  .shp-detail-header {
+    display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;
+  }
+  .shp-detail-icon { width: 80px; height: 80px; flex-shrink: 0; }
+  .shp-detail-icon svg { width: 100%; height: 100%; }
+  .shp-detail-title {
+    font-family: var(--font-display); font-size: 1.5rem;
+    color: #1E1B4B; margin: 0 0 .3rem;
+  }
+  .shp-detail-sub {
+    font-family: var(--font-accent); font-size: .82rem;
+    color: #64748B; font-weight: 600;
+  }
+  .shp-detail-facts {
+    display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .75rem;
+  }
+  .shp-fact {
+    background: rgba(255,255,255,.75);
+    border: 1.5px solid rgba(99,102,241,.2);
+    border-radius: 99px; padding: .3rem .85rem;
+    font-family: var(--font-accent); font-size: .8rem;
+    font-weight: 700; color: #4F46E5;
+  }
+  .shp-speak-btn {
+    margin-top: .75rem; display: inline-flex;
+    align-items: center; gap: .4rem;
+    padding: .5rem 1rem; border-radius: 10px;
+    border: 2px solid #C7D2FE; background: #fff;
+    font-family: var(--font-accent); font-size: .82rem;
+    font-weight: 700; color: #4F46E5; cursor: pointer;
+    transition: all .15s;
+  }
+  .shp-speak-btn:hover { background: #EEF2FF; }
+
+  /* ── MODO QUIZ ─────────────────────────── */
+  #quizPanel { display: none; }
+  .shp-quiz-stats {
+    display: flex; gap: .75rem; margin-bottom: 1.25rem;
+  }
+  .shp-stat {
+    flex: 1; background: #fff; border: 2px solid #E2E8F0;
+    border-radius: 14px; padding: .65rem .75rem; text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,.04);
+  }
+  .shp-stat-val {
+    display: block; font-family: var(--font-display);
+    font-size: 1.6rem; color: #4F46E5;
+  }
+  .shp-stat-lbl {
+    display: block; font-family: var(--font-accent);
+    font-size: .7rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .07em; color: #94A3B8;
+  }
+  .shp-quiz-card {
+    background: #fff; border: 2px solid #E2E8F0;
+    border-radius: 20px; padding: 1.5rem;
+    text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,.07);
+    margin-bottom: 1.25rem;
+  }
+  .shp-quiz-q {
+    font-family: var(--font-accent); font-size: .9rem;
+    font-weight: 700; color: #64748B; text-transform: uppercase;
+    letter-spacing: .05em; margin-bottom: 1rem;
+  }
+  .shp-quiz-shape { width: 120px; height: 120px; margin: 0 auto 1.5rem; }
+  .shp-quiz-shape svg { width: 100%; height: 100%; }
+  .shp-choices {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: .65rem;
+  }
+  .shp-choice {
+    padding: .75rem .5rem; border-radius: 12px;
+    border: 2.5px solid #E2E8F0; background: #FAFAFA;
+    font-family: var(--font-display); font-size: .95rem;
+    color: #1E3A5F; cursor: pointer; transition: all .15s;
+  }
+  .shp-choice:hover { border-color: #818CF8; background: #EEF2FF; color: #4F46E5; }
+  .shp-choice.correct { border-color: #86EFAC; background: #F0FDF4; color: #166534; pointer-events: none; }
+  .shp-choice.wrong   { border-color: #FCA5A5; background: #FEF2F2; color: #991B1B; pointer-events: none; }
+
+  /* Save row */
+  .shp-save-row { display: flex; justify-content: center; gap: .75rem; flex-wrap: wrap; margin-top: 1rem; }
+
+  /* Dark */
+  body.student-dark .shp-title { color: #93C5FD; }
+  body.student-dark .shp-mode-btn { background: #0A1726; border-color: rgba(255,255,255,.08); color: #CBD5E1; }
+  body.student-dark .shp-mode-btn.active { background: #4F46E5; border-color: #4F46E5; color: #fff; }
+  body.student-dark .shp-card { background: #0E1E30; border-color: rgba(255,255,255,.07); }
+  body.student-dark .shp-card-name { color: #93C5FD; }
+  body.student-dark .shp-detail { background: linear-gradient(135deg, #14132A, #0D1F2D); border-color: rgba(99,102,241,.3); }
+  body.student-dark .shp-detail-title { color: #F1EEFF; }
+  body.student-dark .shp-fact { background: rgba(255,255,255,.05); color: #A5B4FC; }
+  body.student-dark .shp-stat { background: #0E1E30; border-color: rgba(255,255,255,.07); }
+  body.student-dark .shp-quiz-card { background: #0E1E30; border-color: rgba(255,255,255,.07); }
+  body.student-dark .shp-choice { background: #0A1726; border-color: rgba(255,255,255,.08); color: #CBD5E1; }
+</style>
+{% endblock %}
+
+{% block body_content %}
+<div class="student-layout">
+  {% include 'student/_sidebar.html' with active_page='games' %}
+  <div class="student-main">
+    <header class="student-topbar">
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Abrir menú"><i class="bi bi-list"></i></button>
+      <div class="topbar-breadcrumb">
+        <a href="{% url 'games_home' %}" class="breadcrumb-link">Mis Juegos</a>
+        <i class="bi bi-chevron-right" style="font-size:.7rem;color:#9CA3AF;"></i>
+        <span class="bc-current">Figuras Geométricas</span>
+      </div>
+      <div class="topbar-actions">
+        <div class="topbar-date"><i class="bi bi-calendar3"></i><span id="topbarDate"></span></div>
+        <div class="topbar-stars-chip"><i class="bi bi-star-fill"></i><span>{{ profile.total_stars|default:"0" }} estrellas</span></div>
+        <button class="dark-mode-toggle" id="darkModeToggle" aria-label="Cambiar modo"><i class="bi bi-moon-fill" id="darkModeIcon"></i></button>
+      </div>
+    </header>
+
+    <div class="student-scroll">
+      {% include 'student/games/_activity_banner.html' %}
+      <div class="shp-page">
+        <h1 class="shp-title">🔷 Figuras Geométricas</h1>
+
+        <div class="shp-mode-row">
+          <button class="shp-mode-btn active" id="btnExplore">🔍 Explorar</button>
+          <button class="shp-mode-btn" id="btnQuiz">🎯 Quiz</button>
+        </div>
+
+        <!-- ── PANEL EXPLORAR ── -->
+        <div id="explorePanel">
+          <div class="shp-detail" id="shpDetail">
+            <div class="shp-detail-header">
+              <div class="shp-detail-icon" id="detailIcon"></div>
+              <div>
+                <div class="shp-detail-title" id="detailName"></div>
+                <div class="shp-detail-sub" id="detailSub"></div>
+                <div class="shp-detail-facts" id="detailFacts"></div>
+              </div>
+            </div>
+            <button class="shp-speak-btn" id="speakBtn">
+              <i class="bi bi-volume-up-fill"></i> Escuchar
+            </button>
+          </div>
+
+          <div class="shp-grid" id="shpGrid"></div>
+
+          <div class="shp-save-row">
+            <button class="btn btn-secondary" id="saveExploreBtn" style="display:none">
+              <i class="bi bi-floppy-fill"></i> Guardar progreso
+            </button>
+          </div>
+        </div>
+
+        <!-- ── PANEL QUIZ ── -->
+        <div id="quizPanel">
+          <div class="shp-quiz-stats">
+            <div class="shp-stat"><span class="shp-stat-val" id="qCorrect">0</span><span class="shp-stat-lbl">Correctas</span></div>
+            <div class="shp-stat"><span class="shp-stat-val" id="qWrong">0</span><span class="shp-stat-lbl">Errores</span></div>
+            <div class="shp-stat"><span class="shp-stat-val" id="qStars">0</span><span class="shp-stat-lbl"><i class="bi bi-star-fill" style="color:#D97706;font-size:.75em;"></i> Estrellas</span></div>
+          </div>
+          <div class="shp-quiz-card">
+            <div class="shp-quiz-q">¿Cómo se llama esta figura?</div>
+            <div class="shp-quiz-shape" id="quizShape"></div>
+            <div class="shp-choices" id="quizChoices"></div>
+          </div>
+          <div class="shp-save-row">
+            <button class="btn btn-secondary" id="saveQuizBtn" style="display:none">
+              <i class="bi bi-floppy-fill"></i> Guardar estrellas
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<script>
+const SHAPES = [
+  {
+    id: 'circle', name: 'Círculo', sides: 'Sin lados (curvo)', color: '#EF4444', rgb: '239,68,68',
+    facts: ['Sin esquinas', 'Tiene un centro', 'Como una pelota'],
+    desc: 'El círculo es una figura redonda sin lados ni esquinas.',
+    svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="currentColor" opacity=".9"/></svg>`,
+  },
+  {
+    id: 'triangle', name: 'Triángulo', sides: '3 lados · 3 esquinas', color: '#F59E0B', rgb: '245,158,11',
+    facts: ['3 lados', '3 esquinas', 'Como un sombrero'],
+    desc: 'El triángulo tiene tres lados y tres esquinas.',
+    svg: `<svg viewBox="0 0 100 100"><polygon points="50,6 94,94 6,94" fill="currentColor" opacity=".9"/></svg>`,
+  },
+  {
+    id: 'square', name: 'Cuadrado', sides: '4 lados iguales', color: '#3B82F6', rgb: '59,130,246',
+    facts: ['4 lados iguales', '4 esquinas', 'Como una caja'],
+    desc: 'El cuadrado tiene cuatro lados iguales y cuatro esquinas iguales.',
+    svg: `<svg viewBox="0 0 100 100"><rect x="8" y="8" width="84" height="84" fill="currentColor" opacity=".9"/></svg>`,
+  },
+  {
+    id: 'rectangle', name: 'Rectángulo', sides: '4 lados (2 largos, 2 cortos)', color: '#8B5CF6', rgb: '139,92,246',
+    facts: ['4 lados', '2 lados largos', 'Como una puerta'],
+    desc: 'El rectángulo tiene cuatro lados pero los lados opuestos son iguales.',
+    svg: `<svg viewBox="0 0 100 100"><rect x="4" y="20" width="92" height="60" fill="currentColor" opacity=".9"/></svg>`,
+  },
+  {
+    id: 'pentagon', name: 'Pentágono', sides: '5 lados · 5 esquinas', color: '#10B981', rgb: '16,185,129',
+    facts: ['5 lados', '5 esquinas', 'Como la casa'],
+    desc: 'El pentágono tiene cinco lados y cinco esquinas.',
+    svg: `<svg viewBox="0 0 100 100"><polygon points="50,5 95,36 78,90 22,90 5,36" fill="currentColor" opacity=".9"/></svg>`,
+  },
+  {
+    id: 'hexagon', name: 'Hexágono', sides: '6 lados · 6 esquinas', color: '#EC4899', rgb: '236,72,153',
+    facts: ['6 lados', '6 esquinas', 'Como una colmena'],
+    desc: 'El hexágono tiene seis lados y seis esquinas. Las abejas construyen sus casas en forma de hexágono.',
+    svg: `<svg viewBox="0 0 100 100"><polygon points="50,4 93,27 93,73 50,96 7,73 7,27" fill="currentColor" opacity=".9"/></svg>`,
+  },
+  {
+    id: 'diamond', name: 'Rombo', sides: '4 lados iguales', color: '#0EA5E9', rgb: '14,165,233',
+    facts: ['4 lados iguales', '4 esquinas', 'Como un diamante'],
+    desc: 'El rombo tiene cuatro lados iguales, pero sus esquinas no son iguales.',
+    svg: `<svg viewBox="0 0 100 100"><polygon points="50,4 96,50 50,96 4,50" fill="currentColor" opacity=".9"/></svg>`,
+  },
+  {
+    id: 'star', name: 'Estrella', sides: '5 puntas', color: '#F97316', rgb: '249,115,22',
+    facts: ['5 puntas', 'Como el cielo', 'Brillante ✨'],
+    desc: 'La estrella tiene cinco puntas. Las podemos ver en el cielo de noche.',
+    svg: `<svg viewBox="0 0 100 100"><polygon points="50,4 61,35 95,35 68,57 79,90 50,70 21,90 32,57 5,35 39,35" fill="currentColor" opacity=".9"/></svg>`,
+  },
+];
+
+// ── EXPLORAR ──────────────────────────────────────────────────
+const explored = new Set();
+let savedExplore = false;
+
+function buildExploreGrid() {
+  const grid = document.getElementById('shpGrid');
+  grid.innerHTML = '';
+  SHAPES.forEach(shp => {
+    const card = document.createElement('div');
+    card.className = 'shp-card' + (explored.has(shp.id) ? ' explored' : '');
+    card.style.setProperty('--shp-color', shp.color);
+    card.style.setProperty('--shp-rgb', shp.rgb);
+    card.innerHTML = `
+      <div class="shp-card-icon"><svg viewBox="0 0 100 100" style="color:${shp.color}">${shp.svg.match(/<svg[^>]*>([\s\S]*)<\/svg>/)[1]}</svg></div>
+      <div class="shp-card-name">${shp.name}</div>
+      <div class="shp-card-sides">${shp.sides}</div>
+      <div class="shp-card-badge"><i class="bi bi-check-lg"></i></div>
+    `;
+    card.addEventListener('click', () => openDetail(shp, card));
+    grid.appendChild(card);
+  });
+}
+
+function openDetail(shp, card) {
+  explored.add(shp.id);
+  card.classList.add('explored');
+
+  document.getElementById('detailIcon').innerHTML = `<svg viewBox="0 0 100 100" style="color:${shp.color}">${shp.svg.match(/<svg[^>]*>([\s\S]*)<\/svg>/)[1]}</svg>`;
+  document.getElementById('detailName').textContent = shp.name;
+  document.getElementById('detailSub').textContent  = shp.desc;
+  document.getElementById('detailFacts').innerHTML  = shp.facts.map(f => `<span class="shp-fact">${f}</span>`).join('');
+  document.getElementById('shpDetail').style.display = 'block';
+
+  document.getElementById('speakBtn').onclick = () => {
+    const utt = new SpeechSynthesisUtterance(shp.name + '. ' + shp.desc);
+    utt.lang = 'es-CO'; speechSynthesis.cancel(); speechSynthesis.speak(utt);
+  };
+  // Auto-speak
+  const utt = new SpeechSynthesisUtterance(shp.name);
+  utt.lang = 'es-CO'; speechSynthesis.cancel(); speechSynthesis.speak(utt);
+
+  if (explored.size >= 4) document.getElementById('saveExploreBtn').style.display = '';
+  if (explored.size >= SHAPES.length && window.Confetti) Confetti.fire();
+}
+
+// ── QUIZ ──────────────────────────────────────────────────────
+let qCorrect = 0, qWrong = 0, savedQuiz = false;
+let currentShp = null;
+
+function newQuiz() {
+  const shuffled = [...SHAPES].sort(() => Math.random() - .5);
+  currentShp = shuffled[0];
+  const choices = shuffled.slice(0, 4).map(s => s.name);
+  // Asegurar que la respuesta esté incluida
+  if (!choices.includes(currentShp.name)) choices[Math.floor(Math.random() * 4)] = currentShp.name;
+
+  document.getElementById('quizShape').innerHTML =
+    `<svg viewBox="0 0 100 100" style="color:${currentShp.color}">${currentShp.svg.match(/<svg[^>]*>([\s\S]*)<\/svg>/)[1]}</svg>`;
+
+  const choicesEl = document.getElementById('quizChoices');
+  choicesEl.innerHTML = '';
+  choices.sort(() => Math.random() - .5).forEach(name => {
+    const btn = document.createElement('button');
+    btn.className = 'shp-choice';
+    btn.textContent = name;
+    btn.addEventListener('click', () => checkChoice(btn, name));
+    choicesEl.appendChild(btn);
+  });
+}
+
+function checkChoice(btn, name) {
+  document.querySelectorAll('.shp-choice').forEach(b => b.style.pointerEvents = 'none');
+  if (name === currentShp.name) {
+    btn.classList.add('correct');
+    qCorrect++;
+    if (window.Toast) Toast.show('¡Correcto! Es un ' + currentShp.name, 'success');
+    if (qCorrect % 5 === 0 && window.Confetti) Confetti.fire();
+  } else {
+    btn.classList.add('wrong');
+    document.querySelectorAll('.shp-choice').forEach(b => {
+      if (b.textContent === currentShp.name) b.classList.add('correct');
+    });
+    qWrong++;
+    if (window.Toast) Toast.show('Es un ' + currentShp.name, 'error');
+  }
+  updateQuizHUD();
+  setTimeout(newQuiz, 1200);
+}
+
+function calcQuizStars() {
+  const total = qCorrect + qWrong;
+  if (total < 5) return 0;
+  const r = qCorrect / total;
+  if (r >= .9) return 5; if (r >= .75) return 4; if (r >= .6) return 3;
+  if (r >= .45) return 2; return 1;
+}
+
+function updateQuizHUD() {
+  document.getElementById('qCorrect').textContent = qCorrect;
+  document.getElementById('qWrong').textContent   = qWrong;
+  document.getElementById('qStars').textContent   = calcQuizStars();
+  if ((qCorrect + qWrong) >= 5) document.getElementById('saveQuizBtn').style.display = '';
+}
+
+// ── MODE TOGGLE ───────────────────────────────────────────────
+document.getElementById('btnExplore').addEventListener('click', () => {
+  document.getElementById('btnExplore').classList.add('active');
+  document.getElementById('btnQuiz').classList.remove('active');
+  document.getElementById('explorePanel').style.display = '';
+  document.getElementById('quizPanel').style.display = 'none';
+});
+document.getElementById('btnQuiz').addEventListener('click', () => {
+  document.getElementById('btnQuiz').classList.add('active');
+  document.getElementById('btnExplore').classList.remove('active');
+  document.getElementById('quizPanel').style.display = 'block';
+  document.getElementById('explorePanel').style.display = 'none';
+  if (qCorrect + qWrong === 0) newQuiz();
+});
+
+// ── GUARDAR ───────────────────────────────────────────────────
+function getCookie(n) { for (let c of document.cookie.split(';')) { const [k, v] = c.trim().split('='); if (k === n) return decodeURIComponent(v); } return ''; }
+
+function saveScore(score, stars, btn) {
+  fetch('{% url "save_game_score" %}', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+    body: JSON.stringify({ game_type: 'shapes', score, stars_earned: stars, activity_id: {{ activity_id|default:'null' }} }),
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (window.Toast) Toast.show('¡Guardado! +' + (data.stars_earned || stars) + ' estrellas ⭐', 'success');
+    btn.disabled = true; btn.innerHTML = '<i class="bi bi-check-circle-fill"></i> Guardado';
+  })
+  .catch(() => { if (window.Toast) Toast.show('Error al guardar.', 'error'); });
+}
+
+document.getElementById('saveExploreBtn').addEventListener('click', function () {
+  if (savedExplore) return; savedExplore = true;
+  const stars = Math.min(5, Math.round(explored.size / SHAPES.length * 5));
+  saveScore(explored.size, stars, this);
+});
+document.getElementById('saveQuizBtn').addEventListener('click', function () {
+  if (savedQuiz) return; savedQuiz = true;
+  saveScore(qCorrect, calcQuizStars(), this);
+});
+
+buildExploreGrid();
+
+(function () {
+  var d = document.getElementById('topbarDate');
+  if (d) d.textContent = new Date().toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' });
+  var pb = document.getElementById('sidebarProfileBtn'), pd = document.getElementById('profileDropdown'), pc = document.getElementById('profileChevron');
+  if (pb && pd) { pb.addEventListener('click', function (e) { e.stopPropagation(); var o = pd.classList.toggle('open'); if (pc) pc.style.transform = o ? 'rotate(180deg)' : ''; }); document.addEventListener('click', function () { pd.classList.remove('open'); if (pc) pc.style.transform = ''; }); }
+  var t = document.getElementById('sidebarToggle'), s = document.getElementById('studentSidebar'), ov = document.getElementById('sidebarOverlay');
+  if (t && s && ov) { t.addEventListener('click', function () { s.classList.toggle('open'); ov.classList.toggle('open'); }); ov.addEventListener('click', function () { s.classList.remove('open'); ov.classList.remove('open'); }); }
+  var dt = document.getElementById('darkModeToggle'), di = document.getElementById('darkModeIcon');
+  function sd(on) { document.body.classList.toggle('student-dark', on); if (di) di.className = on ? 'bi bi-sun-fill' : 'bi bi-moon-fill'; }
+  sd(localStorage.getItem('student_dark') === '1');
+  if (dt) dt.addEventListener('click', function () { var on = !document.body.classList.contains('student-dark'); sd(on); localStorage.setItem('student_dark', on ? '1' : '0'); });
+})();
+</script>
+{% endblock %}

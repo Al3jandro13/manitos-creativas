@@ -1,0 +1,10 @@
+{% if activity %}
+<div style="background:linear-gradient(135deg,#4F46E5,#7C3AED);border-radius:12px;padding:.85rem 1.1rem;margin:1rem 1rem 0;display:flex;align-items:center;gap:.75rem;color:#fff;flex-wrap:wrap;">
+  <i class="bi bi-clipboard2-check-fill" style="font-size:1.3rem;opacity:.9;flex-shrink:0;"></i>
+  <div style="flex:1;min-width:0;">
+    <div style="font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.8;">Actividad asignada</div>
+    <div style="font-size:.92rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ activity.title }}</div>
+  </div>
+  <div style="font-size:.75rem;opacity:.85;white-space:nowrap;">Al guardar se envía a tu profe ✓</div>
+</div>
+{% endif %}

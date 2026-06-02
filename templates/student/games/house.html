@@ -1,0 +1,427 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Constructor de Casas — Manitos Creativas{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/student.css' %}">
+<style>
+.hs-wrap { max-width:860px; margin:0 auto; padding-bottom:2rem; }
+.game-page-header { background:linear-gradient(135deg,#7C3AED,#4338CA); border-radius:24px; padding:1.5rem 1rem 1.25rem; text-align:center; margin-bottom:1.25rem; color:#fff; box-shadow:0 6px 24px rgba(124,58,237,.4); }
+.game-page-title { font-family:var(--font-display); font-size:1.9rem; }
+.game-page-sub   { font-family:var(--font-accent); font-size:.85rem; opacity:.88; margin-top:.25rem; }
+
+.game-score-display { display:flex; gap:.75rem; margin-bottom:1.25rem; }
+.score-item { flex:1; background:#fff; border:2px solid #E2E8F0; border-radius:14px; padding:.65rem .5rem; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,.04); }
+.score-value { display:block; font-family:var(--font-display); font-size:1.5rem; line-height:1.1; color:#7C3AED; }
+.score-label { display:block; font-family:var(--font-accent); font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:#94A3B8; margin-top:.1rem; }
+
+/* Layout */
+.hs-layout { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+@media(max-width:600px){ .hs-layout { grid-template-columns:1fr; } }
+
+.hs-panel { background:#fff; border:2px solid #E2E8F0; border-radius:20px; padding:1rem; box-shadow:0 4px 16px rgba(0,0,0,.06); }
+.hs-panel-title { font-family:var(--font-accent); font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:#7C3AED; margin-bottom:.75rem; }
+
+/* Guide + Canvas */
+.hs-guide-wrap { position:relative; min-height:260px; display:flex; align-items:center; justify-content:center; }
+.hs-guide   { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; opacity:.18; pointer-events:none; }
+.hs-canvas  { position:relative; width:240px; height:240px; border:2px dashed #DDD6FE; border-radius:12px; background:linear-gradient(180deg,#EDE9FE 0%, #C7D2FE 100%); }
+
+/* Drop zones */
+.hs-drop {
+  position:absolute; border:2px dashed #A78BFA; border-radius:8px;
+  display:flex; align-items:center; justify-content:center;
+  transition:all .2s; cursor:pointer; background:rgba(167,139,250,.1);
+}
+.hs-drop.over  { border-color:#7C3AED; background:rgba(124,58,237,.18); transform:scale(1.04); }
+.hs-drop.filled { border-style:solid; border-color:#86EFAC; background:rgba(134,239,172,.2); }
+.hs-drop.filled svg { filter:drop-shadow(0 0 6px #10B981); }
+
+/* Piece bank */
+.hs-bank { display:flex; flex-wrap:wrap; gap:.5rem; justify-content:center; margin-top:.5rem; }
+.hs-piece {
+  cursor:grab; user-select:none; border:2px solid #DDD6FE; border-radius:10px;
+  padding:.35rem; background:#fff; box-shadow:0 2px 8px rgba(0,0,0,.08);
+  display:flex; flex-direction:column; align-items:center; gap:.2rem;
+  transition:transform .15s, box-shadow .15s;
+}
+.hs-piece:hover { transform:translateY(-3px) scale(1.06); box-shadow:0 8px 18px rgba(124,58,237,.25); }
+.hs-piece.dragging { opacity:.45; }
+.hs-piece.placed   { opacity:.35; cursor:not-allowed; pointer-events:none; }
+.hs-piece-label    { font-family:var(--font-accent); font-size:.6rem; font-weight:700; color:#7C3AED; }
+
+/* Level selector */
+.hs-levels { display:flex; gap:.4rem; margin-bottom:.75rem; flex-wrap:wrap; }
+.hs-lvl { background:#F5F3FF; border:2px solid #DDD6FE; border-radius:10px; padding:.35rem .65rem; font-family:var(--font-accent); font-size:.72rem; font-weight:700; color:#7C3AED; cursor:pointer; transition:all .15s; }
+.hs-lvl:hover  { border-color:#7C3AED; }
+.hs-lvl.active { background:#7C3AED; color:#fff; border-color:#7C3AED; }
+
+/* Animations */
+@keyframes hs-smoke { 0%,100%{transform:translateY(0) scale(1);opacity:.7} 50%{transform:translateY(-20px) scale(1.2);opacity:.2} }
+@keyframes hs-wave  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+@keyframes hs-pop   { 0%{transform:scale(0)} 60%{transform:scale(1.15)} 100%{transform:scale(1)} }
+
+.hs-feedback { text-align:center; font-family:var(--font-accent); font-size:.88rem; font-weight:700; min-height:1.4rem; margin-top:.5rem; }
+.hs-feedback.ok  { color:#15803D; }
+.hs-feedback.err { color:#DC2626; }
+
+.hs-actions { display:flex; justify-content:center; gap:.75rem; margin-top:.75rem; flex-wrap:wrap; }
+
+body.student-dark .score-item { background:#0E1E30; border-color:rgba(255,255,255,.07); }
+body.student-dark .score-value{ color:#C4B5FD; }
+body.student-dark .hs-panel   { background:#0E1E30; border-color:rgba(255,255,255,.07); }
+body.student-dark .hs-piece   { background:#0A1726; border-color:rgba(167,139,250,.3); }
+body.student-dark .hs-lvl     { background:#0A1726; border-color:rgba(167,139,250,.3); color:#C4B5FD; }
+body.student-dark .hs-lvl.active { background:#7C3AED; color:#fff; }
+body.student-dark .hs-canvas  { background:linear-gradient(180deg,#1E1235,#1e1b4b); border-color:#4C1D95; }
+</style>
+{% endblock %}
+
+{% block body_content %}
+<div class="student-layout">
+  {% include 'student/_sidebar.html' with active_page='games' %}
+  <div class="student-main">
+    <header class="student-topbar">
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Abrir menú"><i class="bi bi-list"></i></button>
+      <div class="topbar-breadcrumb">
+        <a href="{% url 'games_home' %}" class="breadcrumb-link">Mis Juegos</a>
+        <i class="bi bi-chevron-right" style="font-size:.7rem;color:#9CA3AF;"></i>
+        <span class="bc-current">Constructor de Casas</span>
+      </div>
+      <div class="topbar-actions">
+        <div class="topbar-date"><i class="bi bi-calendar3"></i><span id="topbarDate"></span></div>
+        <div class="topbar-stars-chip"><i class="bi bi-star-fill"></i><span>{{ profile.total_stars|default:"0" }} estrellas</span></div>
+        <button class="dark-mode-toggle" id="darkModeToggle" aria-label="Cambiar modo"><i class="bi bi-moon-fill" id="darkModeIcon"></i></button>
+      </div>
+    </header>
+    <div class="student-scroll">
+      {% include 'student/games/_activity_banner.html' %}
+      <div class="hs-wrap">
+        <div class="game-page-header">
+          <div style="font-size:3.5rem;margin-bottom:.4rem;">🏠</div>
+          <div class="game-page-title">Constructor de Casas</div>
+          <div class="game-page-sub">Arrastra las piezas y construye la casa perfecta</div>
+        </div>
+
+        <div class="game-score-display">
+          <div class="score-item">
+            <span class="score-value" id="hsScore">0</span>
+            <span class="score-label">Puntos</span>
+          </div>
+          <div class="score-item">
+            <span class="score-value" id="hsPiezas">0/0</span>
+            <span class="score-label">Piezas</span>
+          </div>
+          <div class="score-item">
+            <span class="score-value" id="hsStars">⭐ 0</span>
+            <span class="score-label">Estrellas</span>
+          </div>
+        </div>
+
+        <div class="hs-layout">
+          <!-- Left: guide + canvas -->
+          <div class="hs-panel">
+            <div class="hs-panel-title"><i class="bi bi-lightbulb-fill"></i> Modelo a seguir</div>
+            <div class="hs-guide-wrap">
+              <!-- Guide (translucent) -->
+              <div class="hs-guide" id="hsGuide"></div>
+              <!-- Build canvas with drop zones -->
+              <div class="hs-canvas" id="hsCanvas"></div>
+            </div>
+            <div class="hs-feedback" id="hsFeedback"></div>
+          </div>
+
+          <!-- Right: levels + bank -->
+          <div class="hs-panel">
+            <div class="hs-panel-title"><i class="bi bi-collection-fill"></i> Nivel y piezas</div>
+            <div class="hs-levels" id="hsLevels"></div>
+            <div style="font-family:var(--font-accent);font-size:.72rem;color:#9CA3AF;margin-bottom:.4rem;font-weight:700;">Arrastra las piezas al lienzo</div>
+            <div class="hs-bank" id="hsBank"></div>
+          </div>
+        </div>
+
+        <div class="hs-actions">
+          <button class="btn btn-secondary" onclick="resetLevel()"><i class="bi bi-arrow-counterclockwise"></i> Reiniciar</button>
+          <button class="btn btn-secondary" id="hsSaveBtn" style="display:none"><i class="bi bi-floppy-fill"></i> Guardar estrellas</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<script>
+// House level definitions — piezas con posición de snap en canvas 240x240
+const CASAS = [
+  {
+    nombre: 'Casa Simple', emoji: '🏠',
+    piezas: [
+      { id:'techo', label:'Techo', color:'#EF4444',
+        w:140, h:70, snap:{x:50,y:20},
+        svg:'<polygon points="70,0 140,70 0,70" fill="#EF4444"/>' },
+      { id:'pared', label:'Pared', color:'#FCD34D',
+        w:120, h:100, snap:{x:60,y:90},
+        svg:'<rect width="120" height="100" rx="4" fill="#FCD34D" stroke="#D97706" stroke-width="2"/>' },
+      { id:'puerta', label:'Puerta', color:'#92400E',
+        w:36, h:55, snap:{x:102,y:135},
+        svg:'<rect width="36" height="55" rx="4" fill="#92400E"/><circle cx="30" cy="30" r="3" fill="#FCD34D"/>' },
+    ],
+    distractores: [
+      { id:'d1', label:'Ventana', w:32, h:32, svg:'<rect width="32" height="32" rx="4" fill="#93C5FD" stroke="#3B82F6" stroke-width="2"/><line x1="16" y1="0" x2="16" y2="32" stroke="#3B82F6" stroke-width="2"/><line x1="0" y1="16" x2="32" y2="16" stroke="#3B82F6" stroke-width="2"/>' },
+      { id:'d2', label:'Arbol', w:40, h:50, svg:'<polygon points="20,0 40,30 0,30" fill="#10B981"/><rect x="15" y="30" width="10" height="20" fill="#92400E"/>' },
+    ]
+  },
+  {
+    nombre: 'Casa con Ventanas', emoji: '🏡',
+    piezas: [
+      { id:'techo2', label:'Techo', color:'#F97316',
+        w:140, h:65, snap:{x:50,y:15},
+        svg:'<polygon points="70,0 140,65 0,65" fill="#F97316"/>' },
+      { id:'pared2', label:'Pared', color:'#FBBF24',
+        w:130, h:110, snap:{x:55,y:80},
+        svg:'<rect width="130" height="110" rx="4" fill="#FBBF24" stroke="#D97706" stroke-width="2"/>' },
+      { id:'puerta2', label:'Puerta', color:'#92400E',
+        w:34, h:55, snap:{x:98,y:135},
+        svg:'<rect width="34" height="55" rx="5" fill="#92400E"/><circle cx="28" cy="28" r="3" fill="#FBBF24"/>' },
+      { id:'ventL', label:'Ventana Izq', color:'#93C5FD',
+        w:30, h:30, snap:{x:65,y:100},
+        svg:'<rect width="30" height="30" rx="3" fill="#BFDBFE" stroke="#3B82F6" stroke-width="2"/><line x1="15" y1="0" x2="15" y2="30" stroke="#3B82F6" stroke-width="1.5"/><line x1="0" y1="15" x2="30" y2="15" stroke="#3B82F6" stroke-width="1.5"/>' },
+      { id:'ventR', label:'Ventana Der', color:'#93C5FD',
+        w:30, h:30, snap:{x:145,y:100},
+        svg:'<rect width="30" height="30" rx="3" fill="#BFDBFE" stroke="#3B82F6" stroke-width="2"/><line x1="15" y1="0" x2="15" y2="30" stroke="#3B82F6" stroke-width="1.5"/><line x1="0" y1="15" x2="30" y2="15" stroke="#3B82F6" stroke-width="1.5"/>' },
+    ],
+    distractores: [
+      { id:'d3', label:'Chimenea', w:28, h:38, svg:'<rect width="28" height="38" rx="3" fill="#6B7280"/><rect x="3" y="0" width="22" height="8" rx="2" fill="#9CA3AF"/>' },
+      { id:'d4', label:'Flor', w:30, h:30, svg:'<circle cx="15" cy="15" r="8" fill="#EC4899"/><circle cx="15" cy="6" r="5" fill="#FBBF24"/><circle cx="22" cy="11" r="5" fill="#FBBF24"/><circle cx="8" cy="11" r="5" fill="#FBBF24"/><circle cx="8" cy="20" r="5" fill="#FBBF24"/><circle cx="22" cy="20" r="5" fill="#FBBF24"/><circle cx="15" cy="24" r="5" fill="#FBBF24"/>' },
+    ]
+  },
+  {
+    nombre: 'Casa con Chimenea', emoji: '🏠',
+    piezas: [
+      { id:'techo3', label:'Techo', color:'#DC2626',
+        w:140, h:65, snap:{x:50,y:20},
+        svg:'<polygon points="70,0 140,65 0,65" fill="#DC2626"/>' },
+      { id:'pared3', label:'Pared', color:'#FDE68A',
+        w:125, h:105, snap:{x:57,y:85},
+        svg:'<rect width="125" height="105" rx="4" fill="#FDE68A" stroke="#D97706" stroke-width="2"/>' },
+      { id:'puerta3', label:'Puerta', color:'#78350F',
+        w:34, h:52, snap:{x:96,y:138},
+        svg:'<path d="M0,52 L0,12 Q0,0 17,0 Q34,0 34,12 L34,52Z" fill="#78350F"/><circle cx="28" cy="26" r="3" fill="#FDE68A"/>' },
+      { id:'ventL3', label:'Ventana', color:'#93C5FD',
+        w:28, h:28, snap:{x:68,y:100},
+        svg:'<rect width="28" height="28" rx="3" fill="#BFDBFE" stroke="#3B82F6" stroke-width="2"/><line x1="14" y1="0" x2="14" y2="28" stroke="#3B82F6" stroke-width="1.5"/><line x1="0" y1="14" x2="28" y2="14" stroke="#3B82F6" stroke-width="1.5"/>' },
+      { id:'ventR3', label:'Ventana', color:'#93C5FD',
+        w:28, h:28, snap:{x:144,y:100},
+        svg:'<rect width="28" height="28" rx="3" fill="#BFDBFE" stroke="#3B82F6" stroke-width="2"/><line x1="14" y1="0" x2="14" y2="28" stroke="#3B82F6" stroke-width="1.5"/><line x1="0" y1="14" x2="28" y2="14" stroke="#3B82F6" stroke-width="1.5"/>' },
+      { id:'chimenea', label:'Chimenea', color:'#6B7280',
+        w:24, h:42, snap:{x:148,y:0},
+        svg:'<rect width="24" height="42" rx="3" fill="#6B7280"/><rect x="0" y="0" width="24" height="8" rx="2" fill="#9CA3AF"/>' },
+      { id:'sol', label:'Sol', color:'#FBBF24',
+        w:34, h:34, snap:{x:15,y:8},
+        svg:'<circle cx="17" cy="17" r="10" fill="#FBBF24"/><line x1="17" y1="0" x2="17" y2="5" stroke="#FBBF24" stroke-width="3"/><line x1="17" y1="29" x2="17" y2="34" stroke="#FBBF24" stroke-width="3"/><line x1="0" y1="17" x2="5" y2="17" stroke="#FBBF24" stroke-width="3"/><line x1="29" y1="17" x2="34" y2="17" stroke="#FBBF24" stroke-width="3"/><line x1="4" y1="4" x2="8" y2="8" stroke="#FBBF24" stroke-width="3"/><line x1="26" y1="26" x2="30" y2="30" stroke="#FBBF24" stroke-width="3"/><line x1="26" y1="8" x2="30" y2="4" stroke="#FBBF24" stroke-width="3"/><line x1="4" y1="30" x2="8" y2="26" stroke="#FBBF24" stroke-width="3"/>' },
+    ],
+    distractores: [
+      { id:'d5', label:'Nube', w:44, h:24, svg:'<ellipse cx="22" cy="18" rx="20" ry="12" fill="white" stroke="#CBD5E1" stroke-width="2"/><ellipse cx="14" cy="14" rx="12" ry="10" fill="white"/><ellipse cx="30" cy="14" rx="12" ry="10" fill="white"/>' },
+    ]
+  },
+];
+
+let lvl = 0, score = 0, dragPiece = null, placed = {}, firstTry = {}, saved = false;
+
+function shuffle(a) { const b=[...a]; for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];} return b; }
+
+function calcStars() {
+  const casa = CASAS[lvl];
+  const total = casa.piezas.length;
+  const correct = Object.keys(placed).filter(k => placed[k] === 'correct').length;
+  const firstTryCount = Object.values(firstTry).filter(v => v).length;
+  const pct = total ? firstTryCount / total : 0;
+  if (pct >= 0.8) return 3;
+  if (pct >= 0.5) return 2;
+  if (correct > 0) return 1;
+  return 0;
+}
+
+function loadLevel() {
+  placed = {}; firstTry = {}; score = 0;
+  const casa = CASAS[lvl];
+  casa.piezas.forEach(p => { firstTry[p.id] = true; });
+
+  // Level buttons
+  const lv = document.getElementById('hsLevels');
+  lv.innerHTML = '';
+  CASAS.forEach((c, i) => {
+    const b = document.createElement('div');
+    b.className = 'hs-lvl' + (i === lvl ? ' active' : '');
+    b.textContent = c.emoji + ' ' + c.nombre;
+    b.onclick = () => { lvl = i; loadLevel(); };
+    lv.appendChild(b);
+  });
+
+  // Guide (translucent reference)
+  const guide = document.getElementById('hsGuide');
+  guide.innerHTML = `<svg width="240" height="240" viewBox="0 0 240 240" overflow="visible">
+    ${casa.piezas.map(p => `<g transform="translate(${p.snap.x},${p.snap.y})">${p.svg}</g>`).join('')}
+  </svg>`;
+
+  // Canvas with drop zones
+  const canvas = document.getElementById('hsCanvas');
+  canvas.innerHTML = '';
+  casa.piezas.forEach(p => {
+    const zone = document.createElement('div');
+    zone.className = 'hs-drop';
+    zone.id = 'drop_' + p.id;
+    zone.style.cssText = `left:${p.snap.x}px;top:${p.snap.y}px;width:${p.w}px;height:${p.h}px;`;
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('over'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('over'));
+    zone.addEventListener('drop',  e => { e.preventDefault(); zone.classList.remove('over'); tryDrop(p.id); });
+    canvas.appendChild(zone);
+  });
+
+  // Bank: correct pieces + distractors, shuffled
+  const bank = document.getElementById('hsBank');
+  bank.innerHTML = '';
+  const all = shuffle([...casa.piezas, ...(casa.distractores || [])]);
+  all.forEach(p => {
+    const el = document.createElement('div');
+    el.className = 'hs-piece';
+    el.id = 'piece_' + p.id;
+    el.draggable = true;
+    el.innerHTML = `<svg width="${Math.min(p.w,56)}" height="${Math.min(p.h,56)}" viewBox="0 0 ${p.w} ${p.h}" overflow="visible">${p.svg}</svg><span class="hs-piece-label">${p.label}</span>`;
+    el.addEventListener('dragstart', e => { dragPiece = p.id; el.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; });
+    el.addEventListener('dragend', () => el.classList.remove('dragging'));
+    el.addEventListener('click', () => { dragPiece = p.id; autoSnap(p.id); });
+    bank.appendChild(el);
+  });
+
+  updateHUD();
+  document.getElementById('hsSaveBtn').style.display = 'none';
+  document.getElementById('hsFeedback').textContent = '';
+  document.getElementById('hsFeedback').className = 'hs-feedback';
+}
+
+function tryDrop(zoneId) {
+  if (!dragPiece) return;
+  const casa = CASAS[lvl];
+  const isPiece = casa.piezas.find(p => p.id === dragPiece);
+  const isCorrect = isPiece && dragPiece === zoneId;
+
+  if (isCorrect) {
+    snapPiece(dragPiece, zoneId);
+  } else {
+    // Wrong piece or distractor
+    if (firstTry[zoneId] !== undefined) firstTry[zoneId] = false;
+    const fb = document.getElementById('hsFeedback');
+    fb.textContent = 'Esa pieza no encaja aqui. ¡Inténtalo de nuevo!';
+    fb.className = 'hs-feedback err';
+    if (window.Toast) Toast.show('Esa pieza no va aqui 🔄', 'warning');
+    score = Math.max(0, score - 3);
+    updateHUD();
+  }
+  dragPiece = null;
+}
+
+function autoSnap(pieceId) {
+  const casa = CASAS[lvl];
+  const piece = casa.piezas.find(p => p.id === pieceId);
+  if (!piece) return; // distractor
+  const zoneEl = document.getElementById('drop_' + pieceId);
+  if (!zoneEl || zoneEl.classList.contains('filled')) return;
+  snapPiece(pieceId, pieceId);
+}
+
+function snapPiece(pieceId, zoneId) {
+  const casa = CASAS[lvl];
+  const piece = casa.piezas.find(p => p.id === pieceId);
+  if (!piece) return;
+
+  placed[pieceId] = 'correct';
+  score += 10;
+
+  // Fill zone
+  const zone = document.getElementById('drop_' + zoneId);
+  if (zone) {
+    zone.classList.add('filled');
+    zone.innerHTML = `<svg width="${piece.w}" height="${piece.h}" viewBox="0 0 ${piece.w} ${piece.h}" overflow="visible">${piece.svg}</svg>`;
+    zone.style.animation = 'hs-pop .3s ease';
+    setTimeout(() => zone.style.animation = '', 350);
+  }
+
+  // Grey out piece in bank
+  const pEl = document.getElementById('piece_' + pieceId);
+  if (pEl) pEl.classList.add('placed');
+
+  const fb = document.getElementById('hsFeedback');
+  fb.textContent = '¡Encajó! ¡Muy bien! 🎉';
+  fb.className = 'hs-feedback ok';
+  if (window.Toast) Toast.show('¡Pieza colocada! ✅', 'success');
+  updateHUD();
+
+  // Check complete
+  const total = casa.piezas.length;
+  const done  = casa.piezas.filter(p => placed[p.id] === 'correct').length;
+  if (done === total) {
+    setTimeout(levelComplete, 600);
+  }
+}
+
+function levelComplete() {
+  if (window.Confetti) Confetti.fire();
+  const stars = calcStars();
+  const fb = document.getElementById('hsFeedback');
+  fb.textContent = '¡Casa terminada! ' + '⭐'.repeat(stars);
+  fb.className = 'hs-feedback ok';
+  document.getElementById('hsSaveBtn').style.display = '';
+  updateHUD();
+
+  // Celebration smoke on chimenea drop zone if present
+  const smokeZone = document.getElementById('drop_chimenea');
+  if (smokeZone) {
+    const smoke = document.createElement('div');
+    smoke.innerHTML = '💨';
+    smoke.style.cssText = 'position:absolute;top:-30px;left:-5px;font-size:1.4rem;animation:hs-smoke 1.5s ease infinite;';
+    smokeZone.style.position = 'relative';
+    smokeZone.appendChild(smoke);
+  }
+}
+
+function resetLevel() { loadLevel(); }
+
+function updateHUD() {
+  const casa  = CASAS[lvl];
+  const done  = casa.piezas.filter(p => placed[p.id] === 'correct').length;
+  document.getElementById('hsScore').textContent   = score;
+  document.getElementById('hsPiezas').textContent  = done + '/' + casa.piezas.length;
+  document.getElementById('hsStars').textContent   = '⭐ ' + calcStars();
+}
+
+function getCookie(n) { for(let c of document.cookie.split(';')){const[k,v]=c.trim().split('=');if(k===n)return decodeURIComponent(v);}return ''; }
+
+document.getElementById('hsSaveBtn').addEventListener('click', function() {
+  if (saved) return; saved = true;
+  const stars = calcStars();
+  fetch('{% url "save_game_score" %}', {
+    method:'POST',
+    headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},
+    body:JSON.stringify({ game_type:'house', score, stars_earned:stars, activity_id:{{ activity_id|default:'null' }}, drawing_data:'' })
+  }).then(r=>r.json()).then(d=>{
+    if(window.Toast) Toast.show('¡Guardado! +' + (d.stars_earned||stars) + ' estrellas', 'success');
+    this.disabled = true;
+    this.innerHTML = '<i class="bi bi-check-circle-fill"></i> Guardado';
+  }).catch(()=>{ if(window.Toast) Toast.show('Error al guardar.','error'); });
+});
+
+loadLevel();
+
+(function(){
+  const d=document.getElementById('topbarDate');
+  if(d)d.textContent=new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long'});
+  const pb=document.getElementById('sidebarProfileBtn'),pd=document.getElementById('profileDropdown'),pc=document.getElementById('profileChevron');
+  if(pb&&pd){pb.addEventListener('click',function(e){e.stopPropagation();const o=pd.classList.toggle('open');if(pc)pc.style.transform=o?'rotate(180deg)':'';});document.addEventListener('click',function(){pd.classList.remove('open');if(pc)pc.style.transform='';});}
+  const t=document.getElementById('sidebarToggle'),s=document.getElementById('studentSidebar'),ov=document.getElementById('sidebarOverlay');
+  if(t&&s&&ov){t.addEventListener('click',function(){s.classList.toggle('open');ov.classList.toggle('open');});ov.addEventListener('click',function(){s.classList.remove('open');ov.classList.remove('open');});}
+  const dt=document.getElementById('darkModeToggle'),di=document.getElementById('darkModeIcon');
+  function sd(on){document.body.classList.toggle('student-dark',on);if(di)di.className=on?'bi bi-sun-fill':'bi bi-moon-fill';}
+  sd(localStorage.getItem('student_dark')==='1');
+  if(dt)dt.addEventListener('click',function(){const on=!document.body.classList.contains('student-dark');sd(on);localStorage.setItem('student_dark',on?'1':'0');});
+})();
+</script>
+{% endblock %}

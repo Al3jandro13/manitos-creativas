@@ -47,6 +47,10 @@ class Game(models.Model):
         ('drawing', '🎨 Dibujo Libre'),
         ('snake', '🐍 Serpiente'),
         ('wordsearch', '🔠 Sopa de Letras'),
+        ('memory', '🃏 Memoria Visual'),
+        ('counting', '🔢 Contar Objetos'),
+        ('shapes', '🔷 Figuras Geométricas'),
+        ('place_value', '🏠 Unidades, Decenas y Centenas'),
     ]
 
     name = models.CharField(max_length=200)

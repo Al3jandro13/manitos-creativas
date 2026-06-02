@@ -68,6 +68,35 @@ const Toast = {
   },
 };
 
+/* ── Theme Toggle ── */
+const ThemeToggle = {
+  STORAGE_KEY: 'manitos_theme',
+
+  init() {
+    const btn = document.getElementById('theme-toggle');
+    if (!btn) return;
+    this._updateIcon(btn);
+    btn.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme') || 'dark';
+      this.apply(current === 'dark' ? 'light' : 'dark');
+    });
+  },
+
+  apply(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem(this.STORAGE_KEY, theme);
+    const btn = document.getElementById('theme-toggle');
+    if (btn) this._updateIcon(btn);
+  },
+
+  _updateIcon(btn) {
+    const theme = document.documentElement.getAttribute('data-theme') || 'dark';
+    const icon = btn.querySelector('i');
+    if (icon) icon.className = theme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-stars-fill';
+    btn.title = theme === 'dark' ? 'Activar modo claro' : 'Activar modo oscuro';
+  },
+};
+
 /* ── Accessibility System ── */
 const A11y = {
   STORAGE_KEY: 'manitos_a11y',
@@ -214,6 +243,7 @@ document.head.appendChild(starStyle);
 
 /* ── Init ── */
 document.addEventListener('DOMContentLoaded', () => {
+  ThemeToggle.init();
   Toast.init();
   A11y.init();
 

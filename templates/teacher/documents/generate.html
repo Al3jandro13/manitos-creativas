@@ -1,0 +1,453 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Nuevo Documento — Manitos Creativas{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/teacher.css' %}">
+<style>
+  .gen-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    max-width: 1100px;
+  }
+  @media (max-width: 860px) { .gen-layout { grid-template-columns: 1fr; } }
+
+  .gen-card {
+    background: var(--t-card-bg, #fff);
+    border: 1px solid var(--t-border, #e5e7eb);
+    border-radius: 14px;
+    padding: 1.6rem 1.8rem;
+  }
+  .gen-card-title {
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 0 0 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    color: var(--t-text, #1a1a2e);
+  }
+  .gen-card-title i { color: #1B5E20; font-size: 1.1rem; }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
+
+  .form-group { display: flex; flex-direction: column; gap: .35rem; }
+  .form-group label {
+    font-size: .82rem; font-weight: 600;
+    color: var(--t-text-mid, #374151);
+    text-transform: uppercase; letter-spacing: .04em;
+  }
+  .form-control {
+    border: 1.5px solid var(--t-border, #e5e7eb);
+    border-radius: 8px;
+    padding: .55rem .8rem;
+    font-size: .9rem;
+    color: var(--t-text, #1a1a2e);
+    background: var(--t-input-bg, #fff);
+    transition: border-color .2s;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .form-control:focus { outline: none; border-color: #388E3C; box-shadow: 0 0 0 3px rgba(56,142,60,.1); }
+  textarea.form-control { resize: vertical; min-height: 220px; font-family: inherit; line-height: 1.55; }
+
+  /* AI assistant panel */
+  .ai-panel {
+    background: linear-gradient(135deg, #F1F8E9 0%, #E8F5E9 100%);
+    border: 1.5px solid #A5D6A7;
+    border-radius: 14px;
+    padding: 1.4rem 1.6rem;
+  }
+  .ai-panel-title {
+    font-size: 1rem; font-weight: 700; margin: 0 0 .5rem;
+    display: flex; align-items: center; gap: .5rem; color: #1B5E20;
+  }
+  .ai-panel-sub { font-size: .83rem; color: #388E3C; margin: 0 0 1rem; }
+  .ai-prompt-input {
+    border: 1.5px solid #A5D6A7;
+    border-radius: 8px;
+    padding: .55rem .8rem;
+    font-size: .88rem;
+    width: 100%;
+    box-sizing: border-box;
+    background: #fff;
+    min-height: 90px;
+    resize: vertical;
+    font-family: inherit;
+    line-height: 1.5;
+  }
+  .ai-prompt-input:focus { outline: none; border-color: #1B5E20; box-shadow: 0 0 0 3px rgba(27,94,32,.12); }
+
+  .btn-ai {
+    background: #1B5E20; color: #fff; border: none;
+    padding: .6rem 1.3rem; border-radius: 8px; font-size: .9rem; font-weight: 600;
+    cursor: pointer; display: inline-flex; align-items: center; gap: .45rem;
+    transition: background .2s, transform .1s;
+  }
+  .btn-ai:hover { background: #2E7D32; transform: translateY(-1px); }
+  .btn-ai:disabled { background: #A5D6A7; cursor: not-allowed; transform: none; }
+
+  .ai-spinner {
+    display: none;
+    align-items: center; gap: .5rem;
+    font-size: .83rem; color: #388E3C; margin-top: .6rem;
+  }
+  .ai-spinner.show { display: flex; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner-icon { animation: spin 1s linear infinite; }
+
+  .ai-error {
+    display: none;
+    background: #FEE2E2; color: #991B1B;
+    border-radius: 8px; padding: .5rem .85rem;
+    font-size: .82rem; margin-top: .6rem;
+  }
+  .ai-error.show { display: block; }
+
+  /* Type pills selector */
+  .type-pills {
+    display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: .25rem;
+  }
+  .type-pill {
+    padding: .35rem .9rem; border-radius: 20px; font-size: .8rem; font-weight: 600;
+    cursor: pointer; border: 2px solid transparent; transition: all .15s; user-select: none;
+  }
+  .type-pill.selected { box-shadow: 0 0 0 3px rgba(27,94,32,.2); }
+  .pill-circular   { background: #E8F5E9; color: #1B5E20; }  .pill-circular.selected   { border-color: #1B5E20; }
+  .pill-comunicado { background: #E3F2FD; color: #0D47A1; }  .pill-comunicado.selected { border-color: #0D47A1; }
+  .pill-informe    { background: #FFF3E0; color: #E65100; }  .pill-informe.selected    { border-color: #E65100; }
+  .pill-citacion   { background: #F3E5F5; color: #4A148C; }  .pill-citacion.selected   { border-color: #4A148C; }
+  .pill-carta      { background: #FCE4EC; color: #880E4F; }  .pill-carta.selected      { border-color: #880E4F; }
+
+  .btn-submit {
+    background: #1B5E20; color: #fff; border: none;
+    padding: .75rem 2rem; border-radius: 10px;
+    font-size: 1rem; font-weight: 700;
+    cursor: pointer; display: inline-flex; align-items: center; gap: .5rem;
+    transition: background .2s, transform .1s;
+  }
+  .btn-submit:hover { background: #2E7D32; transform: translateY(-1px); }
+
+  .char-count { font-size: .75rem; color: var(--t-text-light, #9ca3af); text-align: right; margin-top: .2rem; }
+
+  .error-banner {
+    background: #FEE2E2; color: #991B1B;
+    border: 1px solid #FECACA; border-radius: 10px;
+    padding: .85rem 1.2rem; margin-bottom: 1.2rem;
+    display: flex; align-items: center; gap: .6rem; font-size: .9rem;
+  }
+
+  /* ── Dark mode ── */
+  body.teacher-dark .gen-card {
+    background: var(--t-surface, #111D2E);
+    border-color: var(--t-border, rgba(255,255,255,.08));
+  }
+  body.teacher-dark .gen-card-title { color: var(--t-text, #E2E8F0); }
+  body.teacher-dark .gen-card-title i { color: #4ADE80; }
+
+  body.teacher-dark .form-group label { color: var(--t-text-mid, #94A3B8); }
+  body.teacher-dark .form-control {
+    background: var(--t-bg, #0B1524);
+    color: var(--t-text, #E2E8F0);
+    border-color: var(--t-border, rgba(255,255,255,.08));
+  }
+  body.teacher-dark .form-control::placeholder { color: var(--t-text-muted, #64748B); }
+  body.teacher-dark .form-control:focus {
+    border-color: #4ADE80;
+    box-shadow: 0 0 0 3px rgba(74,222,128,.12);
+  }
+  body.teacher-dark .char-count { color: var(--t-text-muted, #64748B); }
+
+  body.teacher-dark .ai-panel {
+    background: linear-gradient(135deg, rgba(21,128,61,.18) 0%, rgba(20,83,45,.14) 100%);
+    border-color: rgba(74,222,128,.22);
+  }
+  body.teacher-dark .ai-panel-title { color: #86EFAC; }
+  body.teacher-dark .ai-panel-sub   { color: #4ADE80; }
+  body.teacher-dark .ai-prompt-input {
+    background: rgba(255,255,255,.05);
+    color: var(--t-text, #E2E8F0);
+    border-color: rgba(74,222,128,.2);
+  }
+  body.teacher-dark .ai-prompt-input::placeholder { color: var(--t-text-muted, #64748B); }
+  body.teacher-dark .ai-prompt-input:focus { border-color: #4ADE80; box-shadow: 0 0 0 3px rgba(74,222,128,.12); }
+  body.teacher-dark .ai-spinner { color: #4ADE80; }
+  body.teacher-dark .ai-error {
+    background: rgba(225,29,72,.15);
+    color: #FCA5A5;
+  }
+  body.teacher-dark .error-banner {
+    background: rgba(225,29,72,.15);
+    color: #FCA5A5;
+    border-color: rgba(225,29,72,.3);
+  }
+
+  body.teacher-dark .pill-circular   { background: rgba(27,94,32,.28);   color: #86EFAC; }
+  body.teacher-dark .pill-comunicado { background: rgba(29,78,216,.22);  color: #93C5FD; }
+  body.teacher-dark .pill-informe    { background: rgba(180,83,9,.22);   color: #FCD34D; }
+  body.teacher-dark .pill-citacion   { background: rgba(99,102,241,.22); color: #A5B4FC; }
+  body.teacher-dark .pill-carta      { background: rgba(225,29,72,.18);  color: #FCA5A5; }
+  body.teacher-dark .pill-circular.selected   { border-color: #86EFAC; }
+  body.teacher-dark .pill-comunicado.selected { border-color: #93C5FD; }
+  body.teacher-dark .pill-informe.selected    { border-color: #FCD34D; }
+  body.teacher-dark .pill-citacion.selected   { border-color: #A5B4FC; }
+  body.teacher-dark .pill-carta.selected      { border-color: #FCA5A5; }
+</style>
+{% endblock %}
+
+{% block body_content %}
+<div class="teacher-layout">
+  {% include 'teacher/_sidebar.html' %}
+
+  <main class="teacher-main">
+    <div class="teacher-topbar">
+      <div style="display:flex;align-items:center;gap:.85rem;">
+        <button id="sidebar-toggle"
+          style="display:none;background:none;border:none;cursor:pointer;font-size:1.2rem;color:var(--t-text-mid);padding:.25rem;"
+          onclick="document.querySelector('.sidebar').classList.toggle('open')">
+          <i class="bi bi-list"></i>
+        </button>
+        <div class="teacher-topbar-title">
+          <a href="{% url 'documents_list' %}" style="color:inherit;text-decoration:none;opacity:.6;">Documentos</a>
+          <i class="bi bi-chevron-right" style="font-size:.75rem;margin:0 .35rem;opacity:.5;"></i>
+          Nuevo documento
+        </div>
+      </div>
+    </div>
+
+    <div style="padding:1.5rem 2rem;">
+
+      <div style="margin-bottom:1.5rem;">
+        <h2 style="font-size:1.3rem;font-weight:700;margin:0 0 .25rem;">Generar documento con IA</h2>
+        <p style="margin:0;color:var(--t-text-mid,#6b7280);font-size:.88rem;">
+          Describe lo que quieres comunicar y la IA redactará el texto. Luego puedes editarlo antes de guardar.
+        </p>
+      </div>
+
+      {% if error %}
+        <div class="error-banner"><i class="bi bi-exclamation-triangle-fill"></i> {{ error }}</div>
+      {% endif %}
+
+      <form method="post" id="docForm">
+        {% csrf_token %}
+        <!-- Hidden field for doc_type -->
+        <input type="hidden" name="doc_type" id="docTypeInput" value="{{ form_data.doc_type|default:'circular' }}">
+
+        <div class="gen-layout">
+
+          <!-- LEFT: Document fields -->
+          <div style="display:flex;flex-direction:column;gap:1.25rem;">
+
+            <div class="gen-card">
+              <p class="gen-card-title"><i class="bi bi-file-earmark-text-fill"></i> Tipo de documento</p>
+              <div class="type-pills" id="typePills">
+                {% for val, label in doc_types %}
+                <span class="type-pill pill-{{ val }} {% if forloop.first %}selected{% endif %}"
+                      data-value="{{ val }}">
+                  {{ label }}
+                </span>
+                {% endfor %}
+              </div>
+            </div>
+
+            <div class="gen-card">
+              <p class="gen-card-title"><i class="bi bi-card-heading"></i> Datos del documento</p>
+              <div style="display:flex;flex-direction:column;gap:1rem;">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="title">Asunto / Título *</label>
+                    <input type="text" class="form-control" id="title" name="title"
+                           value="{{ form_data.title|default:'' }}" placeholder="Ej: Reunión de padres de familia"
+                           required>
+                  </div>
+                  <div class="form-group">
+                    <label for="doc_number">Número (opcional)</label>
+                    <input type="text" class="form-control" id="doc_number" name="doc_number"
+                           value="{{ form_data.doc_number|default:'' }}" placeholder="Ej: 0016">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="recipient">Dirigido a</label>
+                  <input type="text" class="form-control" id="recipient" name="recipient"
+                         value="{{ form_data.recipient|default:'' }}"
+                         placeholder="Ej: Padres y acudientes de grado Transición A">
+                </div>
+              </div>
+            </div>
+
+            <div class="gen-card">
+              <p class="gen-card-title"><i class="bi bi-pencil-fill"></i> Contenido del documento *</p>
+              <div class="form-group">
+                <textarea class="form-control" id="content" name="content"
+                          placeholder="Escribe el cuerpo del documento, o usa la IA para generarlo automaticamente..."
+                          required>{{ form_data.content|default:'' }}</textarea>
+                <p class="char-count"><span id="charCount">0</span> caracteres</p>
+              </div>
+            </div>
+
+            <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+              <button type="submit" class="btn-submit">
+                <i class="bi bi-file-earmark-pdf-fill"></i> Guardar y generar PDF
+              </button>
+              <a href="{% url 'documents_list' %}" style="color:var(--t-text-mid,#6b7280);font-size:.88rem;text-decoration:none;">
+                Cancelar
+              </a>
+            </div>
+
+          </div>
+
+          <!-- RIGHT: AI assistant -->
+          <div style="display:flex;flex-direction:column;gap:1.25rem;">
+
+            <div class="ai-panel">
+              <p class="ai-panel-title">
+                <i class="bi bi-stars"></i> Asistente IA
+              </p>
+              <p class="ai-panel-sub">
+                Describe lo que quieres comunicar y la IA redactará el cuerpo del documento por ti.
+              </p>
+
+              <div class="form-group" style="margin-bottom:.8rem;">
+                <label style="font-size:.78rem;font-weight:600;color:#1B5E20;text-transform:uppercase;letter-spacing:.04em;">
+                  ¿Qué quieres comunicar?
+                </label>
+                <textarea class="ai-prompt-input" id="aiPrompt"
+                  placeholder="Ej: Informar a los padres sobre la reunión del martes 10 de junio a las 6pm para hablar del progreso académico del primer periodo..."></textarea>
+              </div>
+
+              <button type="button" class="btn-ai" id="btnAiGenerate">
+                <i class="bi bi-magic"></i> Generar con IA
+              </button>
+
+              <div class="ai-spinner" id="aiSpinner">
+                <i class="bi bi-arrow-repeat spinner-icon"></i>
+                Generando texto con IA...
+              </div>
+              <div class="ai-error" id="aiError"></div>
+            </div>
+
+            <!-- Preview hint -->
+            <div style="background:var(--t-card-bg,#fff);border:1px solid var(--t-border,#e5e7eb);border-radius:14px;padding:1.2rem 1.4rem;">
+              <p style="font-size:.9rem;font-weight:700;margin:0 0 .6rem;display:flex;align-items:center;gap:.4rem;">
+                <i class="bi bi-info-circle" style="color:#1B5E20;"></i> ¿Cómo funciona?
+              </p>
+              <ol style="margin:0;padding-left:1.2rem;font-size:.83rem;color:var(--t-text-mid,#6b7280);line-height:1.8;">
+                <li>Selecciona el tipo de documento</li>
+                <li>Completa el asunto y el destinatario</li>
+                <li>Describe brevemente el contenido en el asistente IA</li>
+                <li>Revisa y edita el texto generado</li>
+                <li>Guarda y descarga el PDF con el encabezado del colegio</li>
+              </ol>
+            </div>
+
+            <div style="background:var(--t-card-bg,#fff);border:1px solid var(--t-border,#e5e7eb);border-radius:14px;padding:1.2rem 1.4rem;">
+              <p style="font-size:.9rem;font-weight:700;margin:0 0 .5rem;display:flex;align-items:center;gap:.4rem;">
+                <i class="bi bi-building" style="color:#1B5E20;"></i> Encabezado del PDF
+              </p>
+              <p style="font-size:.8rem;color:var(--t-text-mid,#6b7280);margin:0;line-height:1.6;">
+                Todos los documentos incluyen automáticamente el encabezado oficial del
+                <strong>Colegio San Francisco de Asís</strong>, Gestión de Educación y Formación,
+                con fecha y firma de la docente.
+              </p>
+            </div>
+
+          </div>
+        </div>
+      </form>
+    </div>
+  </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  // --- Type pills ---
+  var pills = document.querySelectorAll('.type-pill');
+  var hiddenInput = document.getElementById('docTypeInput');
+
+  pills.forEach(function (pill) {
+    pill.addEventListener('click', function () {
+      pills.forEach(function (p) { p.classList.remove('selected'); });
+      pill.classList.add('selected');
+      hiddenInput.value = pill.dataset.value;
+    });
+  });
+
+  // Restore selected pill from form_data (on validation error)
+  var currentType = hiddenInput.value;
+  pills.forEach(function (p) {
+    p.classList.toggle('selected', p.dataset.value === currentType);
+  });
+
+  // --- Char counter ---
+  var textarea = document.getElementById('content');
+  var counter  = document.getElementById('charCount');
+  function updateCount() { counter.textContent = textarea.value.length; }
+  textarea.addEventListener('input', updateCount);
+  updateCount();
+
+  // --- AI generation ---
+  var btnAi    = document.getElementById('btnAiGenerate');
+  var spinner  = document.getElementById('aiSpinner');
+  var errBox   = document.getElementById('aiError');
+  var promptTa = document.getElementById('aiPrompt');
+
+  btnAi.addEventListener('click', function () {
+    var prompt    = promptTa.value.trim();
+    var title     = document.getElementById('title').value.trim();
+    var recipient = document.getElementById('recipient').value.trim();
+    var docType   = hiddenInput.value;
+
+    errBox.textContent = '';
+    errBox.classList.remove('show');
+
+    if (!prompt) {
+      errBox.textContent = 'Por favor describe qué quieres comunicar.';
+      errBox.classList.add('show');
+      return;
+    }
+
+    btnAi.disabled = true;
+    spinner.classList.add('show');
+
+    fetch('{% url "ai_generate_document_text" %}', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token }}',
+      },
+      body: JSON.stringify({
+        doc_type:  docType,
+        title:     title,
+        recipient: recipient,
+        prompt:    prompt,
+      }),
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      spinner.classList.remove('show');
+      btnAi.disabled = false;
+      if (data.error) {
+        errBox.textContent = data.error;
+        errBox.classList.add('show');
+        return;
+      }
+      textarea.value = data.content;
+      updateCount();
+      textarea.focus();
+      textarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    })
+    .catch(function (err) {
+      spinner.classList.remove('show');
+      btnAi.disabled = false;
+      errBox.textContent = 'Error de conexión. Intenta de nuevo.';
+      errBox.classList.add('show');
+    });
+  });
+})();
+</script>
+{% endblock %}

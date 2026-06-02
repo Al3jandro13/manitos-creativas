@@ -1,0 +1,551 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Sílabas en el Tren — Manitos Creativas{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/student.css' %}">
+<style>
+  .tr-wrap { max-width: 720px; margin: 0 auto; padding-bottom: 2rem; }
+
+  .game-page-header {
+    background: linear-gradient(135deg,#F97316,#DC2626);
+    border-radius: 24px; padding: 1.5rem 1rem 1.25rem;
+    text-align: center; margin-bottom: 1.25rem; color: #fff;
+    box-shadow: 0 6px 24px rgba(220,38,38,.3);
+  }
+  .game-page-title { font-family: var(--font-display); font-size: 1.9rem; line-height: 1.1; }
+  .game-page-sub   { font-family: var(--font-accent); font-size: .85rem; opacity:.88; margin-top:.25rem; }
+
+  .game-score-display { display:flex; gap:.75rem; margin-bottom:1.25rem; }
+  .score-item {
+    flex:1; background:#fff; border:2px solid #E2E8F0; border-radius:14px;
+    padding:.65rem .5rem; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,.04);
+  }
+  .score-value {
+    display:block; font-family:var(--font-display); font-size:1.6rem;
+    line-height:1.1; color:#F97316;
+  }
+  .score-label {
+    display:block; font-family:var(--font-accent); font-size:.7rem; font-weight:700;
+    text-transform:uppercase; letter-spacing:.06em; color:#94A3B8; margin-top:.1rem;
+  }
+
+  .game-area {
+    background:#fff; border:2px solid #E2E8F0; border-radius:24px;
+    padding:1.5rem 1rem; box-shadow:0 4px 20px rgba(0,0,0,.07); margin-bottom:1.25rem;
+  }
+
+  /* Word display */
+  .tr-word-display {
+    text-align:center; margin-bottom:1rem;
+  }
+  .tr-emoji { font-size:4rem; line-height:1; display:block; margin-bottom:.4rem; }
+  .tr-hint {
+    font-family:var(--font-accent); font-size:.82rem; color:#9CA3AF;
+    font-weight:600; margin-bottom:.5rem;
+  }
+  .tr-listen-btn {
+    background: linear-gradient(135deg,#F97316,#DC2626);
+    color:#fff; border:none; border-radius:20px; padding:.45rem 1.1rem;
+    font-family:var(--font-accent); font-size:.82rem; font-weight:700;
+    cursor:pointer; display:inline-flex; align-items:center; gap:.4rem;
+    transition:opacity .15s;
+  }
+  .tr-listen-btn:hover { opacity:.88; }
+
+  /* Train track */
+  .tr-track-wrap {
+    margin: 1.25rem 0; overflow-x:auto; padding-bottom:.5rem;
+  }
+  .tr-track {
+    display:flex; align-items:center; gap:.5rem;
+    min-width:max-content; padding:.5rem .75rem;
+    background:linear-gradient(90deg,#FEF3C7,#FFFBEB);
+    border-radius:16px; border:2px solid #FDE68A;
+  }
+  .tr-locomotive {
+    font-size:2.8rem; flex-shrink:0; line-height:1;
+    filter:drop-shadow(2px 2px 4px rgba(0,0,0,.15));
+  }
+  .tr-rail { flex-shrink:0; display:flex; align-items:center; gap:.5rem; }
+
+  /* Wagon slots */
+  .tr-slot {
+    width:72px; height:72px; border:3px dashed #FCA5A5;
+    border-radius:14px; display:flex; align-items:center; justify-content:center;
+    background:#FFF5F5; cursor:pointer; transition:all .2s; position:relative;
+    flex-shrink:0;
+  }
+  .tr-slot.over { border-color:#DC2626; background:#FEE2E2; transform:scale(1.05); }
+  .tr-slot.filled { border-style:solid; border-color:#86EFAC; background:#F0FDF4; }
+  .tr-slot .tr-syllable-placed {
+    font-family:var(--font-display); font-size:1.3rem; color:#166534;
+    user-select:none;
+  }
+
+  /* Wheel */
+  .tr-wheel {
+    width:14px; height:14px; border-radius:50%;
+    background:#D97706; border:2px solid #92400E;
+    position:absolute; bottom:-10px;
+    flex-shrink:0;
+  }
+  .tr-wagon-body {
+    display:flex; flex-direction:column; align-items:center; gap:2px;
+  }
+  .tr-wagon-wheels { display:flex; gap:24px; }
+
+  /* Syllable pool */
+  .tr-pool {
+    display:flex; flex-wrap:wrap; gap:.65rem; justify-content:center;
+    margin-top:1.25rem;
+  }
+  .tr-syllable {
+    background:linear-gradient(135deg,#F97316,#DC2626);
+    color:#fff; border:none; border-radius:14px;
+    padding:.65rem 1rem; font-family:var(--font-display);
+    font-size:1.2rem; cursor:grab; user-select:none;
+    box-shadow:0 4px 12px rgba(220,38,38,.3);
+    transition:transform .15s, box-shadow .15s;
+    touch-action:none;
+  }
+  .tr-syllable:hover { transform:translateY(-3px); box-shadow:0 8px 18px rgba(220,38,38,.35); }
+  .tr-syllable.dragging { opacity:.5; }
+  .tr-syllable.used { opacity:.3; cursor:not-allowed; }
+
+  /* Feedback */
+  .tr-feedback {
+    text-align:center; font-family:var(--font-accent); font-size:.9rem;
+    font-weight:700; min-height:1.4rem; margin-top:.75rem;
+  }
+  .tr-feedback.ok  { color:#15803D; }
+  .tr-feedback.err { color:#DC2626; }
+
+  /* Train animations */
+  @keyframes train-go {
+    0%   { transform:translateX(0); }
+    15%  { transform:translateX(-20px); }
+    100% { transform:translateX(-130vw); }
+  }
+  @keyframes train-shake {
+    0%,100% { transform:translateX(0); }
+    20%,60% { transform:translateX(-8px); }
+    40%,80% { transform:translateX(8px); }
+  }
+  .tr-track.going  { animation:train-go .9s ease-in forwards; }
+  .tr-track.shaking{ animation:train-shake .5s ease; }
+
+  /* Progress */
+  .tr-progress {
+    display:flex; align-items:center; justify-content:space-between;
+    font-family:var(--font-accent); font-size:.82rem; font-weight:700;
+    color:#6B7280; margin-bottom:.75rem;
+  }
+  .tr-dots { display:flex; gap:.35rem; }
+  .tr-dot  { width:11px; height:11px; border-radius:50%; background:#E2E8F0; transition:background .3s; }
+  .tr-dot.done { background:#F97316; }
+
+  .tr-actions { display:flex; justify-content:center; gap:1rem; margin-top:.75rem; flex-wrap:wrap; }
+
+  /* Dark */
+  body.student-dark .score-item { background:#0E1E30; border-color:rgba(255,255,255,.07); }
+  body.student-dark .score-value{ color:#FDBA74; }
+  body.student-dark .game-area  { background:#0E1E30; border-color:rgba(255,255,255,.07); }
+  body.student-dark .tr-track   { background:linear-gradient(90deg,#1A1200,#0F0D00); border-color:#92400E; }
+  body.student-dark .tr-slot    { background:#0A1726; border-color:rgba(220,38,38,.4); }
+  body.student-dark .tr-progress{ color:#94A3B8; }
+  body.student-dark .tr-hint    { color:#6B7280; }
+</style>
+{% endblock %}
+
+{% block body_content %}
+<div class="student-layout">
+  {% include 'student/_sidebar.html' with active_page='games' %}
+  <div class="student-main">
+    <header class="student-topbar">
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Abrir menú"><i class="bi bi-list"></i></button>
+      <div class="topbar-breadcrumb">
+        <a href="{% url 'games_home' %}" class="breadcrumb-link">Mis Juegos</a>
+        <i class="bi bi-chevron-right" style="font-size:.7rem;color:#9CA3AF;"></i>
+        <span class="bc-current">Sílabas en el Tren</span>
+      </div>
+      <div class="topbar-actions">
+        <div class="topbar-date"><i class="bi bi-calendar3"></i><span id="topbarDate"></span></div>
+        <div class="topbar-stars-chip"><i class="bi bi-star-fill"></i><span>{{ profile.total_stars|default:"0" }} estrellas</span></div>
+        <button class="dark-mode-toggle" id="darkModeToggle" aria-label="Cambiar modo"><i class="bi bi-moon-fill" id="darkModeIcon"></i></button>
+      </div>
+    </header>
+
+    <div class="student-scroll">
+      {% include 'student/games/_activity_banner.html' %}
+      <div class="tr-wrap">
+
+        <div class="game-page-header">
+          <div style="font-size:3.5rem;margin-bottom:.4rem;">🚂</div>
+          <div class="game-page-title">Sílabas en el Tren</div>
+          <div class="game-page-sub">Ordena los vagones para formar la palabra</div>
+        </div>
+
+        <div class="game-score-display">
+          <div class="score-item">
+            <span class="score-value" id="trScore">0</span>
+            <span class="score-label">Puntos</span>
+          </div>
+          <div class="score-item">
+            <span class="score-value" id="trCorrect">0</span>
+            <span class="score-label">Correctas</span>
+          </div>
+          <div class="score-item">
+            <span class="score-value" id="trStars">⭐ 0</span>
+            <span class="score-label">Estrellas</span>
+          </div>
+        </div>
+
+        <div class="tr-progress">
+          <span id="trWordLabel">Palabra 1 / 8</span>
+          <div class="tr-dots" id="trDots"></div>
+        </div>
+
+        <div class="game-area">
+          <!-- Word clue -->
+          <div class="tr-word-display">
+            <span class="tr-emoji" id="trEmoji">⚽</span>
+            <div class="tr-hint" id="trHint">una pelota redonda</div>
+            <button class="tr-listen-btn" id="trListenBtn" onclick="speakWord()">
+              <i class="bi bi-volume-up-fill"></i> Escuchar de nuevo
+            </button>
+          </div>
+
+          <!-- Train track -->
+          <div class="tr-track-wrap">
+            <div class="tr-track" id="trTrack">
+              <span class="tr-locomotive">🚂</span>
+              <div class="tr-rail" id="trRail">
+                <!-- slots generated by JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Syllable pool -->
+          <div class="tr-pool" id="trPool"></div>
+
+          <div class="tr-feedback" id="trFeedback"></div>
+        </div>
+
+        <div class="tr-actions">
+          <button class="btn btn-secondary" id="trSaveBtn" style="display:none">
+            <i class="bi bi-floppy-fill"></i> Guardar estrellas
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<script>
+const WORDS = [
+  { word:'PELOTA',   syllables:['PE','LO','TA'],      emoji:'⚽', hint:'una pelota redonda' },
+  { word:'MARIPOSA', syllables:['MA','RI','PO','SA'], emoji:'🦋', hint:'vuela entre las flores' },
+  { word:'ZAPATO',   syllables:['ZA','PA','TO'],      emoji:'👟', hint:'lo usas en el pie' },
+  { word:'CAMISA',   syllables:['CA','MI','SA'],      emoji:'👕', hint:'ropa para el torso' },
+  { word:'MANZANA',  syllables:['MAN','ZA','NA'],     emoji:'🍎', hint:'fruta roja y dulce' },
+  { word:'CONEJO',   syllables:['CO','NE','JO'],      emoji:'🐰', hint:'tiene orejas largas' },
+  { word:'PALOMA',   syllables:['PA','LO','MA'],      emoji:'🕊️', hint:'ave blanca de la paz' },
+  { word:'TOMATE',   syllables:['TO','MA','TE'],      emoji:'🍅', hint:'rojo y va en la ensalada' },
+  { word:'CABALLO',  syllables:['CA','BA','LLO'],     emoji:'🐴', hint:'animal de montar' },
+  { word:'CUCHARA',  syllables:['CU','CHA','RA'],     emoji:'🥄', hint:'para tomar la sopa' },
+  { word:'GATITO',   syllables:['GA','TI','TO'],      emoji:'🐱', hint:'animal que maúlla' },
+  { word:'ABEJA',    syllables:['A','BE','JA'],       emoji:'🐝', hint:'hace la miel' },
+  { word:'COHETE',   syllables:['CO','HE','TE'],      emoji:'🚀', hint:'va al espacio' },
+  { word:'NUBE',     syllables:['NU','BE'],           emoji:'☁️', hint:'flota en el cielo' },
+  { word:'LIBRO',    syllables:['LI','BRO'],          emoji:'📚', hint:'para leer y aprender' },
+  { word:'FLORES',   syllables:['FLO','RES'],         emoji:'🌸', hint:'huelen muy bien' },
+  { word:'SILLA',    syllables:['SI','LLA'],          emoji:'🪑', hint:'para sentarse' },
+  { word:'MUÑECA',   syllables:['MU','ÑE','CA'],      emoji:'🪆', hint:'juguete favorito' },
+  { word:'TIJERAS',  syllables:['TI','JE','RAS'],     emoji:'✂️', hint:'cortan el papel' },
+  { word:'CAMINO',   syllables:['CA','MI','NO'],      emoji:'🛤️', hint:'por donde caminamos' },
+];
+
+const TOTAL = 8;
+
+function shuffle(a) {
+  const b=[...a];
+  for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}
+  return b;
+}
+
+const ROUNDS = shuffle(WORDS).slice(0, TOTAL);
+let round = 0, score = 0, correct = 0, attempts = 0, saved = false;
+let slots = []; // current slot state (null or syllable string)
+let dragSrc = null;
+
+function calcStars() {
+  const firstTry = correct; // correct on first attempt tracked via 'attempts' per word
+  if (firstTry >= 6) return 3;
+  if (firstTry >= 4) return 2;
+  if (round > 0) return 1;
+  return 0;
+}
+
+function buildDots() {
+  const c = document.getElementById('trDots');
+  c.innerHTML = '';
+  for (let i = 0; i < TOTAL; i++) {
+    const d = document.createElement('div');
+    d.className = 'tr-dot' + (i < round ? ' done' : '');
+    c.appendChild(d);
+  }
+}
+
+function speakWord() {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const w = ROUNDS[round];
+  const utt = new SpeechSynthesisUtterance(w.word.toLowerCase());
+  utt.lang = 'es-CO'; utt.rate = 0.85;
+  window.speechSynthesis.speak(utt);
+}
+
+function loadRound() {
+  if (round >= TOTAL) { finishGame(); return; }
+  const w = ROUNDS[round];
+  slots = new Array(w.syllables.length).fill(null);
+  attempts = 0;
+
+  document.getElementById('trEmoji').textContent = w.emoji;
+  document.getElementById('trHint').textContent  = w.hint;
+  document.getElementById('trWordLabel').textContent = 'Palabra ' + (round + 1) + ' / ' + TOTAL;
+  document.getElementById('trFeedback').textContent = '';
+  document.getElementById('trFeedback').className = 'tr-feedback';
+
+  const track = document.getElementById('trTrack');
+  track.classList.remove('going', 'shaking');
+
+  buildSlots(w);
+  buildPool(w);
+  buildDots();
+  speakWord();
+}
+
+function buildSlots(w) {
+  const rail = document.getElementById('trRail');
+  rail.innerHTML = '';
+  w.syllables.forEach((_, i) => {
+    const wrap = document.createElement('div');
+    wrap.style.display = 'flex'; wrap.style.flexDirection = 'column'; wrap.style.alignItems = 'center';
+    const slot = document.createElement('div');
+    slot.className = 'tr-slot';
+    slot.dataset.idx = i;
+    slot.addEventListener('dragover', e => { e.preventDefault(); slot.classList.add('over'); });
+    slot.addEventListener('dragleave', () => slot.classList.remove('over'));
+    slot.addEventListener('drop', e => { e.preventDefault(); slot.classList.remove('over'); dropOnSlot(i); });
+    slot.addEventListener('click', () => clearSlot(i));
+    wrap.appendChild(slot);
+    // wheels
+    const wheels = document.createElement('div');
+    wheels.style.cssText = 'display:flex;gap:18px;margin-top:2px;';
+    for(let k=0;k<2;k++){
+      const wh = document.createElement('div');
+      wh.className = 'tr-wheel'; wheels.appendChild(wh);
+    }
+    wrap.appendChild(wheels);
+    rail.appendChild(wrap);
+  });
+}
+
+function buildPool(w) {
+  const pool = document.getElementById('trPool');
+  pool.innerHTML = '';
+  const shuffled = shuffle(w.syllables);
+  shuffled.forEach(syl => {
+    const btn = document.createElement('div');
+    btn.className = 'tr-syllable';
+    btn.textContent = syl;
+    btn.draggable = true;
+    btn.dataset.syl = syl;
+    btn.addEventListener('dragstart', e => {
+      dragSrc = syl;
+      btn.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    btn.addEventListener('dragend', () => btn.classList.remove('dragging'));
+    btn.addEventListener('click', () => clickSyllable(syl, btn));
+    pool.appendChild(btn);
+  });
+}
+
+function clickSyllable(syl, btn) {
+  // Place in first empty slot
+  const w = ROUNDS[round];
+  const emptyIdx = slots.findIndex(s => s === null);
+  if (emptyIdx === -1) return;
+  slots[emptyIdx] = syl;
+  btn.classList.add('used');
+  btn.draggable = false;
+  renderSlots(w);
+  if (slots.every(s => s !== null)) checkWord();
+}
+
+function dropOnSlot(idx) {
+  if (!dragSrc) return;
+  const w = ROUNDS[round];
+  // Remove from pool display
+  const poolBtns = document.querySelectorAll('.tr-syllable');
+  poolBtns.forEach(b => {
+    if (b.dataset.syl === dragSrc && !b.classList.contains('used')) {
+      b.classList.add('used'); b.draggable = false;
+    }
+  });
+  // If slot was occupied, return old syllable to pool
+  if (slots[idx] !== null) {
+    const old = slots[idx];
+    poolBtns.forEach(b => {
+      if (b.dataset.syl === old && b.classList.contains('used')) {
+        b.classList.remove('used'); b.draggable = true;
+      }
+    });
+  }
+  slots[idx] = dragSrc;
+  dragSrc = null;
+  renderSlots(w);
+  if (slots.every(s => s !== null)) checkWord();
+}
+
+function clearSlot(idx) {
+  if (slots[idx] === null) return;
+  const old = slots[idx];
+  slots[idx] = null;
+  // restore pool btn
+  document.querySelectorAll('.tr-syllable').forEach(b => {
+    if (b.dataset.syl === old && b.classList.contains('used')) {
+      b.classList.remove('used'); b.draggable = true;
+    }
+  });
+  renderSlots(ROUNDS[round]);
+}
+
+function renderSlots(w) {
+  const rail = document.getElementById('trRail');
+  const slotEls = rail.querySelectorAll('.tr-slot');
+  slotEls.forEach((el, i) => {
+    el.innerHTML = '';
+    el.classList.toggle('filled', slots[i] !== null);
+    if (slots[i]) {
+      const sp = document.createElement('span');
+      sp.className = 'tr-syllable-placed';
+      sp.textContent = slots[i];
+      el.appendChild(sp);
+    }
+  });
+}
+
+function checkWord() {
+  const w = ROUNDS[round];
+  const formed = slots.join('');
+  const expected = w.syllables.join('');
+  const fb = document.getElementById('trFeedback');
+  attempts++;
+
+  if (formed === expected) {
+    fb.textContent = '¡Muy bien! 🎉 La palabra es: ' + w.word;
+    fb.className = 'tr-feedback ok';
+    correct++;
+    score += 10;
+    updateHUD();
+    if (window.Confetti) Confetti.fire();
+    // Animate train going
+    const track = document.getElementById('trTrack');
+    track.classList.add('going');
+    // Speak it
+    setTimeout(() => {
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+        const utt = new SpeechSynthesisUtterance('¡Muy bien! ' + w.word.toLowerCase());
+        utt.lang = 'es-CO'; utt.rate = 0.85;
+        window.speechSynthesis.speak(utt);
+      }
+    }, 200);
+    round++;
+    buildDots();
+    setTimeout(loadRound, 1600);
+  } else {
+    fb.textContent = '¡Casi! Intenta de nuevo 💪';
+    fb.className = 'tr-feedback err';
+    if (window.Toast) Toast.show('Revisa el orden de las sílabas 🔄', 'warning');
+    const track = document.getElementById('trTrack');
+    track.classList.add('shaking');
+    setTimeout(() => track.classList.remove('shaking'), 550);
+    // Clear slots and restore pool so they can retry
+    setTimeout(() => {
+      slots = new Array(w.syllables.length).fill(null);
+      buildPool(w);
+      renderSlots(w);
+      fb.textContent = '';
+      fb.className = 'tr-feedback';
+    }, 900);
+  }
+}
+
+function updateHUD() {
+  document.getElementById('trScore').textContent   = score;
+  document.getElementById('trCorrect').textContent = correct;
+  document.getElementById('trStars').textContent   = '⭐ ' + calcStars();
+}
+
+function finishGame() {
+  document.getElementById('trWordLabel').textContent = '¡Completado!';
+  document.getElementById('trSaveBtn').style.display = '';
+  updateHUD();
+  if (window.Confetti) Confetti.fire();
+  if (window.Toast) Toast.show('¡Juego terminado! ' + calcStars() + ' estrellas ⭐', 'success');
+}
+
+function getCookie(name) {
+  for (let c of document.cookie.split(';')) {
+    const [k, v] = c.trim().split('=');
+    if (k === name) return decodeURIComponent(v);
+  }
+  return '';
+}
+
+document.getElementById('trSaveBtn').addEventListener('click', function () {
+  if (saved) return; saved = true;
+  const stars = calcStars();
+  fetch('{% url "save_game_score" %}', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+    body: JSON.stringify({
+      game_type: 'train_syllables',
+      score: score,
+      stars_earned: stars,
+      activity_id: {{ activity_id|default:'null' }},
+      drawing_data: ''
+    })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (window.Toast) Toast.show('¡Guardado! +' + (data.stars_earned || stars) + ' estrellas ⭐', 'success');
+    this.disabled = true;
+    this.innerHTML = '<i class="bi bi-check-circle-fill"></i> Guardado';
+  })
+  .catch(() => { if (window.Toast) Toast.show('Error al guardar.', 'error'); });
+});
+
+// Start
+loadRound();
+
+// Layout init
+(function(){
+  var d=document.getElementById('topbarDate');
+  if(d) d.textContent=new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long'});
+  var pb=document.getElementById('sidebarProfileBtn'),pd=document.getElementById('profileDropdown'),pc=document.getElementById('profileChevron');
+  if(pb&&pd){pb.addEventListener('click',function(e){e.stopPropagation();var o=pd.classList.toggle('open');if(pc)pc.style.transform=o?'rotate(180deg)':'';});document.addEventListener('click',function(){pd.classList.remove('open');if(pc)pc.style.transform='';});}
+  var t=document.getElementById('sidebarToggle'),s=document.getElementById('studentSidebar'),ov=document.getElementById('sidebarOverlay');
+  if(t&&s&&ov){t.addEventListener('click',function(){s.classList.toggle('open');ov.classList.toggle('open');});ov.addEventListener('click',function(){s.classList.remove('open');ov.classList.remove('open');});}
+  var dt=document.getElementById('darkModeToggle'),di=document.getElementById('darkModeIcon');
+  function sd(on){document.body.classList.toggle('student-dark',on);if(di)di.className=on?'bi bi-sun-fill':'bi bi-moon-fill';}
+  sd(localStorage.getItem('student_dark')==='1');
+  if(dt)dt.addEventListener('click',function(){var on=!document.body.classList.contains('student-dark');sd(on);localStorage.setItem('student_dark',on?'1':'0');});
+})();
+</script>
+{% endblock %}

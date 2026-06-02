@@ -1,0 +1,482 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Cohete Explorador — Manitos Creativas{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/student.css' %}">
+<style>
+.rk-wrap { max-width:860px; margin:0 auto; padding-bottom:2rem; }
+.game-page-header { background:linear-gradient(135deg,#1E1B4B,#7C3AED); border-radius:24px; padding:1.5rem 1rem 1.25rem; text-align:center; margin-bottom:1.25rem; color:#fff; box-shadow:0 6px 24px rgba(124,58,237,.5); }
+.game-page-title { font-family:var(--font-display); font-size:1.9rem; }
+.game-page-sub   { font-family:var(--font-accent); font-size:.85rem; opacity:.88; margin-top:.25rem; }
+
+.game-score-display { display:flex; gap:.75rem; margin-bottom:1.25rem; }
+.score-item { flex:1; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.15); border-radius:14px; padding:.65rem .5rem; text-align:center; }
+.score-value { display:block; font-family:var(--font-display); font-size:1.5rem; line-height:1.1; color:#C4B5FD; }
+.score-label { display:block; font-family:var(--font-accent); font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:rgba(255,255,255,.5); margin-top:.1rem; }
+
+/* Space */
+.rk-space {
+  background:radial-gradient(ellipse at center, #0D0D2B 0%, #000010 100%);
+  border-radius:24px; position:relative; overflow:hidden;
+  height:380px; margin-bottom:1rem; cursor:pointer;
+  box-shadow:0 8px 32px rgba(0,0,0,.6);
+}
+.rk-star { position:absolute; width:2px; height:2px; background:white; border-radius:50%; }
+@keyframes twinkle { from{opacity:.15;transform:scale(1)} to{opacity:1;transform:scale(1.6)} }
+
+/* Planets */
+.rk-planet {
+  position:absolute; border-radius:50%; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.3rem; transition:transform .2s, box-shadow .2s;
+  box-shadow:0 0 20px rgba(255,255,255,.15);
+}
+.rk-planet:hover { transform:scale(1.15); box-shadow:0 0 30px rgba(255,255,255,.35); }
+.rk-planet.visited { filter:grayscale(1) brightness(.5); cursor:default; }
+.rk-planet.visited:hover { transform:scale(1); }
+.rk-planet-label {
+  position:absolute; bottom:-22px; left:50%; transform:translateX(-50%);
+  font-family:var(--font-accent); font-size:.6rem; font-weight:700;
+  color:rgba(255,255,255,.7); white-space:nowrap;
+}
+@keyframes rk-orbit { from{transform:rotate(0deg) translateX(var(--r)) rotate(0deg)} to{transform:rotate(360deg) translateX(var(--r)) rotate(-360deg)} }
+
+/* Rocket */
+#rkRocket {
+  position:absolute; font-size:2rem; transition:all 1.2s cubic-bezier(.25,.46,.45,.94);
+  z-index:10; transform:translate(-50%,-50%);
+  filter:drop-shadow(0 0 10px rgba(139,92,246,.8));
+}
+
+/* Challenge overlay */
+.rk-overlay {
+  position:absolute; inset:0; background:rgba(0,0,0,.85);
+  display:flex; z-index:20; border-radius:24px; backdrop-filter:blur(4px);
+  overflow-y:auto; padding:.5rem;
+}
+.rk-challenge {
+  background:linear-gradient(135deg,#1E1B4B,#312E81); border:2px solid #7C3AED;
+  border-radius:24px; padding:1.25rem; max-width:480px; width:92%;
+  color:#fff; text-align:center; margin:auto;
+}
+.rk-ch-planet { font-size:2.5rem; margin-bottom:.3rem; }
+.rk-ch-title  { font-family:var(--font-display); font-size:1.4rem; margin-bottom:.25rem; color:#C4B5FD; }
+.rk-ch-sub    { font-family:var(--font-accent); font-size:.8rem; color:rgba(255,255,255,.6); margin-bottom:1rem; }
+.rk-ch-prompt { font-family:var(--font-display); font-size:1.1rem; margin-bottom:1rem; color:#E9D5FF; }
+.rk-ch-display { font-size:2.2rem; margin:.4rem 0 .8rem; min-height:50px; display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:.3rem; }
+.rk-opts { display:grid; grid-template-columns:1fr 1fr; gap:.65rem; }
+.rk-opt { background:rgba(255,255,255,.1); border:2px solid rgba(255,255,255,.2); border-radius:14px; padding:.85rem .5rem; cursor:pointer; font-family:var(--font-display); font-size:1.1rem; color:#fff; transition:all .15s; }
+.rk-opt:hover:not(:disabled) { background:rgba(124,58,237,.4); border-color:#7C3AED; transform:translateY(-2px); }
+.rk-opt:disabled { cursor:not-allowed; }
+.rk-opt.correct { border-color:#86EFAC !important; background:rgba(134,239,172,.2) !important; color:#86EFAC; }
+.rk-opt.wrong   { border-color:#FCA5A5 !important; background:rgba(252,165,165,.15) !important; color:#FCA5A5; }
+@keyframes rk-shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-10px)} 75%{transform:translateX(10px)} }
+.rk-challenge.shaking { animation:rk-shake .35s ease; }
+.rk-ch-feedback { font-family:var(--font-accent); font-size:.85rem; font-weight:700; min-height:1.2rem; margin-top:.75rem; }
+.rk-ch-feedback.ok  { color:#86EFAC; }
+.rk-ch-feedback.err { color:#FCA5A5; }
+
+/* Completion */
+.rk-actions { display:flex; justify-content:center; margin-top:.75rem; }
+
+body.student-dark .score-item { background:rgba(255,255,255,.06); border-color:rgba(255,255,255,.1); }
+</style>
+{% endblock %}
+
+{% block body_content %}
+<div class="student-layout">
+  {% include 'student/_sidebar.html' with active_page='games' %}
+  <div class="student-main">
+    <header class="student-topbar">
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Abrir menú"><i class="bi bi-list"></i></button>
+      <div class="topbar-breadcrumb">
+        <a href="{% url 'games_home' %}" class="breadcrumb-link">Mis Juegos</a>
+        <i class="bi bi-chevron-right" style="font-size:.7rem;color:#9CA3AF;"></i>
+        <span class="bc-current">Cohete Explorador</span>
+      </div>
+      <div class="topbar-actions">
+        <div class="topbar-date"><i class="bi bi-calendar3"></i><span id="topbarDate"></span></div>
+        <div class="topbar-stars-chip"><i class="bi bi-star-fill"></i><span>{{ profile.total_stars|default:"0" }} estrellas</span></div>
+        <button class="dark-mode-toggle" id="darkModeToggle" aria-label="Cambiar modo"><i class="bi bi-moon-fill" id="darkModeIcon"></i></button>
+      </div>
+    </header>
+    <div class="student-scroll">
+      {% include 'student/games/_activity_banner.html' %}
+      <div class="rk-wrap">
+        <div class="game-page-header">
+          <div style="font-size:3.5rem;margin-bottom:.4rem;">🚀</div>
+          <div class="game-page-title">Cohete Explorador</div>
+          <div class="game-page-sub">Visita los 6 planetas y supera cada reto</div>
+        </div>
+
+        <div class="game-score-display" style="background:linear-gradient(135deg,#1E1B4B,#312E81);border-radius:18px;padding:.75rem;">
+          <div class="score-item">
+            <span class="score-value" id="rkScore">100</span>
+            <span class="score-label">Puntuacion</span>
+          </div>
+          <div class="score-item">
+            <span class="score-value" id="rkVisited">0/6</span>
+            <span class="score-label">Planetas</span>
+          </div>
+          <div class="score-item">
+            <span class="score-value" id="rkStars">⭐ 0</span>
+            <span class="score-label">Estrellas</span>
+          </div>
+        </div>
+
+        <!-- Space canvas -->
+        <div class="rk-space" id="rkSpace">
+          <!-- Stars generated by JS -->
+          <!-- Rocket -->
+          <div id="rkRocket" style="left:50%;top:50%;">🚀</div>
+          <!-- Planets generated by JS -->
+          <!-- Challenge overlay (hidden) -->
+          <div class="rk-overlay" id="rkOverlay" style="display:none">
+            <div class="rk-challenge" id="rkChallenge">
+              <div class="rk-ch-planet" id="chPlanetEmoji"></div>
+              <div class="rk-ch-title"  id="chPlanetName"></div>
+              <div class="rk-ch-sub">¡El planeta te pone a prueba!</div>
+              <div class="rk-ch-prompt" id="chPrompt"></div>
+              <div class="rk-ch-display" id="chDisplay"></div>
+              <div class="rk-opts" id="chOpts"></div>
+              <div class="rk-ch-feedback" id="chFeedback"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="rk-actions">
+          <button class="btn btn-secondary" id="rkSaveBtn" style="display:none">
+            <i class="bi bi-floppy-fill"></i> Guardar estrellas
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<script>
+function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
+function rnd(min,max){return Math.floor(Math.random()*(max-min+1))+min;}
+
+// Planets config — positioned around center (50%, 50%) = (190,190)
+const CX = 190, CY = 190;
+const PLANETAS = [
+  { id:'mercurio', nombre:'Mercurio', color:'#B0B0B0', emoji:'⚫', r:30, dist:70,  ang:0,
+    reto:'figura' },
+  { id:'venus',    nombre:'Venus',    color:'#E8C97A', emoji:'🟡', r:36, dist:110, ang:60,
+    reto:'contar' },
+  { id:'marte',    nombre:'Marte',    color:'#C1440E', emoji:'🔴', r:28, dist:150, ang:130,
+    reto:'letra'  },
+  { id:'jupiter',  nombre:'Jupiter',  color:'#C88B3A', emoji:'🟠', r:42, dist:195, ang:200,
+    reto:'color'  },
+  { id:'saturno',  nombre:'Saturno',  color:'#D4AC6E', emoji:'🪐', r:38, dist:240, ang:265,
+    reto:'animal' },
+  { id:'urano',    nombre:'Urano',    color:'#81D4CE', emoji:'🔵', r:32, dist:290, ang:330,
+    reto:'suma'   },
+];
+
+let score = 100, visited = 0, saved = false;
+
+// ── Generate stars ────────────────────────────────────────────────
+function genStars() {
+  const sp = document.getElementById('rkSpace');
+  for (let i = 0; i < 90; i++) {
+    const s = document.createElement('div');
+    s.className = 'rk-star';
+    s.style.cssText = `left:${rnd(0,100)}%;top:${rnd(0,100)}%;animation:twinkle ${(2+Math.random()*3).toFixed(1)}s ${(Math.random()*3).toFixed(1)}s infinite alternate;`;
+    sp.insertBefore(s, sp.firstChild);
+  }
+}
+
+// ── Place planets ─────────────────────────────────────────────────
+function placePlanets() {
+  const sp = document.getElementById('rkSpace');
+  PLANETAS.forEach(p => {
+    const rad = p.ang * Math.PI / 180;
+    const px = CX + p.dist * Math.cos(rad);
+    const py = CY + p.dist * Math.sin(rad);
+    // clamp inside space div (380x380 approx)
+    const lx = Math.max(p.r+5, Math.min(370-p.r, px));
+    const ly = Math.max(p.r+5, Math.min(370-p.r, py));
+
+    const el = document.createElement('div');
+    el.className = 'rk-planet';
+    el.id = 'planet_' + p.id;
+    el.style.cssText = `left:${lx-p.r}px;top:${ly-p.r}px;width:${p.r*2}px;height:${p.r*2}px;background:radial-gradient(circle at 35% 35%, ${lighten(p.color)}, ${p.color});`;
+    el.innerHTML = `<span>${p.emoji}</span><span class="rk-planet-label">${p.nombre}</span>`;
+    el.addEventListener('click', () => launchTo(p));
+    sp.appendChild(el);
+  });
+}
+
+function lighten(hex) {
+  const r = Math.min(255, parseInt(hex.slice(1,3),16)+60);
+  const g = Math.min(255, parseInt(hex.slice(3,5),16)+60);
+  const b = Math.min(255, parseInt(hex.slice(5,7),16)+60);
+  return '#' + [r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+
+// ── Launch rocket ──────────────────────────────────────────────────
+function launchTo(planet) {
+  const el = document.getElementById('planet_' + planet.id);
+  if (el.classList.contains('visited')) return;
+
+  const rk = document.getElementById('rkRocket');
+  const sp = document.getElementById('rkSpace');
+  const spRect = sp.getBoundingClientRect();
+  const plEl = el;
+  const plRect = plEl.getBoundingClientRect();
+
+  const tx = plRect.left - spRect.left + plRect.width/2;
+  const ty = plRect.top  - spRect.top  + plRect.height/2;
+
+  rk.style.left = tx + 'px';
+  rk.style.top  = ty + 'px';
+
+  setTimeout(() => showChallenge(planet), 1300);
+}
+
+// ── Challenge system ───────────────────────────────────────────────
+const FIGURAS = [
+  { nombre:'Circulo',    svg:'<circle cx="55" cy="55" r="50" fill="#7C3AED"/>' },
+  { nombre:'Triangulo',  svg:'<polygon points="55,5 105,105 5,105" fill="#EF4444"/>' },
+  { nombre:'Cuadrado',   svg:'<rect x="5" y="5" width="100" height="100" rx="4" fill="#3B82F6"/>' },
+  { nombre:'Rectangulo', svg:'<rect x="5" y="25" width="100" height="60" rx="4" fill="#10B981"/>' },
+];
+const COLORES = [
+  {hex:'#EF4444',nom:'Rojo'},{hex:'#3B82F6',nom:'Azul'},{hex:'#FBBF24',nom:'Amarillo'},
+  {hex:'#10B981',nom:'Verde'},{hex:'#F97316',nom:'Naranja'},{hex:'#7C3AED',nom:'Morado'},
+];
+const ANIMALES = [
+  {sonido:'Muuu',nom:'Vaca',emoji:'🐄',dist:['🐕','🐱','🐔']},
+  {sonido:'Miau',nom:'Gato',emoji:'🐱',dist:['🐶','🐭','🐟']},
+  {sonido:'Guau guau',nom:'Perro',emoji:'🐕',dist:['🐱','🐟','🐰']},
+  {sonido:'Cuac cuac',nom:'Pato',emoji:'🦆',dist:['🐸','🐰','🐟']},
+  {sonido:'Beeee',nom:'Oveja',emoji:'🐑',dist:['🐮','🐷','🐴']},
+  {sonido:'Oink oink',nom:'Cerdo',emoji:'🐷',dist:['🐑','🦆','🐔']},
+];
+const LETRAS = 'ABCDEFGHIJLMNOPRSTV'.split('');
+
+function hablar(txt, rate=0.85) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(txt);
+  u.lang='es-CO'; u.rate=rate; u.pitch=1.1;
+  window.speechSynthesis.speak(u);
+}
+
+function showChallenge(planet) {
+  document.getElementById('rkOverlay').style.display = 'flex';
+  document.getElementById('chPlanetEmoji').textContent = planet.emoji;
+  document.getElementById('chPlanetName').textContent  = planet.nombre;
+  document.getElementById('chFeedback').textContent = '';
+  document.getElementById('chFeedback').className   = 'rk-ch-feedback';
+
+  switch(planet.reto) {
+    case 'figura': buildFigura(); break;
+    case 'contar': buildContar(); break;
+    case 'letra':  buildLetra();  break;
+    case 'color':  buildColor();  break;
+    case 'animal': buildAnimal(); break;
+    case 'suma':   buildSuma();   break;
+  }
+
+  function onAnswer(isCorrect, correctLabel) {
+    document.querySelectorAll('.rk-opt').forEach(b => b.disabled = true);
+    const fb = document.getElementById('chFeedback');
+    if (isCorrect) {
+      fb.textContent = '¡Excelente! Combustible conseguido 🚀';
+      fb.className = 'rk-ch-feedback ok';
+      hablar('¡Muy bien! Sigamos explorando', 0.9);
+      if (window.Confetti) Confetti.fire();
+      if (window.Toast) Toast.show('¡Planeta superado! 🌟', 'success');
+      setTimeout(() => { closeChallenge(planet, true); }, 1500);
+    } else {
+      score = Math.max(0, score - 5);
+      updateHUD();
+      fb.textContent = 'La respuesta correcta era: ' + correctLabel;
+      fb.className = 'rk-ch-feedback err';
+      document.getElementById('rkChallenge').classList.add('shaking');
+      setTimeout(() => document.getElementById('rkChallenge').classList.remove('shaking'), 400);
+      hablar('Casi. Sigue intentando', 0.8);
+      if (window.Toast) Toast.show('¡Inténtalo de nuevo! -5 puntos', 'warning');
+      setTimeout(() => closeChallenge(planet, false), 2000);
+    }
+  }
+
+  function buildOpts(opts, correct) {
+    const c = document.getElementById('chOpts');
+    c.innerHTML = '';
+    opts.forEach(o => {
+      const b = document.createElement('button');
+      b.className = 'rk-opt';
+      b.textContent = o;
+      b.addEventListener('click', () => {
+        b.classList.add(o === correct ? 'correct' : 'wrong');
+        onAnswer(o === correct, correct);
+      });
+      c.appendChild(b);
+    });
+  }
+
+  function buildFigura() {
+    const idx  = rnd(0, FIGURAS.length-1);
+    const fig  = FIGURAS[idx];
+    document.getElementById('chPrompt').textContent = '¿Que figura ves?';
+    document.getElementById('chDisplay').innerHTML  =
+      `<svg width="110" height="110" viewBox="0 0 110 110">${fig.svg}</svg>`;
+    const opts = shuffle(FIGURAS.map(f=>f.nombre));
+    buildOpts(opts, fig.nombre);
+    hablar('¿Que figura ves?');
+  }
+
+  function buildContar() {
+    const n = rnd(1,9);
+    const emojis = ['⭐','🍎','🌟','🎈','🐤','🌸'];
+    const e = emojis[rnd(0,emojis.length-1)];
+    document.getElementById('chPrompt').textContent = '¿Cuantos hay?';
+    document.getElementById('chDisplay').innerHTML  = (e+' ').repeat(n);
+    const correctStr = String(n);
+    let opts = new Set([n]);
+    while(opts.size < 4){ opts.add(rnd(Math.max(1,n-3), n+3)); }
+    buildOpts(shuffle([...opts]).map(String), correctStr);
+    hablar('Cuenta los objetos. ¿Cuantos hay?');
+  }
+
+  function buildLetra() {
+    const letra = LETRAS[rnd(0, LETRAS.length-1)];
+    document.getElementById('chPrompt').textContent = '¿Que letra es esta?';
+    document.getElementById('chDisplay').innerHTML  =
+      `<span style="font-size:4rem;font-family:var(--font-display);color:#C4B5FD;">${letra}</span>`;
+    let set = new Set([letra]);
+    while(set.size < 4){ set.add(LETRAS[rnd(0,LETRAS.length-1)]); }
+    buildOpts(shuffle([...set]), letra);
+    hablar('¿Que letra es esta?');
+  }
+
+  function buildColor() {
+    const c = COLORES[rnd(0, COLORES.length-1)];
+    document.getElementById('chPrompt').textContent = '¿De que color es?';
+    document.getElementById('chDisplay').innerHTML  =
+      `<div style="width:80px;height:80px;border-radius:50%;background:${c.hex};box-shadow:0 0 20px ${c.hex}88;"></div>`;
+    const opts4 = shuffle(COLORES).slice(0,4).map(x=>x.nom);
+    if (!opts4.includes(c.nom)) opts4[0] = c.nom;
+    buildOpts(shuffle(opts4), c.nom);
+    hablar('¿De que color es?');
+  }
+
+  function buildAnimal() {
+    const a = ANIMALES[rnd(0, ANIMALES.length-1)];
+    document.getElementById('chPrompt').textContent = '¿Que animal hace ese sonido?';
+    document.getElementById('chDisplay').innerHTML  =
+      `<div style="font-size:1.4rem;color:#C4B5FD;">"${a.sonido}"</div>`;
+    hablar(a.sonido, 0.75);
+    const opts = shuffle([a.emoji, ...a.dist]).slice(0,4);
+    if (!opts.includes(a.emoji)) opts[0] = a.emoji;
+    const c = document.getElementById('chOpts');
+    c.innerHTML = '';
+    shuffle(opts).forEach(e => {
+      const b = document.createElement('button');
+      b.className = 'rk-opt';
+      b.style.fontSize = '2rem';
+      b.textContent = e;
+      b.addEventListener('click', () => {
+        b.classList.add(e === a.emoji ? 'correct' : 'wrong');
+        onAnswer(e === a.emoji, a.emoji + ' ' + a.nom);
+      });
+      c.appendChild(b);
+    });
+  }
+
+  function buildSuma() {
+    const x = rnd(1,5), y = rnd(1, Math.min(5, 8-x));
+    const res = x + y;
+    const emojis = ['🌟','🍎','🎈','⭐','🐤'];
+    const e = emojis[rnd(0,emojis.length-1)];
+    document.getElementById('chPrompt').textContent = '¿Cuanto es en total?';
+    document.getElementById('chDisplay').innerHTML  =
+      `<div style="display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:.3rem;font-size:1.8rem;">
+        <span>${(e+' ').repeat(x)}</span><span style="font-size:1.4rem;">➕</span><span>${(e+' ').repeat(y)}</span>
+      </div>`;
+    const correctStr = String(res);
+    let opts = new Set([res]);
+    while(opts.size < 4){ opts.add(rnd(Math.max(1,res-3), res+3)); }
+    buildOpts(shuffle([...opts]).map(String), correctStr);
+    hablar('Cuenta todos. ¿Cuanto es en total?');
+  }
+}
+
+function closeChallenge(planet, success) {
+  document.getElementById('rkOverlay').style.display = 'none';
+  if (success) {
+    document.getElementById('planet_' + planet.id).classList.add('visited');
+    visited++;
+    updateHUD();
+    // Return rocket to center
+    const rk = document.getElementById('rkRocket');
+    rk.style.left = '50%';
+    rk.style.top  = '50%';
+    if (visited >= PLANETAS.length) setTimeout(misionCompleta, 1200);
+  } else {
+    // Return rocket to center on failure too
+    const rk = document.getElementById('rkRocket');
+    rk.style.left = '50%';
+    rk.style.top  = '50%';
+  }
+}
+
+function misionCompleta() {
+  if (window.Confetti) Confetti.fire();
+  hablar('Felicitaciones! Completaste la mision espacial.', 0.85);
+  if (window.Toast) Toast.show('¡Mision completada! ' + calcStars() + ' estrellas', 'success');
+  document.getElementById('rkSaveBtn').style.display = '';
+  updateHUD();
+}
+
+function calcStars() {
+  if (score >= 85) return 3;
+  if (score >= 55) return 2;
+  return 1;
+}
+
+function updateHUD() {
+  document.getElementById('rkScore').textContent   = score;
+  document.getElementById('rkVisited').textContent = visited + '/6';
+  document.getElementById('rkStars').textContent   = '⭐ ' + calcStars();
+}
+
+function getCookie(n){for(let c of document.cookie.split(';')){const[k,v]=c.trim().split('=');if(k===n)return decodeURIComponent(v);}return '';}
+
+document.getElementById('rkSaveBtn').addEventListener('click', function(){
+  if(saved)return; saved=true;
+  const stars=calcStars();
+  fetch('{% url "save_game_score" %}',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},
+    body:JSON.stringify({game_type:'rocket',score,stars_earned:stars,activity_id:{{ activity_id|default:'null' }},drawing_data:''})
+  }).then(r=>r.json()).then(d=>{
+    if(window.Toast)Toast.show('¡Guardado! +' + (d.stars_earned||stars) + ' estrellas','success');
+    this.disabled=true;
+    this.innerHTML='<i class="bi bi-check-circle-fill"></i> Guardado';
+  }).catch(()=>{if(window.Toast)Toast.show('Error al guardar.','error');});
+});
+
+genStars();
+placePlanets();
+updateHUD();
+hablar('Hola astronauta! Haz clic en un planeta para visitarlo.', 0.85);
+
+(function(){
+  const d=document.getElementById('topbarDate');
+  if(d)d.textContent=new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long'});
+  const pb=document.getElementById('sidebarProfileBtn'),pd=document.getElementById('profileDropdown'),pc=document.getElementById('profileChevron');
+  if(pb&&pd){pb.addEventListener('click',function(e){e.stopPropagation();const o=pd.classList.toggle('open');if(pc)pc.style.transform=o?'rotate(180deg)':'';});document.addEventListener('click',function(){pd.classList.remove('open');if(pc)pc.style.transform='';});}
+  const t=document.getElementById('sidebarToggle'),s=document.getElementById('studentSidebar'),ov=document.getElementById('sidebarOverlay');
+  if(t&&s&&ov){t.addEventListener('click',function(){s.classList.toggle('open');ov.classList.toggle('open');});ov.addEventListener('click',function(){s.classList.remove('open');ov.classList.remove('open');});}
+  const dt=document.getElementById('darkModeToggle'),di=document.getElementById('darkModeIcon');
+  function sd(on){document.body.classList.toggle('student-dark',on);if(di)di.className=on?'bi bi-sun-fill':'bi bi-moon-fill';}
+  sd(localStorage.getItem('student_dark')==='1');
+  if(dt)dt.addEventListener('click',function(){const on=!document.body.classList.contains('student-dark');sd(on);localStorage.setItem('student_dark',on?'1':'0');});
+})();
+</script>
+{% endblock %}

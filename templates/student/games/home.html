@@ -120,7 +120,80 @@
           <span class="game-name">Sopa de Letras</span>
           <span class="game-stars"><i class="bi bi-star-fill"></i> +5</span>
         </a>
+        <a href="{% url 'game_memory' %}" class="game-card game-card-purple">
+          <span class="game-icon">🃏</span>
+          <span class="game-name">Memoria Visual</span>
+          <span class="game-stars"><i class="bi bi-star-fill"></i> +4</span>
+        </a>
+        <a href="{% url 'game_counting' %}" class="game-card game-card-blue">
+          <span class="game-icon">🔢</span>
+          <span class="game-name">Contar Objetos</span>
+          <span class="game-stars"><i class="bi bi-star-fill"></i> +4</span>
+        </a>
+        <a href="{% url 'game_shapes' %}" class="game-card game-card-teal">
+          <span class="game-icon">🔷</span>
+          <span class="game-name">Figuras Geométricas</span>
+          <span class="game-stars"><i class="bi bi-star-fill"></i> +4</span>
+        </a>
+        <a href="{% url 'game_place_value' %}" class="game-card game-card-yellow">
+          <span class="game-icon">🏠</span>
+          <span class="game-name">Unidades, Decenas y Centenas</span>
+          <span class="game-stars"><i class="bi bi-star-fill"></i> +5</span>
+        </a>
+        <a href="{% url 'game_crazy_face' %}" class="game-card game-card-yellow">
+          <span class="game-icon">🤪</span>
+          <span class="game-name">Cara Loca</span>
+          <span class="game-stars"><i class="bi bi-star-fill"></i> +4</span>
+        </a>
+        <a href="{% url 'game_rocket' %}" class="game-card game-card-indigo">
+          <span class="game-icon">🚀</span>
+          <span class="game-name">Cohete Explorador</span>
+          <span class="game-stars"><i class="bi bi-star-fill"></i> +6</span>
+        </a>
+        <a href="{% url 'game_house' %}" class="game-card game-card-purple">
+          <span class="game-icon">🏠</span>
+          <span class="game-name">Constructor de Casas</span>
+          <span class="game-stars"><i class="bi bi-star-fill"></i> +5</span>
+        </a>
+        <a href="{% url 'game_shadows' %}" class="game-card game-card-rose">
+          <span class="game-icon">🎭</span>
+          <span class="game-name">Teatro de Sombras</span>
+          <span class="game-stars"><i class="bi bi-star-fill"></i> +5</span>
+        </a>
+        <a href="{% url 'game_mixing' %}" class="game-card game-card-pink">
+          <span class="game-icon">🎨</span>
+          <span class="game-name">Mezcla de Colores</span>
+          <span class="game-stars"><i class="bi bi-star-fill"></i> +4</span>
+        </a>
+        <a href="{% url 'game_train_syllables' %}" class="game-card game-card-orange">
+          <span class="game-icon">🚂</span>
+          <span class="game-name">Sílabas en el Tren</span>
+          <span class="game-stars"><i class="bi bi-star-fill"></i> +5</span>
+        </a>
+        <a href="{% url 'game_puppet' %}" class="game-card game-card-sky">
+          <span class="game-icon">🎭</span>
+          <span class="game-name">Marioneta Mágica</span>
+          <span class="game-stars"><i class="bi bi-star-fill"></i> +4</span>
+        </a>
       </div>
+
+      <!-- Actividades en Pareja -->
+      <div class="section-header" style="margin-top:1.5rem;">
+        <div class="section-title-new">
+          <span class="section-icon-badge"><i class="bi bi-people-fill"></i></span>
+          Actividades en Pareja
+        </div>
+      </div>
+      <a href="{% url 'student_coop_list' %}" class="games-coop-banner">
+        <div class="coop-banner-left">
+          <div class="coop-banner-icons">🔠📖🖼️</div>
+          <div>
+            <div class="coop-banner-title">¡Trabajen juntos!</div>
+            <div class="coop-banner-sub">Sopa en pareja · Cuento en pareja · Mural colaborativo</div>
+          </div>
+        </div>
+        <div class="coop-banner-arrow"><i class="bi bi-arrow-right-circle-fill"></i></div>
+      </a>
 
     </div><!-- /student-scroll -->
   </div><!-- /student-main -->

@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Usuarios — Manitos Creativas{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/teacher.css' %}">{% endblock %}
+
+{% block body_content %}
+<div class="teacher-layout">
+  {% include 'teacher/_sidebar.html' %}
+  <main class="teacher-main">
+
+    <div class="teacher-topbar">
+      <div style="display:flex;align-items:center;gap:.85rem;">
+        <button id="sidebar-toggle"
+          style="display:none;background:none;border:none;cursor:pointer;font-size:1.2rem;color:var(--t-text-mid);padding:.25rem;"
+          onclick="document.querySelector('.sidebar').classList.toggle('open')">
+          <i class="bi bi-list"></i>
+        </button>
+        <div class="teacher-topbar-title"><i class="bi bi-people-fill"></i> Usuarios</div>
+      </div>
+      <div class="topbar-actions">
+        <a href="{% url 'teacher_create_student' %}" class="btn btn-primary">
+          <i class="bi bi-person-plus"></i> Nuevo estudiante
+        </a>
+      </div>
+    </div>
+
+    <div class="teacher-content">
+
+      <!-- Search & filters -->
+      <form method="get" style="display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1.35rem;align-items:center;">
+        <div style="position:relative;flex:1;min-width:200px;max-width:380px;">
+          <i class="bi bi-search" style="position:absolute;left:.75rem;top:50%;transform:translateY(-50%);color:var(--t-text-muted);font-size:.9rem;pointer-events:none;"></i>
+          <input type="text" name="q" value="{{ q }}"
+            placeholder="Buscar por nombre o usuario…"
+            style="width:100%;padding:.55rem .75rem .55rem 2.2rem;border:1px solid var(--t-border);border-radius:var(--t-radius);background:var(--t-surface);color:var(--t-text);font-size:.875rem;outline:none;">
+        </div>
+        <a href="?level=&q={{ q }}" class="filter-chip {% if not level %}active{% endif %}">Todos</a>
+        <a href="?level=A&q={{ q }}" class="filter-chip {% if level == 'A' %}active{% endif %}">Transición A</a>
+        <a href="?level=B&q={{ q }}" class="filter-chip {% if level == 'B' %}active{% endif %}">Transición B</a>
+        <button type="submit" class="btn btn-outline" style="padding:.5rem 1rem;font-size:.85rem;">
+          <i class="bi bi-search"></i> Buscar
+        </button>
+      </form>
+
+      {% if students %}
+      <div style="display:flex;flex-direction:column;gap:.6rem;">
+        {% for student in students %}
+        <div class="activity-list-item" style="align-items:center;">
+          <div style="width:2.6rem;height:2.6rem;border-radius:50%;background:var(--t-indigo-light);color:var(--t-indigo);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.95rem;flex-shrink:0;">
+            {{ student.first_name|first|upper }}{{ student.last_name|first|upper }}
+          </div>
+          <div class="activity-list-info" style="flex:1;min-width:0;">
+            <div class="activity-list-title">{{ student.get_full_name|default:student.username }}</div>
+            <div class="activity-list-meta">
+              <span style="font-size:.75rem;color:var(--t-text-muted);">@{{ student.username }}</span>
+              {% if student.student_profile %}
+                <span class="badge badge-blue">Nivel {{ student.student_profile.level }}</span>
+                <span style="font-size:.75rem;color:var(--t-text-muted);display:inline-flex;align-items:center;gap:.25rem;">
+                  <i class="bi bi-star-fill" style="color:var(--t-amber);font-size:.65rem;"></i>
+                  {{ student.student_profile.total_stars }}
+                </span>
+                {% if student.student_profile.parent_name %}
+                <span style="font-size:.75rem;color:var(--t-text-muted);">
+                  <i class="bi bi-person" style="font-size:.65rem;"></i> {{ student.student_profile.parent_name }}
+                </span>
+                {% endif %}
+              {% endif %}
+            </div>
+          </div>
+          <div style="display:flex;gap:.4rem;align-items:center;flex-shrink:0;">
+            <a href="{% url 'teacher_student_detail' student.pk %}" class="btn btn-outline" style="padding:.38rem .85rem;font-size:.8rem;" title="Ver detalle">
+              <i class="bi bi-eye"></i>
+            </a>
+            <a href="{% url 'teacher_student_edit' student.pk %}" class="btn btn-outline" style="padding:.38rem .75rem;font-size:.8rem;" title="Editar">
+              <i class="bi bi-pencil"></i>
+            </a>
+            <button type="button"
+              class="btn btn-outline"
+              style="padding:.38rem .75rem;font-size:.8rem;border-color:var(--t-rose);color:var(--t-rose);"
+              onclick="openDelete({{ student.pk }}, '{{ student.get_full_name|default:student.username|escapejs }}')"
+              title="Eliminar">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-state-icon"><i class="bi bi-people"></i></div>
+        <div class="empty-state-title">
+          {% if q %}No se encontraron estudiantes con "{{ q }}"{% else %}Aún no hay estudiantes registrados{% endif %}
+        </div>
+        {% if not q %}
+        <a href="{% url 'teacher_create_student' %}" class="btn btn-primary">
+          <i class="bi bi-person-plus"></i> Agregar primer estudiante
+        </a>
+        {% endif %}
+      </div>
+      {% endif %}
+
+    </div>
+
+    <!-- Modal Eliminar -->
+    <div id="modalDelete" style="display:none;position:fixed;inset:0;z-index:1000;align-items:center;justify-content:center;">
+      <div class="modal-backdrop" onclick="closeDelete()"></div>
+      <div class="modal-box" style="max-width:420px;">
+        <div class="modal-header">
+          <div class="modal-title"><i class="bi bi-trash" style="color:var(--t-rose);margin-right:.4rem;"></i> Eliminar estudiante</div>
+          <button onclick="closeDelete()" class="modal-close"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <div style="padding:1.35rem;">
+          <p style="font-size:.9rem;color:var(--t-text-mid);line-height:1.6;margin-bottom:1.25rem;">
+            ¿Eliminar a <strong id="deleteStudentName" style="color:var(--t-text);"></strong>? Esta acción no se puede deshacer y eliminará todas sus actividades y datos asociados.
+          </p>
+          <form id="deleteForm" method="post">
+            {% csrf_token %}
+            <div class="form-actions">
+              <button type="button" onclick="closeDelete()" class="btn btn-outline">Cancelar</button>
+              <button type="submit" class="btn btn-primary" style="background:var(--t-rose);border-color:var(--t-rose);">
+                <i class="bi bi-trash"></i> Sí, eliminar
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<style>
+.modal-backdrop { position:absolute;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(3px); }
+.modal-box { position:relative;z-index:1;width:100%;margin:1rem;background:var(--t-surface);border-radius:var(--t-radius-lg);box-shadow:0 24px 48px rgba(0,0,0,.25);border:1px solid var(--t-border);overflow:hidden; }
+.modal-header { display:flex;align-items:center;justify-content:space-between;padding:1.1rem 1.35rem;border-bottom:1px solid var(--t-border); }
+.modal-title { font-family:var(--t-font-serif);font-size:1.05rem;font-weight:700;color:var(--t-text);letter-spacing:-.01em; }
+.modal-close { background:none;border:none;cursor:pointer;font-size:1.1rem;color:var(--t-text-muted);line-height:1;padding:.2rem; }
+</style>
+
+<script>
+if (window.innerWidth <= 768) document.getElementById('sidebar-toggle').style.display = 'block';
+window.addEventListener('resize', () => {
+  const tog = document.getElementById('sidebar-toggle');
+  if (tog) tog.style.display = window.innerWidth <= 768 ? 'block' : 'none';
+});
+function openDelete(pk, name) {
+  document.getElementById('deleteForm').action = '/cuentas/estudiantes/' + pk + '/eliminar/';
+  document.getElementById('deleteStudentName').textContent = name;
+  document.getElementById('modalDelete').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+function closeDelete() {
+  document.getElementById('modalDelete').style.display = 'none';
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDelete(); });
+</script>
+{% endblock %}

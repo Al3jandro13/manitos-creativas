@@ -1,0 +1,1754 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ coop.title }} — Mural en Pareja{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/student.css' %}">{% endblock %}
+
+{% block body_content %}
+<div class="student-layout">
+  {% include 'student/_sidebar.html' with active_page='activities' %}
+
+  <div class="student-main">
+    <header class="student-topbar">
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Abrir menú"><i class="bi bi-list"></i></button>
+      <div class="topbar-breadcrumb">
+        <a href="{% url 'student_coop_list' %}" class="breadcrumb-link">Mis Parejas</a>
+        <i class="bi bi-chevron-right" style="font-size:.7rem;color:#9CA3AF;"></i>
+        <span class="bc-current">{{ coop.title }}</span>
+      </div>
+      <div class="topbar-actions">
+        <div class="topbar-date"><i class="bi bi-calendar3"></i><span id="topbarDate"></span></div>
+        <div class="topbar-stars-chip"><i class="bi bi-star-fill"></i><span>{{ profile.total_stars|default:"0" }} estrellas</span></div>
+        <button class="dark-mode-toggle" id="darkModeToggle" aria-label="Cambiar modo"><i class="bi bi-moon-fill" id="darkModeIcon"></i></button>
+      </div>
+    </header>
+
+    <div class="student-scroll">
+      <div class="coop-wrap">
+
+        <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+        <!--  HEADER — Trabajo en pareja                       -->
+        <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+        <div class="coop-header">
+          <div class="coop-header-tape coop-header-tape-l"></div>
+          <div class="coop-header-tape coop-header-tape-r"></div>
+
+          <div class="coop-pair-badge">
+            <i class="bi bi-people-fill"></i> Trabajo en pareja
+          </div>
+
+          <h1 class="coop-title">{{ coop.title }}</h1>
+
+          <!-- Avatares + línea de unión -->
+          <div class="coop-duo">
+            <div class="coop-duo-side coop-duo-1 {% if my_sub.step == 1 %}coop-duo-me{% endif %}">
+              <div class="coop-avatar coop-avatar-1">
+                {{ coop.student1.first_name|first|upper }}{{ coop.student1.last_name|first|upper }}
+              </div>
+              <div class="coop-duo-name">{{ coop.student1.first_name|default:coop.student1.username }}</div>
+              <div class="coop-duo-role">Mitad izquierda</div>
+              {% if my_sub.step == 1 %}<div class="coop-duo-you">¡ERES TÚ!</div>{% endif %}
+            </div>
+
+            <div class="coop-bridge">
+              <span class="coop-bridge-plus">+</span>
+              <div class="coop-bridge-dots">
+                <span></span><span></span><span></span>
+              </div>
+            </div>
+
+            <div class="coop-duo-side coop-duo-2 {% if my_sub.step == 2 %}coop-duo-me{% endif %}">
+              <div class="coop-avatar coop-avatar-2">
+                {{ coop.student2.first_name|first|upper }}{{ coop.student2.last_name|first|upper }}
+              </div>
+              <div class="coop-duo-name">{{ coop.student2.first_name|default:coop.student2.username }}</div>
+              <div class="coop-duo-role">Mitad derecha</div>
+              {% if my_sub.step == 2 %}<div class="coop-duo-you">¡ERES TÚ!</div>{% endif %}
+            </div>
+          </div>
+
+          {% if coop.description %}
+          <p class="coop-desc">{{ coop.description }}</p>
+          {% endif %}
+        </div>
+
+
+        <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+        <!--  CASO A — Estudiante 2 esperando                 -->
+        <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+        {% if waiting_for_partner %}
+        <div class="coop-wait">
+          <div class="coop-wait-canvas">
+            <div class="coop-wait-half coop-wait-half-busy">
+              <div class="coop-wait-icon">🎨</div>
+              <div class="coop-wait-name">
+                {{ partner.first_name|default:partner.username }}
+              </div>
+              <div class="coop-wait-msg">está dibujando ahora mismo...</div>
+              <div class="coop-wait-pulse"></div>
+            </div>
+            <div class="coop-wait-divider">
+              <div class="coop-wait-divider-dot"></div>
+              <div class="coop-wait-divider-dot"></div>
+              <div class="coop-wait-divider-dot"></div>
+            </div>
+            <div class="coop-wait-half coop-wait-half-mine">
+              <div class="coop-wait-icon" style="filter:grayscale(.7);opacity:.4;">✨</div>
+              <div class="coop-wait-name" style="color:#94A3B8;">Tu lienzo</div>
+              <div class="coop-wait-msg" style="color:#CBD5E1;">se abrirá cuando termine tu compañero/a</div>
+            </div>
+          </div>
+
+          <div class="coop-wait-msg-big">
+            ¡Espera a tu compañero/a! <span style="display:inline-block;animation:wave 1.5s ease-in-out infinite;">⏳</span>
+          </div>
+          <p class="coop-wait-sub">
+            <strong>{{ partner.first_name|default:partner.username }}</strong> está trabajando en la primera mitad del mural.<br>
+            Cuando termine, tú podrás continuar con la otra mitad ✨
+          </p>
+
+          <a href="{% url 'student_coop_list' %}" class="coop-btn-back">
+            <i class="bi bi-arrow-left"></i> Volver a mis parejas
+          </a>
+        </div>
+
+
+        <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+        <!--  CASO B — Ya enviado / revisado                  -->
+        <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+        {% elif already_submitted %}
+        <div class="coop-done">
+          <div class="coop-done-burst">
+            {% if my_sub.status == 'approved' %}🌟{% elif my_sub.status == 'reviewed' %}⭐{% else %}🎉{% endif %}
+          </div>
+          <div class="coop-done-title">
+            {% if my_sub.status == 'approved' %}¡Tu mural fue aprobado!
+            {% elif my_sub.status == 'reviewed' %}¡Tu profe ya lo revisó!
+            {% else %}¡Tu mitad fue enviada!{% endif %}
+          </div>
+
+          {% if my_sub.stars_awarded %}
+          <div class="coop-done-stars">
+            <i class="bi bi-star-fill"></i> +{{ my_sub.stars_awarded }} estrellas
+          </div>
+          {% endif %}
+
+          {% if my_sub.teacher_feedback %}
+          <div class="coop-feedback">
+            <div class="coop-feedback-label">Comentario de tu profe</div>
+            <div class="coop-feedback-text">"{{ my_sub.teacher_feedback }}"</div>
+          </div>
+          {% endif %}
+
+          <!-- Mural completo si ambos enviaron -->
+          {% if partner_sub.drawing_data and my_sub.drawing_data %}
+          <div class="coop-mural-preview">
+            <div class="coop-mural-label">El mural completo</div>
+            <div class="coop-mural-frame">
+              {% if my_sub.step == 1 %}
+              <img src="{{ my_sub.drawing_data }}" alt="Tu mitad" class="coop-mural-img coop-mural-img-l">
+              <img src="{{ partner_sub.drawing_data }}" alt="Mitad del compañero" class="coop-mural-img coop-mural-img-r">
+              {% else %}
+              <img src="{{ partner_sub.drawing_data }}" alt="Mitad del compañero" class="coop-mural-img coop-mural-img-l">
+              <img src="{{ my_sub.drawing_data }}" alt="Tu mitad" class="coop-mural-img coop-mural-img-r">
+              {% endif %}
+              <div class="coop-mural-seam"></div>
+            </div>
+            <div class="coop-mural-credits">
+              <span><span class="coop-credit-dot c1"></span> {{ coop.student1.first_name|default:coop.student1.username }}</span>
+              <span><span class="coop-credit-dot c2"></span> {{ coop.student2.first_name|default:coop.student2.username }}</span>
+            </div>
+          </div>
+          {% elif my_sub.drawing_data %}
+          <div class="coop-mural-preview">
+            <div class="coop-mural-label">Tu mitad</div>
+            <img src="{{ my_sub.drawing_data }}" alt="Tu dibujo" style="width:100%;max-width:420px;border-radius:14px;border:2px solid #E2E8F0;display:block;margin:0 auto;">
+            <p style="font-size:.82rem;color:#94A3B8;margin-top:.7rem;text-align:center;">
+              {{ partner.first_name|default:partner.username }} aún no ha terminado su parte.
+            </p>
+          </div>
+          {% endif %}
+
+          <a href="{% url 'student_coop_list' %}" class="coop-btn-back">
+            <i class="bi bi-arrow-left"></i> Volver a mis parejas
+          </a>
+        </div>
+
+
+        <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+        <!--  CASO C — Trabajar (lienzo dividido)             -->
+        <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+        {% elif can_work %}
+
+        <!-- Instrucción contextual -->
+        <div class="coop-mission">
+          {% if my_sub.step == 1 %}
+          <div class="coop-mission-pill coop-mission-pill-1">
+            <i class="bi bi-1-circle-fill"></i> Tu misión
+          </div>
+          <div class="coop-mission-text">
+            {% if coop.category.name == 'puntillismo' %}
+            Eres <strong>quien empieza la obra</strong>. Haz puntos de colores en la <strong>mitad izquierda</strong>
+            para crear tu arte. Cuando termines, <strong>{{ partner.first_name|default:partner.username }}</strong>
+            completará la otra mitad con sus puntos. 🎨
+            {% elif coop.category.name == 'colorear' %}
+            Eres <strong>quien empieza a colorear</strong>. Pinta la <strong>mitad izquierda</strong> de la imagen
+            con tus colores favoritos. Cuando termines, <strong>{{ partner.first_name|default:partner.username }}</strong>
+            coloreará la otra mitad. 🖍️
+            {% else %}
+            Eres <strong>quien empieza el mural</strong>. Dibuja en la <strong>mitad izquierda</strong>
+            algo lindo. Cuando termines, <strong>{{ partner.first_name|default:partner.username }}</strong>
+            continuará con la otra mitad.
+            {% endif %}
+          </div>
+          {% else %}
+          <div class="coop-mission-pill coop-mission-pill-2">
+            <i class="bi bi-2-circle-fill"></i> Tu misión
+          </div>
+          <div class="coop-mission-text">
+            {% if coop.category.name == 'puntillismo' %}
+            <strong>{{ partner.first_name|default:partner.username }}</strong> ya hizo su mitad con puntos.
+            Ahora <strong>completa la obra</strong> haciendo puntos en la <strong>mitad derecha</strong>.
+            ¡Hagan que ambas partes combinen! ✨
+            {% elif coop.category.name == 'colorear' %}
+            <strong>{{ partner.first_name|default:partner.username }}</strong> ya coloreó su mitad.
+            Ahora <strong>completa el dibujo</strong> coloreando la <strong>mitad derecha</strong>.
+            ¡Hagan que se vea increíble! ✨
+            {% else %}
+            <strong>{{ partner.first_name|default:partner.username }}</strong> ya hizo la primera mitad.
+            Ahora <strong>completa el mural</strong> dibujando en la <strong>mitad derecha</strong>.
+            ¡Hagan que las dos partes se conecten! ✨
+            {% endif %}
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Toolbar -->
+        <div class="coop-toolbar">
+          <!-- Herramientas -->
+          <div class="coop-tool-group">
+            <span class="coop-tool-label">Herramienta</span>
+            <div class="coop-tools-row">
+              <button class="coop-tool-btn {% if coop.category.name != 'puntillismo' %}active{% endif %}" id="btnDraw"><i class="bi bi-pencil-fill"></i> Pincel</button>
+              {% if coop.category.name == 'puntillismo' %}
+              <button class="coop-tool-btn active" id="btnDot" title="Hacer puntos">⚫ Punto</button>
+              {% endif %}
+              {% if coop.category.name == 'colorear' %}
+              <button class="coop-tool-btn" id="btnFill" title="Balde de pintura">🪣 Balde</button>
+              {% endif %}
+              <button class="coop-tool-btn" id="btnErase"><i class="bi bi-eraser-fill"></i> Borrar</button>
+            </div>
+          </div>
+
+          <!-- Paleta de colores -->
+          <div class="coop-tool-group">
+            <span class="coop-tool-label">Color</span>
+            <div class="coop-palette" id="paletteWrap">
+              <button class="coop-color selected" style="--c:#FF3333;" data-color="#FF3333"></button>
+              <button class="coop-color" style="--c:#FF6600;" data-color="#FF6600"></button>
+              <button class="coop-color" style="--c:#FF9900;" data-color="#FF9900"></button>
+              <button class="coop-color" style="--c:#FFD700;" data-color="#FFD700"></button>
+              <button class="coop-color" style="--c:#FFFF33;" data-color="#FFFF33"></button>
+              <button class="coop-color" style="--c:#99DD00;" data-color="#99DD00"></button>
+              <button class="coop-color" style="--c:#33BB33;" data-color="#33BB33"></button>
+              <button class="coop-color" style="--c:#00AA88;" data-color="#00AA88"></button>
+              <button class="coop-color" style="--c:#00BBEE;" data-color="#00BBEE"></button>
+              <button class="coop-color" style="--c:#3388FF;" data-color="#3388FF"></button>
+              <button class="coop-color" style="--c:#6633EE;" data-color="#6633EE"></button>
+              <button class="coop-color" style="--c:#CC33FF;" data-color="#CC33FF"></button>
+              <button class="coop-color" style="--c:#FF33BB;" data-color="#FF33BB"></button>
+              <button class="coop-color" style="--c:#FF6699;" data-color="#FF6699"></button>
+              <button class="coop-color" style="--c:#884400;" data-color="#884400"></button>
+              <button class="coop-color" style="--c:#FFCCAA;" data-color="#FFCCAA"></button>
+              <button class="coop-color coop-color-white" style="--c:#FFFFFF;" data-color="#FFFFFF"></button>
+              <button class="coop-color" style="--c:#CCCCCC;" data-color="#CCCCCC"></button>
+              <button class="coop-color" style="--c:#666666;" data-color="#666666"></button>
+              <button class="coop-color" style="--c:#111111;" data-color="#111111"></button>
+              <input type="color" id="customColor" class="coop-color-custom" title="Color personalizado" value="#FF3333">
+            </div>
+          </div>
+
+          <!-- Tamaño (oculto en balde) -->
+          <div class="coop-tool-group" id="sizeGroup">
+            <span class="coop-tool-label">Tamaño</span>
+            <input type="range" class="coop-brush" id="brushSize" min="3" max="40" value="12">
+            <span class="coop-brush-num" id="brushNum">12</span>
+          </div>
+
+          <!-- Acciones -->
+          <div class="coop-tool-actions">
+            <button class="coop-tool-btn" id="btnUndo" disabled><i class="bi bi-arrow-counterclockwise"></i> Deshacer</button>
+            <button class="coop-tool-btn" onclick="clearMyHalf()"><i class="bi bi-trash"></i> Limpiar mi mitad</button>
+          </div>
+        </div>
+
+        <!-- THE MURAL: lienzo dividido -->
+        <div class="mural">
+          <!-- Etiquetas de cada lado -->
+          <div class="mural-side-label mural-side-label-l {% if my_sub.step == 1 %}mural-active{% else %}mural-locked{% endif %}">
+            <div class="mural-side-avatar mural-side-avatar-1">
+              {{ coop.student1.first_name|first|upper }}
+            </div>
+            <div class="mural-side-text">
+              <div class="mural-side-who">{{ coop.student1.first_name|default:coop.student1.username }}</div>
+              <div class="mural-side-zone">
+                {% if my_sub.step == 1 %}TU ZONA{% else %}Mitad 1{% endif %}
+              </div>
+            </div>
+          </div>
+
+          <div class="mural-side-label mural-side-label-r {% if my_sub.step == 2 %}mural-active{% else %}mural-locked{% endif %}">
+            <div class="mural-side-text" style="text-align:right;">
+              <div class="mural-side-who">{{ coop.student2.first_name|default:coop.student2.username }}</div>
+              <div class="mural-side-zone">
+                {% if my_sub.step == 2 %}TU ZONA{% else %}Mitad 2{% endif %}
+              </div>
+            </div>
+            <div class="mural-side-avatar mural-side-avatar-2">
+              {{ coop.student2.first_name|first|upper }}
+            </div>
+          </div>
+
+          <!-- Canvas dividido -->
+          <div class="mural-frame">
+            <!-- Capa de fondo (papel) -->
+            <div class="mural-paper"></div>
+
+            <!-- Canvas real (transparente) -->
+            <canvas id="muralCanvas" width="800" height="420"></canvas>
+
+            <!-- Overlay sobre la mitad bloqueada -->
+            {% if my_sub.step == 1 %}
+            <div class="mural-overlay mural-overlay-r" id="overlayLocked">
+              <div class="mural-overlay-content">
+                <div class="mural-overlay-avatar">{{ coop.student2.first_name|first|upper }}</div>
+                <div class="mural-overlay-text">
+                  <strong>{{ coop.student2.first_name|default:coop.student2.username }}</strong>
+                  dibujará aquí después
+                </div>
+                <div class="mural-overlay-zzz">···</div>
+              </div>
+            </div>
+            {% else %}
+            <!-- Mitad izquierda: el dibujo del compañero (solo lectura) -->
+            <div class="mural-partner-label">
+              <i class="bi bi-brush-fill"></i> Hecho por {{ partner.first_name|default:partner.username }}
+            </div>
+            {% endif %}
+
+            <!-- Línea central — "la costura mágica" -->
+            <div class="mural-seam">
+              <div class="mural-seam-line"></div>
+              <div class="mural-seam-medallion">
+                <i class="bi bi-stars"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Indicador de zona -->
+          <div class="mural-zone-hint">
+            <i class="bi bi-info-circle-fill"></i>
+            {% if my_sub.step == 1 %}
+            Dibuja solo en la mitad izquierda — la derecha la completará {{ partner.first_name|default:partner.username }}
+            {% else %}
+            Dibuja solo en la mitad derecha — la izquierda ya la hizo {{ partner.first_name|default:partner.username }}
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <form id="muralForm" method="post" action="{% url 'student_coop_work' coop.pk %}">
+          {% csrf_token %}
+          <input type="hidden" name="drawing_data" id="drawingDataInput">
+
+          <button type="button" onclick="submitMural()" class="coop-submit">
+            <span class="coop-submit-inner">
+              {% if my_sub.step == 1 %}
+              🚀 ¡Listo! Pasar el mural a {{ partner.first_name|default:partner.username }}
+              {% else %}
+              ✨ ¡Listo! Terminar el mural juntos
+              {% endif %}
+            </span>
+            <span class="coop-submit-shine"></span>
+          </button>
+        </form>
+
+        {% endif %}
+        <!-- /can_work -->
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+{# ════════════════════════════════════════════════════════════ #}
+{#                       ESTILOS                                 #}
+{# ════════════════════════════════════════════════════════════ #}
+<style>
+  .coop-wrap {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 1rem 1.25rem 3rem;
+  }
+
+  /* ─── HEADER ─────────────────────────────────────────────── */
+  .coop-header {
+    position: relative;
+    background:
+      radial-gradient(circle at 20% 0%, rgba(124,58,237,.08), transparent 60%),
+      radial-gradient(circle at 80% 100%, rgba(13,148,136,.08), transparent 60%),
+      linear-gradient(180deg, #FDFCFB, #F6F4F1);
+    border: 1.5px solid #E8E2D8;
+    border-radius: 24px;
+    padding: 1.75rem 1.5rem 1.5rem;
+    box-shadow: 0 2px 16px rgba(60,40,20,.06);
+    margin-bottom: 1.25rem;
+    overflow: hidden;
+  }
+  /* washi tape decorativo */
+  .coop-header-tape {
+    position: absolute;
+    width: 90px;
+    height: 22px;
+    top: -10px;
+    background: repeating-linear-gradient(45deg, #FCD34D, #FCD34D 6px, #FBBF24 6px, #FBBF24 12px);
+    opacity: .85;
+    transform: rotate(-4deg);
+    box-shadow: 0 2px 4px rgba(0,0,0,.1);
+  }
+  .coop-header-tape-l { left: 22px; transform: rotate(-7deg); }
+  .coop-header-tape-r { right: 22px; transform: rotate(8deg); background: repeating-linear-gradient(45deg, #C7D2FE, #C7D2FE 6px, #A5B4FC 6px, #A5B4FC 12px); }
+
+  .coop-pair-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    background: linear-gradient(135deg,#4F46E5,#7C3AED);
+    color: #fff;
+    padding: .35rem .85rem;
+    border-radius: 99px;
+    font-size: .72rem;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    margin-bottom: .65rem;
+    box-shadow: 0 4px 12px rgba(79,70,229,.3);
+  }
+  .coop-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: clamp(1.5rem, 3vw, 2.1rem);
+    font-weight: 800;
+    color: #1E1B4B;
+    margin: 0 0 1.1rem;
+    line-height: 1.15;
+    letter-spacing: -.01em;
+  }
+
+  /* ─── AVATARES DUO ───────────────────────────────────────── */
+  .coop-duo {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem .25rem .25rem;
+  }
+  .coop-duo-side {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: .85rem .65rem;
+    border-radius: 16px;
+    transition: all .3s ease;
+    position: relative;
+  }
+  .coop-duo-me {
+    background: linear-gradient(180deg, rgba(255,255,255,.9), rgba(255,255,255,.5));
+    box-shadow: 0 4px 16px rgba(0,0,0,.08), 0 0 0 2px var(--me-color, #4F46E5);
+    transform: translateY(-4px);
+  }
+  .coop-duo-1.coop-duo-me { --me-color: #4F46E5; }
+  .coop-duo-2.coop-duo-me { --me-color: #0D9488; }
+
+  .coop-avatar {
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: .45rem;
+    box-shadow: 0 6px 16px rgba(0,0,0,.18), inset 0 -3px 6px rgba(0,0,0,.15);
+    border: 3px solid #fff;
+  }
+  .coop-avatar-1 { background: linear-gradient(135deg, #6366F1, #4F46E5); }
+  .coop-avatar-2 { background: linear-gradient(135deg, #14B8A6, #0D9488); }
+
+  .coop-duo-name {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    font-size: .92rem;
+    color: #1E293B;
+    line-height: 1.2;
+  }
+  .coop-duo-role {
+    font-size: .7rem;
+    color: #94A3B8;
+    margin-top: .15rem;
+    font-weight: 500;
+  }
+  .coop-duo-you {
+    margin-top: .4rem;
+    font-size: .65rem;
+    font-weight: 800;
+    color: #fff;
+    background: var(--me-color, #4F46E5);
+    padding: .15rem .55rem;
+    border-radius: 99px;
+    letter-spacing: .1em;
+    animation: bounce .8s cubic-bezier(.5,1.5,.5,1) infinite alternate;
+  }
+
+  .coop-bridge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .35rem;
+  }
+  .coop-bridge-plus {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4F46E5, #0D9488);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    font-weight: 800;
+    box-shadow: 0 4px 12px rgba(99,102,241,.4);
+    font-family: 'Playfair Display', serif;
+  }
+  .coop-bridge-dots {
+    display: flex;
+    gap: 3px;
+  }
+  .coop-bridge-dots span {
+    width: 4px; height: 4px; border-radius: 50%;
+    background: #CBD5E1;
+    animation: dotPulse 1.4s ease-in-out infinite;
+  }
+  .coop-bridge-dots span:nth-child(2) { animation-delay: .2s; }
+  .coop-bridge-dots span:nth-child(3) { animation-delay: .4s; }
+
+  .coop-desc {
+    margin: 1.1rem 0 0;
+    padding: .85rem 1rem;
+    background: rgba(255,255,255,.6);
+    border: 1px solid #EEE7DC;
+    border-radius: 12px;
+    font-size: .88rem;
+    color: #475569;
+    line-height: 1.65;
+    font-family: 'Outfit', sans-serif;
+  }
+
+  /* ─── MISSION ─────────────────────────────────────────────── */
+  .coop-mission {
+    background: #fff;
+    border: 1.5px solid #E8E2D8;
+    border-left: 4px solid var(--mission-color, #4F46E5);
+    border-radius: 14px;
+    padding: 1rem 1.15rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .coop-mission-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    background: var(--mission-bg, #EEF2FF);
+    color: var(--mission-color, #4F46E5);
+    padding: .35rem .75rem;
+    border-radius: 99px;
+    font-size: .72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .coop-mission-pill-1 { --mission-color: #4F46E5; --mission-bg: #EEF2FF; }
+  .coop-mission { --mission-color: #4F46E5; }
+  .coop-mission:has(.coop-mission-pill-2) {
+    --mission-color: #0D9488;
+  }
+  .coop-mission-pill-2 { --mission-color: #0D9488; --mission-bg: #F0FDFA; }
+  .coop-mission-text {
+    font-size: .92rem;
+    color: #334155;
+    line-height: 1.6;
+    flex: 1;
+    min-width: 200px;
+    font-family: 'Outfit', sans-serif;
+  }
+  .coop-mission-text strong { color: #1E1B4B; font-weight: 700; }
+
+  /* ─── TOOLBAR ─────────────────────────────────────────────── */
+  .coop-toolbar {
+    background: #fff;
+    border: 1.5px solid #E8E2D8;
+    border-radius: 14px;
+    padding: .9rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    flex-wrap: wrap;
+    margin-bottom: .85rem;
+    box-shadow: 0 2px 8px rgba(60,40,20,.04);
+  }
+  .coop-tool-group {
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+  }
+  .coop-tool-label {
+    font-family: 'Outfit', sans-serif;
+    font-size: .72rem;
+    font-weight: 800;
+    color: #64748B;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .coop-palette {
+    display: flex;
+    gap: .3rem;
+    flex-wrap: wrap;
+  }
+  .coop-color {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: var(--c);
+    border: 2.5px solid #fff;
+    box-shadow: 0 0 0 1.5px #CBD5E1, 0 2px 4px rgba(0,0,0,.15);
+    cursor: pointer;
+    padding: 0;
+    transition: transform .15s ease;
+  }
+  .coop-color:hover { transform: scale(1.15); }
+  .coop-color.selected {
+    transform: scale(1.2);
+    box-shadow: 0 0 0 2.5px #1E1B4B, 0 2px 8px rgba(30,27,75,.4);
+  }
+  .coop-color-white { box-shadow: 0 0 0 1.5px #94A3B8, 0 2px 4px rgba(0,0,0,.1); }
+  .coop-color-custom {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: 2.5px dashed #94A3B8;
+    cursor: pointer;
+    padding: 0;
+    background: conic-gradient(from 0deg, #FF3333, #FFD700, #33BB33, #00BBEE, #6633EE, #FF33BB, #FF3333);
+    transition: transform .15s ease;
+  }
+  .coop-color-custom:hover { transform: scale(1.15); }
+
+  .coop-tools-row {
+    display: flex;
+    gap: .4rem;
+    flex-wrap: wrap;
+  }
+  .coop-tool-btn:disabled {
+    opacity: .35;
+    cursor: not-allowed;
+  }
+  .coop-tool-btn:disabled:hover {
+    border-color: #E2E8F0;
+    color: #475569;
+  }
+
+  .coop-brush {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 90px; height: 6px;
+    background: linear-gradient(90deg, #C7D2FE, #6366F1);
+    border-radius: 99px;
+    outline: none;
+  }
+  .coop-brush::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2.5px solid #4F46E5;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,.2);
+  }
+  .coop-brush-num {
+    font-family: 'Outfit', sans-serif;
+    font-size: .85rem;
+    color: #4F46E5;
+    font-weight: 700;
+    min-width: 22px;
+    text-align: center;
+  }
+
+  .coop-tool-actions {
+    display: flex; gap: .4rem;
+    margin-left: auto;
+    flex-wrap: wrap;
+  }
+  .coop-tool-btn {
+    display: inline-flex; align-items: center; gap: .35rem;
+    padding: .5rem .9rem;
+    border: 1.5px solid #E2E8F0;
+    background: #fff;
+    border-radius: 10px;
+    font-family: 'Outfit', sans-serif;
+    font-size: .8rem;
+    font-weight: 600;
+    color: #475569;
+    cursor: pointer;
+    transition: all .15s ease;
+  }
+  .coop-tool-btn:hover { border-color: #4F46E5; color: #4F46E5; }
+  .coop-tool-btn.active {
+    background: #1E1B4B;
+    color: #fff;
+    border-color: #1E1B4B;
+  }
+
+  /* ─── MURAL FRAME ─────────────────────────────────────────── */
+  .mural {
+    margin-bottom: 1rem;
+  }
+  .mural-side-label {
+    display: inline-flex;
+    align-items: center;
+    gap: .55rem;
+    padding: .55rem .9rem .55rem .55rem;
+    border-radius: 99px;
+    background: #fff;
+    border: 1.5px solid #E2E8F0;
+    margin-bottom: .55rem;
+    transition: all .25s ease;
+  }
+  .mural-side-label-r {
+    flex-direction: row;
+    padding: .55rem .55rem .55rem .9rem;
+    float: right;
+  }
+  .mural-active {
+    background: linear-gradient(135deg, #fff, var(--zone-tint, #EEF2FF));
+    border-color: var(--zone-color, #4F46E5);
+    box-shadow: 0 4px 12px rgba(79,70,229,.15);
+  }
+  .mural-side-label-l.mural-active { --zone-tint: #EEF2FF; --zone-color: #4F46E5; }
+  .mural-side-label-r.mural-active { --zone-tint: #F0FDFA; --zone-color: #0D9488; }
+  .mural-locked { opacity: .55; }
+
+  .mural-side-avatar {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    font-size: .85rem;
+    border: 2px solid #fff;
+    flex-shrink: 0;
+  }
+  .mural-side-avatar-1 { background: linear-gradient(135deg, #6366F1, #4F46E5); }
+  .mural-side-avatar-2 { background: linear-gradient(135deg, #14B8A6, #0D9488); }
+  .mural-side-who {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    font-size: .82rem;
+    color: #1E293B;
+    line-height: 1.1;
+  }
+  .mural-side-zone {
+    font-size: .62rem;
+    font-weight: 800;
+    color: var(--zone-color, #94A3B8);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    margin-top: .1rem;
+  }
+
+  /* Frame del lienzo */
+  .mural-frame {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #FDFCFA;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,.5) inset,
+      0 0 0 1.5px #E8E2D8,
+      0 12px 32px rgba(60,40,20,.12),
+      0 4px 8px rgba(60,40,20,.06);
+    aspect-ratio: 800 / 420;
+    clear: both;
+  }
+  .mural-paper {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(circle at 30% 30%, rgba(252,211,77,.04), transparent 50%),
+      radial-gradient(circle at 70% 70%, rgba(20,184,166,.04), transparent 50%),
+      #FFFEFB;
+  }
+  #muralCanvas {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    touch-action: none;
+    cursor: crosshair;
+  }
+
+  /* Overlay sobre la zona bloqueada (para estudiante 1) */
+  .mural-overlay {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 50%;
+    background:
+      repeating-linear-gradient(135deg, transparent, transparent 18px, rgba(13,148,136,.04) 18px, rgba(13,148,136,.04) 36px),
+      linear-gradient(180deg, rgba(240,253,250,.6), rgba(204,251,241,.4));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    border-left: 1px dashed rgba(13,148,136,.3);
+  }
+  .mural-overlay-r { right: 0; }
+  .mural-overlay-content {
+    text-align: center;
+    padding: 1rem;
+  }
+  .mural-overlay-avatar {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #14B8A6, #0D9488);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    font-size: 1.2rem;
+    margin: 0 auto .55rem;
+    border: 3px solid rgba(255,255,255,.9);
+    box-shadow: 0 4px 12px rgba(13,148,136,.3);
+    opacity: .85;
+  }
+  .mural-overlay-text {
+    font-family: 'Outfit', sans-serif;
+    font-size: .8rem;
+    color: #0F766E;
+    line-height: 1.5;
+    opacity: .9;
+  }
+  .mural-overlay-text strong {
+    display: block;
+    font-size: .9rem;
+    color: #0D9488;
+    margin-bottom: .15rem;
+  }
+  .mural-overlay-zzz {
+    margin-top: .65rem;
+    font-size: 1.3rem;
+    color: rgba(13,148,136,.4);
+    letter-spacing: .2em;
+    animation: zzz 2s ease-in-out infinite;
+  }
+
+  /* Etiqueta cuando la mitad izq está hecha por el compañero (estudiante 2) */
+  .mural-partner-label {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: rgba(255,255,255,.95);
+    backdrop-filter: blur(8px);
+    border: 1.5px solid rgba(79,70,229,.2);
+    color: #4F46E5;
+    padding: .35rem .75rem;
+    border-radius: 99px;
+    font-family: 'Outfit', sans-serif;
+    font-size: .72rem;
+    font-weight: 700;
+    box-shadow: 0 2px 8px rgba(0,0,0,.08);
+    z-index: 5;
+    pointer-events: none;
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+  }
+
+  /* La costura mágica central */
+  .mural-seam {
+    position: absolute;
+    top: 0; bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2px;
+    pointer-events: none;
+    z-index: 4;
+  }
+  .mural-seam-line {
+    position: absolute;
+    top: 0; bottom: 0; left: 0;
+    width: 2px;
+    background:
+      repeating-linear-gradient(180deg, transparent, transparent 6px, rgba(99,102,241,.35) 6px, rgba(99,102,241,.35) 12px);
+  }
+  .mural-seam-medallion {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4F46E5, #0D9488);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    box-shadow: 0 0 0 4px rgba(255,255,255,.95), 0 6px 16px rgba(79,70,229,.4);
+    animation: seamPulse 3s ease-in-out infinite;
+  }
+
+  .mural-zone-hint {
+    margin-top: .65rem;
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    background: #FEF3C7;
+    border: 1.5px solid #FCD34D;
+    color: #92400E;
+    padding: .5rem .9rem;
+    border-radius: 10px;
+    font-size: .82rem;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 600;
+  }
+
+  /* ─── SUBMIT BUTTON ───────────────────────────────────────── */
+  .coop-submit {
+    position: relative;
+    width: 100%;
+    margin-top: 1.25rem;
+    padding: 1.1rem 1.5rem;
+    background: linear-gradient(135deg, #1E1B4B 0%, #4F46E5 50%, #0D9488 100%);
+    color: #fff;
+    border: none;
+    border-radius: 18px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 800;
+    cursor: pointer;
+    overflow: hidden;
+    box-shadow: 0 12px 28px rgba(79,70,229,.4), 0 4px 8px rgba(0,0,0,.1), inset 0 1px 0 rgba(255,255,255,.2);
+    letter-spacing: .01em;
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .coop-submit:hover { transform: translateY(-2px); box-shadow: 0 16px 36px rgba(79,70,229,.5); }
+  .coop-submit:active { transform: translateY(0); }
+  .coop-submit-inner { position: relative; z-index: 2; }
+  .coop-submit-shine {
+    position: absolute;
+    top: 0; left: -75%;
+    width: 50%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.4), transparent);
+    transform: skewX(-20deg);
+    animation: shineSlide 3s ease-in-out infinite;
+  }
+
+  /* ─── WAITING STATE ───────────────────────────────────────── */
+  .coop-wait {
+    text-align: center;
+    padding: 1rem 0 0;
+  }
+  .coop-wait-canvas {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: stretch;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0,0,0,.08), 0 0 0 1.5px #E8E2D8;
+    margin-bottom: 1.5rem;
+    aspect-ratio: 800 / 320;
+    background: #FFFEFB;
+  }
+  .coop-wait-half {
+    position: relative;
+    padding: 1.5rem 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: .35rem;
+    overflow: hidden;
+  }
+  .coop-wait-half-busy {
+    background:
+      radial-gradient(circle at 50% 40%, rgba(124,58,237,.1), transparent 60%),
+      linear-gradient(180deg, #EEF2FF, #E0E7FF);
+  }
+  .coop-wait-half-mine {
+    background: repeating-linear-gradient(135deg, #FAFAF7, #FAFAF7 16px, #F5F5F0 16px, #F5F5F0 32px);
+  }
+  .coop-wait-icon {
+    font-size: 2.5rem;
+    animation: float 2.5s ease-in-out infinite;
+  }
+  .coop-wait-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #4F46E5;
+  }
+  .coop-wait-msg {
+    font-family: 'Outfit', sans-serif;
+    font-size: .82rem;
+    color: #64748B;
+  }
+  .coop-wait-pulse {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 50%, rgba(99,102,241,.15), transparent 50%);
+    animation: heartbeat 1.8s ease-in-out infinite;
+    pointer-events: none;
+  }
+  .coop-wait-divider {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 0 .25rem;
+    background: #fff;
+    position: relative;
+  }
+  .coop-wait-divider::before, .coop-wait-divider::after {
+    content: '';
+    position: absolute;
+    left: 50%; transform: translateX(-50%);
+    width: 1.5px;
+    background: repeating-linear-gradient(180deg, #CBD5E1, #CBD5E1 4px, transparent 4px, transparent 8px);
+  }
+  .coop-wait-divider::before { top: 0; height: calc(50% - 20px); }
+  .coop-wait-divider::after { bottom: 0; height: calc(50% - 20px); }
+  .coop-wait-divider-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #94A3B8;
+    z-index: 1;
+  }
+
+  .coop-wait-msg-big {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #1E1B4B;
+    margin-bottom: .55rem;
+  }
+  .coop-wait-sub {
+    font-family: 'Outfit', sans-serif;
+    font-size: .92rem;
+    color: #64748B;
+    line-height: 1.7;
+    max-width: 480px;
+    margin: 0 auto 1.5rem;
+  }
+
+  /* ─── DONE STATE ──────────────────────────────────────────── */
+  .coop-done { text-align: center; padding: 1rem 0; }
+  .coop-done-burst {
+    font-size: 4.5rem;
+    margin-bottom: .5rem;
+    animation: burst 1.2s cubic-bezier(.5,1.5,.5,1);
+  }
+  .coop-done-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #1E1B4B;
+    margin-bottom: .65rem;
+  }
+  .coop-done-stars {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    background: linear-gradient(135deg, #FBBF24, #F59E0B);
+    color: #fff;
+    padding: .55rem 1rem;
+    border-radius: 99px;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+    font-size: 1rem;
+    margin-bottom: 1.25rem;
+    box-shadow: 0 6px 16px rgba(245,158,11,.4);
+  }
+  .coop-feedback {
+    background: #fff;
+    border: 1.5px solid #E2E8F0;
+    border-radius: 14px;
+    padding: 1rem 1.2rem;
+    max-width: 480px;
+    margin: 0 auto 1.5rem;
+    text-align: left;
+  }
+  .coop-feedback-label {
+    font-family: 'Outfit', sans-serif;
+    font-size: .68rem;
+    font-weight: 800;
+    color: #94A3B8;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    margin-bottom: .35rem;
+  }
+  .coop-feedback-text {
+    font-family: 'Outfit', sans-serif;
+    font-size: .92rem;
+    color: #334155;
+    line-height: 1.6;
+    font-style: italic;
+  }
+
+  /* Mural preview en done */
+  .coop-mural-preview {
+    margin: 0 auto 1.5rem;
+    max-width: 700px;
+  }
+  .coop-mural-label {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1E1B4B;
+    margin-bottom: .65rem;
+  }
+  .coop-mural-frame {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 10px 28px rgba(0,0,0,.12), 0 0 0 1.5px #E8E2D8;
+    aspect-ratio: 800 / 420;
+    background: #FFFEFB;
+  }
+  .coop-mural-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+  }
+  .coop-mural-img-l { object-position: left center; object-fit: cover; }
+  .coop-mural-img-r { object-position: right center; object-fit: cover; }
+  .coop-mural-seam {
+    position: absolute;
+    top: 0; bottom: 0; left: 50%;
+    width: 2px;
+    background: repeating-linear-gradient(180deg, transparent, transparent 6px, rgba(255,255,255,.6) 6px, rgba(255,255,255,.6) 12px);
+    transform: translateX(-50%);
+    box-shadow: 0 0 0 1px rgba(0,0,0,.04);
+  }
+  .coop-mural-credits {
+    margin-top: .65rem;
+    display: flex;
+    justify-content: space-between;
+    font-family: 'Outfit', sans-serif;
+    font-size: .82rem;
+    color: #475569;
+    font-weight: 600;
+  }
+  .coop-mural-credits span { display: inline-flex; align-items: center; gap: .4rem; }
+  .coop-credit-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .coop-credit-dot.c1 { background: linear-gradient(135deg, #6366F1, #4F46E5); }
+  .coop-credit-dot.c2 { background: linear-gradient(135deg, #14B8A6, #0D9488); }
+
+  .coop-btn-back {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    padding: .65rem 1.25rem;
+    background: #fff;
+    border: 1.5px solid #E2E8F0;
+    border-radius: 10px;
+    font-family: 'Outfit', sans-serif;
+    font-size: .88rem;
+    font-weight: 600;
+    color: #475569;
+    text-decoration: none;
+    transition: all .15s ease;
+  }
+  .coop-btn-back:hover { border-color: #4F46E5; color: #4F46E5; }
+
+  /* ─── ANIMACIONES ─────────────────────────────────────────── */
+  @keyframes bounce { 0% { transform: translateY(0); } 100% { transform: translateY(-3px); } }
+  @keyframes dotPulse { 0%, 100% { opacity: .3; } 50% { opacity: 1; } }
+  @keyframes zzz { 0%, 100% { opacity: .4; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-3px); } }
+  @keyframes seamPulse { 0%, 100% { box-shadow: 0 0 0 4px rgba(255,255,255,.95), 0 6px 16px rgba(79,70,229,.4); } 50% { box-shadow: 0 0 0 4px rgba(255,255,255,.95), 0 6px 24px rgba(13,148,136,.6); } }
+  @keyframes shineSlide { 0%, 100% { left: -75%; } 50% { left: 125%; } }
+  @keyframes wave { 0%, 100% { transform: rotate(-15deg); } 50% { transform: rotate(15deg); } }
+  @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+  @keyframes heartbeat { 0%, 100% { opacity: .5; } 50% { opacity: 1; } }
+  @keyframes burst {
+    0% { transform: scale(0) rotate(0); }
+    60% { transform: scale(1.2) rotate(15deg); }
+    100% { transform: scale(1) rotate(0); }
+  }
+
+  /* Sparkles cuando se completa el mural */
+  @keyframes sparkle {
+    0%, 100% { opacity: 0; transform: scale(0); }
+    50% { opacity: 1; transform: scale(1); }
+  }
+  .spark {
+    position: absolute;
+    width: 6px; height: 6px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 8px #FCD34D, 0 0 16px #FCD34D;
+    animation: sparkle 1.5s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 6;
+  }
+
+  /* ═══════════════════════════════════════════════════════════ */
+  /*                    MODO OSCURO                              */
+  /* ═══════════════════════════════════════════════════════════ */
+  body.student-dark .coop-header {
+    background:
+      radial-gradient(circle at 20% 0%, rgba(124,58,237,.18), transparent 60%),
+      radial-gradient(circle at 80% 100%, rgba(20,184,166,.18), transparent 60%),
+      linear-gradient(180deg, #1A1830, #14132A);
+    border-color: #2D2A4A;
+    box-shadow: 0 2px 16px rgba(0,0,0,.4);
+  }
+  body.student-dark .coop-title { color: #F1EEFF; }
+  body.student-dark .coop-desc {
+    background: rgba(255,255,255,.03);
+    border-color: #2D2A4A;
+    color: #C7C2E6;
+  }
+  body.student-dark .coop-duo-me {
+    background: linear-gradient(180deg, rgba(124,58,237,.15), rgba(124,58,237,.04));
+    box-shadow: 0 4px 16px rgba(0,0,0,.4), 0 0 0 2px var(--me-color, #6366F1);
+  }
+  body.student-dark .coop-duo-name { color: #F1EEFF; }
+  body.student-dark .coop-duo-role { color: #8B86B0; }
+
+  body.student-dark .coop-mission {
+    background: #1A1830;
+    border-color: #2D2A4A;
+    border-left-color: var(--mission-color, #818CF8);
+  }
+  body.student-dark .coop-mission-text { color: #C7C2E6; }
+  body.student-dark .coop-mission-text strong { color: #F1EEFF; }
+  body.student-dark .coop-mission-pill-1 { background: rgba(99,102,241,.18); color: #A5B4FC; }
+  body.student-dark .coop-mission-pill-2 { background: rgba(20,184,166,.18); color: #5EEAD4; }
+
+  body.student-dark .coop-toolbar {
+    background: #1A1830;
+    border-color: #2D2A4A;
+    box-shadow: 0 2px 8px rgba(0,0,0,.3);
+  }
+  body.student-dark .coop-tool-label { color: #8B86B0; }
+  body.student-dark .coop-tool-btn {
+    background: #14132A;
+    border-color: #2D2A4A;
+    color: #C7C2E6;
+  }
+  body.student-dark .coop-tool-btn:hover { border-color: #818CF8; color: #A5B4FC; }
+  body.student-dark .coop-tool-btn.active {
+    background: #6366F1;
+    color: #fff;
+    border-color: #6366F1;
+  }
+  body.student-dark .coop-color {
+    box-shadow: 0 0 0 1.5px #4A4670, 0 2px 4px rgba(0,0,0,.4);
+  }
+  body.student-dark .coop-color.selected {
+    box-shadow: 0 0 0 2.5px #F1EEFF, 0 2px 8px rgba(241,238,255,.4);
+  }
+  body.student-dark .coop-brush-num { color: #A5B4FC; }
+
+  body.student-dark .mural-side-label {
+    background: #1A1830;
+    border-color: #2D2A4A;
+  }
+  body.student-dark .mural-side-label-l.mural-active {
+    background: linear-gradient(135deg, #1A1830, rgba(99,102,241,.18));
+    border-color: #6366F1;
+  }
+  body.student-dark .mural-side-label-r.mural-active {
+    background: linear-gradient(135deg, #1A1830, rgba(20,184,166,.18));
+    border-color: #14B8A6;
+  }
+  body.student-dark .mural-side-who { color: #F1EEFF; }
+  body.student-dark .mural-frame {
+    background: #FDFCFA;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,.08) inset,
+      0 0 0 1.5px #2D2A4A,
+      0 12px 32px rgba(0,0,0,.5),
+      0 4px 8px rgba(0,0,0,.3);
+  }
+
+  body.student-dark .mural-zone-hint {
+    background: rgba(252,211,77,.1);
+    border-color: rgba(252,211,77,.35);
+    color: #FCD34D;
+  }
+
+  body.student-dark .coop-wait-canvas {
+    background: #FDFCFA;
+    box-shadow: 0 8px 24px rgba(0,0,0,.5), 0 0 0 1.5px #2D2A4A;
+  }
+  body.student-dark .coop-wait-half-busy {
+    background:
+      radial-gradient(circle at 50% 40%, rgba(124,58,237,.25), transparent 60%),
+      linear-gradient(180deg, #1A1830, #14132A);
+  }
+  body.student-dark .coop-wait-half-mine {
+    background: repeating-linear-gradient(135deg, #14132A, #14132A 16px, #1A1830 16px, #1A1830 32px);
+  }
+  body.student-dark .coop-wait-name { color: #A5B4FC; }
+  body.student-dark .coop-wait-msg { color: #8B86B0; }
+  body.student-dark .coop-wait-divider { background: transparent; }
+  body.student-dark .coop-wait-msg-big { color: #F1EEFF; }
+  body.student-dark .coop-wait-sub { color: #C7C2E6; }
+
+  body.student-dark .coop-done-title { color: #F1EEFF; }
+  body.student-dark .coop-feedback {
+    background: #1A1830;
+    border-color: #2D2A4A;
+  }
+  body.student-dark .coop-feedback-text { color: #C7C2E6; }
+  body.student-dark .coop-feedback-label { color: #8B86B0; }
+  body.student-dark .coop-mural-label { color: #F1EEFF; }
+  body.student-dark .coop-mural-credits { color: #C7C2E6; }
+  body.student-dark .coop-mural-frame {
+    box-shadow: 0 10px 28px rgba(0,0,0,.5), 0 0 0 1.5px #2D2A4A;
+  }
+
+  body.student-dark .coop-btn-back {
+    background: #1A1830;
+    border-color: #2D2A4A;
+    color: #C7C2E6;
+  }
+  body.student-dark .coop-btn-back:hover { border-color: #818CF8; color: #A5B4FC; }
+
+  body.student-dark .coop-pair-badge { box-shadow: 0 4px 16px rgba(79,70,229,.5); }
+
+  /* ─── RESPONSIVE ──────────────────────────────────────────── */
+  @media (max-width: 720px) {
+    .coop-wrap { padding: .75rem .5rem 2rem; }
+    .coop-header { padding: 1.25rem 1rem 1rem; }
+    .coop-header-tape { width: 60px; }
+    .coop-duo { gap: .5rem; grid-template-columns: 1fr auto 1fr; }
+    .coop-avatar { width: 48px; height: 48px; font-size: 1.1rem; }
+    .coop-bridge-plus { width: 30px; height: 30px; font-size: 1rem; }
+    .coop-tool-actions { margin-left: 0; width: 100%; }
+    .coop-toolbar { gap: .85rem; }
+    .mural-side-label { padding: .4rem .65rem .4rem .4rem; }
+    .mural-side-label-r { padding: .4rem .4rem .4rem .65rem; }
+    .mural-side-avatar { width: 24px; height: 24px; font-size: .72rem; }
+    .mural-side-who { font-size: .72rem; }
+    .mural-side-zone { font-size: .55rem; }
+    .mural-seam-medallion { width: 30px; height: 30px; font-size: .82rem; }
+    .mural-overlay-avatar { width: 36px; height: 36px; font-size: .95rem; }
+    .mural-overlay-text { font-size: .7rem; }
+    .coop-submit { font-size: .92rem; padding: .9rem 1rem; }
+  }
+</style>
+
+
+{# ════════════════════════════════════════════════════════════ #}
+{#                       JAVASCRIPT                              #}
+{# ════════════════════════════════════════════════════════════ #}
+<script>
+  {% if can_work %}
+  // ─── Setup canvas dividido ───────────────────────────────
+  const canvas  = document.getElementById('muralCanvas');
+  const ctx     = canvas.getContext('2d', { willReadFrequently: true });
+  const MIDLINE = canvas.width / 2;          // 400 px
+  const MY_STEP = {{ my_sub.step }};         // 1 o 2
+  const IS_COLORING = {% if coop.category.name == 'colorear' %}true{% else %}false{% endif %};
+  // Zona permitida: estudiante 1 → x < 400; estudiante 2 → x >= 400
+  const MY_ZONE_START = MY_STEP === 1 ? 0      : MIDLINE;
+  const MY_ZONE_END   = MY_STEP === 1 ? MIDLINE : canvas.width;
+
+  // brush | fill | eraser | dot
+  let currentTool = {% if coop.category.name == 'puntillismo' %}'dot'{% else %}'brush'{% endif %};
+  let drawing  = false;
+  let brushColor = '#FF3333';
+  let brushSize  = 12;
+  let lastPos    = null;
+  let lastDotPos = null;
+
+  // Undo stack (snapshots de mi mitad)
+  const UNDO_MAX = 10;
+  const undoStack = [];
+
+  // baseImageData: snapshot del lienzo con la imagen base / dibujo del compañero
+  // Se restaura cada vez que el estudiante 2 limpia su mitad
+  let baseImageData = null;
+
+  // Fondo blanco (todo el lienzo)
+  ctx.fillStyle = '#FFFEFB';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  function saveBaseSnapshot() {
+    baseImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  }
+
+  {% if coop.coloring_image %}
+  // Imagen base de colorear: ambos estudiantes la ven completa de fondo
+  const baseImg = new Image();
+  baseImg.crossOrigin = 'anonymous';
+  baseImg.onload = function() {
+    // Dibujar la imagen base centrada y contenida en todo el canvas
+    const ratio = Math.min(canvas.width / baseImg.width, canvas.height / baseImg.height);
+    const w = baseImg.width  * ratio;
+    const h = baseImg.height * ratio;
+    const x = (canvas.width  - w) / 2;
+    const y = (canvas.height - h) / 2;
+    ctx.drawImage(baseImg, x, y, w, h);
+
+    {% if my_sub.step == 2 and partner_sub.drawing_data %}
+    loadPartnerHalf();
+    {% else %}
+    saveBaseSnapshot();
+    {% endif %}
+  };
+  baseImg.onerror = function() { saveBaseSnapshot(); };
+  baseImg.src = "{{ coop.coloring_image.image.url }}";
+  {% elif my_sub.step == 2 and partner_sub.drawing_data %}
+  loadPartnerHalf();
+  {% else %}
+  saveBaseSnapshot();
+  {% endif %}
+
+  {% if my_sub.step == 2 and partner_sub.drawing_data %}
+  function loadPartnerHalf() {
+    const partnerImg = new Image();
+    partnerImg.onload = function() {
+      // partner_sub.drawing_data es la mitad izquierda (400x420)
+      ctx.drawImage(partnerImg, 0, 0, MIDLINE, canvas.height);
+      saveBaseSnapshot();
+    };
+    partnerImg.src = "{{ partner_sub.drawing_data }}";
+  }
+  {% endif %}
+
+  function getPos(e) {
+    const rect   = canvas.getBoundingClientRect();
+    const scaleX = canvas.width  / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const src    = e.touches ? e.touches[0] : e;
+    return {
+      x: Math.round((src.clientX - rect.left) * scaleX),
+      y: Math.round((src.clientY - rect.top)  * scaleY),
+    };
+  }
+
+  function inMyZone(x) {
+    return x >= MY_ZONE_START + 1 && x < MY_ZONE_END - 1;
+  }
+  function clampX(x) {
+    const half = (currentTool === 'eraser') ? brushSize * 1.25 : brushSize/2;
+    return Math.max(MY_ZONE_START + half, Math.min(MY_ZONE_END - half - 1, x));
+  }
+
+  // ─── UNDO ─────────────────────────────────────────────────
+  function pushUndo() {
+    // Solo guardamos el área de mi mitad para ahorrar memoria
+    const w = MY_ZONE_END - MY_ZONE_START;
+    const snap = ctx.getImageData(MY_ZONE_START, 0, w, canvas.height);
+    if (undoStack.length >= UNDO_MAX) undoStack.shift();
+    undoStack.push(snap);
+    document.getElementById('btnUndo').disabled = false;
+  }
+  function doUndo() {
+    if (!undoStack.length) return;
+    const snap = undoStack.pop();
+    ctx.putImageData(snap, MY_ZONE_START, 0);
+    document.getElementById('btnUndo').disabled = !undoStack.length;
+  }
+
+  // ─── DRAW (pincel + borrador) ─────────────────────────────
+  function drawAt(pos) {
+    if (!inMyZone(pos.x)) { lastPos = null; return; }
+    const cp = { x: clampX(pos.x), y: pos.y };
+    ctx.beginPath();
+    if (lastPos) {
+      ctx.moveTo(lastPos.x, lastPos.y);
+      ctx.lineTo(cp.x, cp.y);
+    } else {
+      ctx.moveTo(cp.x, cp.y);
+      ctx.lineTo(cp.x + 0.01, cp.y);
+    }
+    ctx.strokeStyle = (currentTool === 'eraser') ? '#FFFEFB' : brushColor;
+    ctx.lineWidth   = (currentTool === 'eraser') ? brushSize * 2.5 : brushSize;
+    ctx.lineCap     = 'round';
+    ctx.lineJoin    = 'round';
+    ctx.stroke();
+    lastPos = cp;
+  }
+
+  // ─── DOT (puntillismo) ─────────────────────────────────────
+  function dotAt(pos) {
+    if (!inMyZone(pos.x)) { lastDotPos = null; return; }
+    // Evitar puntos super pegados al arrastrar
+    if (lastDotPos) {
+      const dx = pos.x - lastDotPos.x, dy = pos.y - lastDotPos.y;
+      if (Math.sqrt(dx*dx + dy*dy) < brushSize * 0.9) return;
+    }
+    const cp = { x: clampX(pos.x), y: pos.y };
+    ctx.beginPath();
+    ctx.arc(cp.x, cp.y, brushSize/2, 0, Math.PI*2);
+    ctx.fillStyle = brushColor;
+    ctx.fill();
+    lastDotPos = cp;
+  }
+
+  // ─── FLOOD FILL (BALDE) ───────────────────────────────────
+  function hexToRGB(hex) {
+    const n = parseInt(hex.slice(1), 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  }
+  function floodFill(startX, startY) {
+    if (!inMyZone(startX)) return;
+    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imgData.data;
+    const w = canvas.width, h = canvas.height;
+
+    startX = Math.max(0, Math.min(w - 1, startX));
+    startY = Math.max(0, Math.min(h - 1, startY));
+
+    const si = (startY * w + startX) * 4;
+    const tR = data[si], tG = data[si + 1], tB = data[si + 2];
+    const [fR, fG, fB] = hexToRGB(brushColor);
+
+    if (tR === fR && tG === fG && tB === fB) return;
+    if (tR < 75 && tG < 75 && tB < 75) return;  // no rellenar negro/líneas
+
+    const visited = new Uint8Array(w * h);
+    const queue = [startY * w + startX];
+    let qi = 0;
+
+    while (qi < queue.length) {
+      const pos = queue[qi++];
+      if (visited[pos]) continue;
+      visited[pos] = 1;
+
+      const x = pos % w;
+      // RESPETAR mi zona: el balde no cruza la línea central
+      if (x < MY_ZONE_START || x >= MY_ZONE_END) continue;
+
+      const y = (pos / w) | 0;
+      const i = pos * 4;
+      const r = data[i], g = data[i + 1], b = data[i + 2];
+
+      if (r < 75 && g < 75 && b < 75) continue;
+      if (Math.abs(r - tR) + Math.abs(g - tG) + Math.abs(b - tB) > 90) continue;
+
+      data[i]     = fR;
+      data[i + 1] = fG;
+      data[i + 2] = fB;
+      data[i + 3] = 255;
+
+      if (x > 0)     queue.push(pos - 1);
+      if (x < w - 1) queue.push(pos + 1);
+      if (y > 0)     queue.push(pos - w);
+      if (y < h - 1) queue.push(pos + w);
+    }
+    ctx.putImageData(imgData, 0, 0);
+  }
+
+  // ─── Cursor dinámico ──────────────────────────────────────
+  function updateCursor(e) {
+    if (drawing) return;
+    const pos = getPos(e);
+    if (!inMyZone(pos.x)) { canvas.style.cursor = 'not-allowed'; return; }
+    canvas.style.cursor = (currentTool === 'fill' || currentTool === 'dot') ? 'cell' : 'crosshair';
+  }
+
+  // ─── Canvas events ────────────────────────────────────────
+  function onStart(e) {
+    e.preventDefault();
+    const pos = getPos(e);
+    if (!inMyZone(pos.x)) return;
+    pushUndo();
+    if (currentTool === 'fill') {
+      floodFill(pos.x, pos.y);
+    } else if (currentTool === 'dot') {
+      drawing = true;
+      lastDotPos = null;
+      dotAt(pos);
+    } else {
+      drawing = true;
+      lastPos = null;
+      drawAt(pos);
+    }
+  }
+  function onMove(e) {
+    e.preventDefault();
+    updateCursor(e);
+    if (!drawing) return;
+    if (currentTool === 'dot') dotAt(getPos(e));
+    else drawAt(getPos(e));
+  }
+  function onEnd() { drawing = false; lastPos = null; lastDotPos = null; }
+
+  canvas.addEventListener('mousedown',  onStart);
+  canvas.addEventListener('mousemove',  onMove);
+  canvas.addEventListener('mouseup',    onEnd);
+  canvas.addEventListener('mouseleave', onEnd);
+  canvas.addEventListener('touchstart', onStart, { passive: false });
+  canvas.addEventListener('touchmove',  onMove,  { passive: false });
+  canvas.addEventListener('touchend',   onEnd);
+
+  // ─── UI handlers ──────────────────────────────────────────
+  function selectColor(hex) {
+    brushColor = hex;
+    document.querySelectorAll('.coop-color').forEach(b => {
+      b.classList.toggle('selected', b.dataset.color === hex);
+    });
+    document.getElementById('customColor').value = hex;
+    // Si estaba en borrador, volver a pincel automáticamente
+    if (currentTool === 'eraser') setTool('brush');
+  }
+  document.querySelectorAll('.coop-color').forEach(btn => {
+    btn.addEventListener('click', () => selectColor(btn.dataset.color));
+  });
+  document.getElementById('customColor').addEventListener('input', e => {
+    brushColor = e.target.value;
+    document.querySelectorAll('.coop-color').forEach(b => b.classList.remove('selected'));
+    if (currentTool === 'eraser') setTool('brush');
+  });
+
+  function setTool(tool) {
+    currentTool = tool;
+    document.getElementById('btnDraw').classList.toggle('active', tool === 'brush');
+    const fillBtn = document.getElementById('btnFill');
+    const dotBtn  = document.getElementById('btnDot');
+    if (fillBtn) fillBtn.classList.toggle('active', tool === 'fill');
+    if (dotBtn)  dotBtn.classList.toggle('active', tool === 'dot');
+    document.getElementById('btnErase').classList.toggle('active', tool === 'eraser');
+    // Ocultar slider de tamaño cuando se usa balde
+    document.getElementById('sizeGroup').style.visibility = (tool === 'fill') ? 'hidden' : 'visible';
+  }
+  document.getElementById('btnDraw').addEventListener('click', () => setTool('brush'));
+  document.getElementById('btnErase').addEventListener('click', () => setTool('eraser'));
+  const fillBtn = document.getElementById('btnFill');
+  if (fillBtn) fillBtn.addEventListener('click', () => setTool('fill'));
+  const dotBtn = document.getElementById('btnDot');
+  if (dotBtn) dotBtn.addEventListener('click', () => setTool('dot'));
+
+  document.getElementById('brushSize').addEventListener('input', e => {
+    brushSize = +e.target.value;
+    document.getElementById('brushNum').textContent = brushSize;
+  });
+
+  document.getElementById('btnUndo').addEventListener('click', doUndo);
+
+  function clearMyHalf() {
+    pushUndo();
+    if (baseImageData) {
+      // Restaurar solo la mitad del estudiante desde el snapshot base
+      // (mantiene la imagen base / dibujo del compañero intactos)
+      const halfData = ctx.createImageData(MY_ZONE_END - MY_ZONE_START, canvas.height);
+      const src = baseImageData.data;
+      const dst = halfData.data;
+      const w = canvas.width;
+      const sliceW = MY_ZONE_END - MY_ZONE_START;
+      for (let y = 0; y < canvas.height; y++) {
+        for (let x = 0; x < sliceW; x++) {
+          const si = ((y * w) + (MY_ZONE_START + x)) * 4;
+          const di = ((y * sliceW) + x) * 4;
+          dst[di]   = src[si];
+          dst[di+1] = src[si+1];
+          dst[di+2] = src[si+2];
+          dst[di+3] = src[si+3];
+        }
+      }
+      ctx.putImageData(halfData, MY_ZONE_START, 0);
+    } else {
+      ctx.fillStyle = '#FFFEFB';
+      ctx.fillRect(MY_ZONE_START, 0, MY_ZONE_END - MY_ZONE_START, canvas.height);
+    }
+  }
+  window.clearMyHalf = clearMyHalf;
+
+  // ─── Submit: recorta solo mi mitad y la envía ───────────
+  function submitMural() {
+    // Crear canvas auxiliar solo con mi mitad
+    const half = document.createElement('canvas');
+    half.width  = MIDLINE;
+    half.height = canvas.height;
+    const hctx = half.getContext('2d');
+    hctx.drawImage(
+      canvas,
+      MY_ZONE_START, 0, MIDLINE, canvas.height,  // src
+      0, 0, MIDLINE, canvas.height               // dst
+    );
+
+    const dataURL = half.toDataURL('image/png');
+    document.getElementById('drawingDataInput').value = dataURL;
+
+    // Pequeña celebración antes de enviar
+    burstSparkles();
+    setTimeout(() => document.getElementById('muralForm').submit(), 500);
+  }
+  window.submitMural = submitMural;
+
+  function burstSparkles() {
+    const frame = document.querySelector('.mural-frame');
+    if (!frame) return;
+    for (let i = 0; i < 18; i++) {
+      const s = document.createElement('div');
+      s.className = 'spark';
+      s.style.left = (45 + Math.random()*10) + '%';
+      s.style.top  = (10 + Math.random()*80) + '%';
+      s.style.animationDelay = (Math.random()*.4) + 's';
+      frame.appendChild(s);
+      setTimeout(() => s.remove(), 1500);
+    }
+  }
+  {% endif %}
+
+  // ─── Layout init ─────────────────────────────────────────
+  (function () {
+    var d = document.getElementById('topbarDate');
+    if (d) d.textContent = new Date().toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' });
+
+    var pb = document.getElementById('sidebarProfileBtn'),
+        pd = document.getElementById('profileDropdown'),
+        pc = document.getElementById('profileChevron');
+    if (pb && pd) {
+      pb.addEventListener('click', function (e) { e.stopPropagation(); var o = pd.classList.toggle('open'); if(pc) pc.style.transform = o ? 'rotate(180deg)' : ''; });
+      document.addEventListener('click', function () { pd.classList.remove('open'); if(pc) pc.style.transform = ''; });
+    }
+
+    var t = document.getElementById('sidebarToggle'),
+        s = document.getElementById('studentSidebar'),
+        ov = document.getElementById('sidebarOverlay');
+    if (t && s && ov) {
+      t.addEventListener('click', function () { s.classList.toggle('open'); ov.classList.toggle('open'); });
+      ov.addEventListener('click', function () { s.classList.remove('open'); ov.classList.remove('open'); });
+    }
+
+    var dt = document.getElementById('darkModeToggle'),
+        di = document.getElementById('darkModeIcon');
+    function sd(on) { document.body.classList.toggle('student-dark', on); if (di) di.className = on ? 'bi bi-sun-fill' : 'bi bi-moon-fill'; }
+    sd(localStorage.getItem('student_dark') === '1');
+    if (dt) dt.addEventListener('click', function () { var on = !document.body.classList.contains('student-dark'); sd(on); localStorage.setItem('student_dark', on ? '1' : '0'); });
+  })();
+</script>
+{% endblock %}

@@ -36,10 +36,10 @@
             <img src="{{ submission.drawing_data }}" alt="Dibujo del estudiante"
               style="width:100%;border-radius:var(--t-radius-md);border:1px solid var(--t-border);margin-bottom:1rem;">
             {% endif %}
-            {% if submission.notes %}
+            {% if submission.content %}
             <div style="background:var(--t-indigo-light);border-radius:var(--t-radius);padding:.85rem 1rem;font-size:.855rem;color:var(--t-text);line-height:1.6;border-left:3px solid var(--t-indigo);">
               <strong style="font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--t-indigo);">Nota del estudiante</strong><br>
-              {{ submission.notes }}
+              {{ submission.content }}
             </div>
             {% endif %}
             <div style="font-size:.72rem;color:var(--t-text-muted);margin-top:.85rem;">
@@ -67,12 +67,34 @@
               </div>
               <div class="form-group">
                 <label style="display:flex;align-items:center;gap:.55rem;cursor:pointer;font-family:var(--t-font-sans);font-weight:500;font-size:.875rem;color:var(--t-text-mid);">
-                  <input type="checkbox" name="is_featured" style="width:16px;height:16px;accent-color:var(--t-indigo);cursor:pointer;">
+                  <input type="checkbox" name="is_featured" id="isFeatured" style="width:16px;height:16px;accent-color:var(--t-indigo);cursor:pointer;" {% if submission.is_featured %}checked{% endif %}>
                   <i class="bi bi-trophy" style="color:var(--t-amber);"></i> Destacar en el Tablero de Fama
                 </label>
               </div>
+              <div id="fameFields" style="display:{% if submission.is_featured %}block{% else %}none{% endif %};">
+                <div class="form-group">
+                  <label class="form-label"><i class="bi bi-pencil"></i> Título del reconocimiento</label>
+                  <input type="text" name="fame_title" class="form-input"
+                    placeholder="ej: ¡El artista más creativo!"
+                    value="{{ submission.fame_entries.first.title|default:'' }}">
+                </div>
+                <div class="form-group">
+                  <label class="form-label"><i class="bi bi-award"></i> Tipo de medalla</label>
+                  <select name="medal_type" class="form-select">
+                    <option value="star" {% if submission.fame_entries.first.medal_type == 'star' %}selected{% endif %}>⭐ Estrella</option>
+                    <option value="gold" {% if submission.fame_entries.first.medal_type == 'gold' %}selected{% endif %}>🥇 Oro</option>
+                    <option value="silver" {% if submission.fame_entries.first.medal_type == 'silver' %}selected{% endif %}>🥈 Plata</option>
+                    <option value="bronze" {% if submission.fame_entries.first.medal_type == 'bronze' %}selected{% endif %}>🥉 Bronce</option>
+                    <option value="heart" {% if submission.fame_entries.first.medal_type == 'heart' %}selected{% endif %}>❤️ Corazón</option>
+                    <option value="rainbow" {% if submission.fame_entries.first.medal_type == 'rainbow' %}selected{% endif %}>🌈 Arcoíris</option>
+                  </select>
+                </div>
+              </div>
+              {% if request.GET.back == 'overview' %}
+              <input type="hidden" name="back" value="overview">
+              {% endif %}
               <div class="form-actions">
-                <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle"></i> Aprobar y calificar</button>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle"></i> Guardar revisión</button>
               </div>
             </form>
           </div>
@@ -88,5 +110,10 @@ window.addEventListener('resize', () => {
   const tog = document.getElementById('sidebar-toggle');
   if (tog) tog.style.display = window.innerWidth <= 768 ? 'block' : 'none';
 });
+const cb = document.getElementById('isFeatured');
+const ff = document.getElementById('fameFields');
+if (cb && ff) {
+  cb.addEventListener('change', () => ff.style.display = cb.checked ? 'block' : 'none');
+}
 </script>
 {% endblock %}

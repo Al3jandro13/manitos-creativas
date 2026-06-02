@@ -1,0 +1,742 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Mis Murales en Pareja — Manitos Creativas{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/student.css' %}">{% endblock %}
+
+{% block body_content %}
+<div class="student-layout">
+  {% include 'student/_sidebar.html' with active_page='activities' %}
+
+  <div class="student-main">
+    <header class="student-topbar">
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Abrir menú"><i class="bi bi-list"></i></button>
+      <div class="topbar-title">Murales en Pareja</div>
+      <div class="topbar-actions">
+        <div class="topbar-date"><i class="bi bi-calendar3"></i><span id="topbarDate"></span></div>
+        <div class="topbar-stars-chip"><i class="bi bi-star-fill"></i><span>{{ profile.total_stars|default:"0" }} estrellas</span></div>
+        <button class="dark-mode-toggle" id="darkModeToggle" aria-label="Cambiar modo"><i class="bi bi-moon-fill" id="darkModeIcon"></i></button>
+      </div>
+    </header>
+
+    <div class="student-scroll">
+      <div class="cl-wrap">
+
+        <!-- ─── Hero ─── -->
+        <div class="cl-hero">
+          <div class="cl-hero-tape"></div>
+          <div class="cl-hero-content">
+            <div class="cl-hero-pill"><i class="bi bi-people-fill"></i> Trabajo en pareja</div>
+            <h1 class="cl-hero-title">Murales en Pareja</h1>
+            <p class="cl-hero-sub">
+              ¡Cada mural se hace entre dos! Tú dibujas una mitad,
+              tu compañero/a la otra. Juntos crean algo único ✨
+            </p>
+          </div>
+          <div class="cl-hero-visual">
+            <!-- Mini-mural decorativo -->
+            <div class="cl-mini-mural">
+              <div class="cl-mini-half cl-mini-half-1">
+                <span>A</span>
+              </div>
+              <div class="cl-mini-seam"></div>
+              <div class="cl-mini-half cl-mini-half-2">
+                <span>B</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ─── Section header ─── -->
+        <div class="cl-section-head">
+          <div class="cl-section-title">
+            <span class="cl-section-icon"><i class="bi bi-people-fill"></i></span>
+            Mis murales
+          </div>
+          <div class="cl-section-count">
+            {{ coop_data|length }} actividad{{ coop_data|length|pluralize:"es" }}
+          </div>
+        </div>
+
+        <!-- ─── Lista ─── -->
+        {% if coop_data %}
+        <div class="cl-list">
+          {% for coop, sub in coop_data %}
+          {% with is_s1=request.user|stringformat:"s" %}
+          {% with partner=coop.student2 me_step=1 %}
+          {% if request.user == coop.student2 %}
+          {% endif %}
+          {% endwith %}
+          {% endwith %}
+
+          <div class="cl-card">
+            <!-- Banda lateral según rol -->
+            <div class="cl-card-band {% if request.user == coop.student1 %}cl-band-1{% else %}cl-band-2{% endif %}">
+              <div class="cl-card-role">
+                {% if request.user == coop.student1 %}
+                <i class="bi bi-1-circle-fill"></i>
+                <span>Eres el inicio</span>
+                {% else %}
+                <i class="bi bi-2-circle-fill"></i>
+                <span>Eres el cierre</span>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Cuerpo -->
+            <div class="cl-card-body">
+              <div class="cl-card-top">
+                <div class="cl-card-title">{{ coop.title }}</div>
+                <span class="cl-card-cat">{{ coop.category }}</span>
+              </div>
+
+              {% if coop.description %}
+              <p class="cl-card-desc">{{ coop.description|truncatechars:100 }}</p>
+              {% endif %}
+
+              <!-- Pareja -->
+              <div class="cl-pair">
+                <div class="cl-pair-side {% if request.user == coop.student1 %}cl-pair-me{% endif %}">
+                  <div class="cl-pair-avatar cl-pair-avatar-1">{{ coop.student1.first_name|first|upper }}</div>
+                  <div class="cl-pair-info">
+                    <div class="cl-pair-name">
+                      {% if request.user == coop.student1 %}Tú{% else %}{{ coop.student1.first_name|default:coop.student1.username }}{% endif %}
+                    </div>
+                    <div class="cl-pair-half">Mitad izquierda</div>
+                  </div>
+                </div>
+
+                <div class="cl-pair-bridge">
+                  <span class="cl-pair-plus">+</span>
+                </div>
+
+                <div class="cl-pair-side {% if request.user == coop.student2 %}cl-pair-me{% endif %}">
+                  <div class="cl-pair-avatar cl-pair-avatar-2">{{ coop.student2.first_name|first|upper }}</div>
+                  <div class="cl-pair-info">
+                    <div class="cl-pair-name">
+                      {% if request.user == coop.student2 %}Tú{% else %}{{ coop.student2.first_name|default:coop.student2.username }}{% endif %}
+                    </div>
+                    <div class="cl-pair-half">Mitad derecha</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Footer del card -->
+              <div class="cl-card-footer">
+                <!-- Estado amigable -->
+                {% if sub %}
+                  {% if sub.status == 'in_progress' %}
+                  <span class="cl-status cl-status-go">
+                    <span class="cl-status-dot"></span>
+                    🎨 ¡Es tu turno!
+                  </span>
+                  {% elif sub.status == 'waiting' %}
+                  <span class="cl-status cl-status-wait">
+                    <span class="cl-status-dot"></span>
+                    ⏳ Esperando a {{ coop.student1.first_name|default:coop.student1.username }}
+                  </span>
+                  {% elif sub.status == 'submitted' %}
+                  <span class="cl-status cl-status-sent">
+                    ✓ ¡Mitad enviada!
+                  </span>
+                  {% elif sub.status == 'reviewed' %}
+                  <span class="cl-status cl-status-reviewed">
+                    ⭐ ¡Revisado!
+                  </span>
+                  {% elif sub.status == 'approved' %}
+                  <span class="cl-status cl-status-approved">
+                    🌟 ¡Aprobado!
+                  </span>
+                  {% endif %}
+                {% endif %}
+
+                <!-- Reward -->
+                <span class="cl-reward">
+                  <i class="bi bi-star-fill"></i> +{{ coop.reward_stars }}
+                </span>
+
+                <!-- CTA -->
+                {% if sub and sub.status == 'in_progress' %}
+                <a href="{% url 'student_coop_work' coop.pk %}" class="cl-cta cl-cta-go">
+                  <span>¡Trabajar ahora!</span>
+                  <i class="bi bi-arrow-right"></i>
+                </a>
+                {% elif sub and sub.status == 'waiting' %}
+                <a href="{% url 'student_coop_work' coop.pk %}" class="cl-cta cl-cta-wait">
+                  <span>Ver estado</span>
+                </a>
+                {% elif sub %}
+                <a href="{% url 'student_coop_work' coop.pk %}" class="cl-cta cl-cta-view">
+                  <i class="bi bi-eye-fill"></i>
+                  <span>Ver mural</span>
+                </a>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="cl-empty">
+          <div class="cl-empty-mural">
+            <div class="cl-empty-half"></div>
+            <div class="cl-empty-seam"></div>
+            <div class="cl-empty-half"></div>
+          </div>
+          <div class="cl-empty-title">Aún no tienes murales en pareja</div>
+          <div class="cl-empty-sub">Tu profe te asignará uno pronto. ¡Prepárate para crear algo increíble! 🎨</div>
+        </div>
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<style>
+  .cl-wrap {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 1rem 1.25rem 3rem;
+  }
+
+  /* ─── HERO ─── */
+  .cl-hero {
+    position: relative;
+    background:
+      radial-gradient(circle at 90% 10%, rgba(13,148,136,.1), transparent 50%),
+      radial-gradient(circle at 10% 90%, rgba(124,58,237,.1), transparent 50%),
+      linear-gradient(135deg, #FDFCFB, #F6F4F1);
+    border: 1.5px solid #E8E2D8;
+    border-radius: 24px;
+    padding: 1.75rem 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 20px rgba(60,40,20,.06);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 1.5rem;
+    overflow: hidden;
+  }
+  .cl-hero-tape {
+    position: absolute;
+    top: -8px; left: 50%;
+    transform: translateX(-50%) rotate(-2deg);
+    width: 120px; height: 22px;
+    background: repeating-linear-gradient(45deg, #FCD34D, #FCD34D 6px, #FBBF24 6px, #FBBF24 12px);
+    opacity: .85;
+    box-shadow: 0 2px 4px rgba(0,0,0,.1);
+  }
+  .cl-hero-content { max-width: 460px; }
+  .cl-hero-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    background: linear-gradient(135deg, #4F46E5, #7C3AED);
+    color: #fff;
+    padding: .35rem .85rem;
+    border-radius: 99px;
+    font-family: 'Outfit', sans-serif;
+    font-size: .72rem;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    margin-bottom: .65rem;
+    box-shadow: 0 4px 12px rgba(79,70,229,.3);
+  }
+  .cl-hero-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: clamp(1.65rem, 4vw, 2.4rem);
+    font-weight: 800;
+    color: #1E1B4B;
+    margin: 0 0 .55rem;
+    letter-spacing: -.01em;
+    line-height: 1.1;
+  }
+  .cl-hero-sub {
+    font-family: 'Outfit', sans-serif;
+    color: #475569;
+    font-size: .95rem;
+    line-height: 1.65;
+    margin: 0;
+  }
+
+  /* Mini-mural decorativo */
+  .cl-hero-visual { display: flex; justify-content: center; }
+  .cl-mini-mural {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 160px;
+    aspect-ratio: 800 / 420;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 8px 20px rgba(0,0,0,.12), 0 0 0 1.5px #E8E2D8;
+    transform: rotate(-2deg);
+  }
+  .cl-mini-half {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Playfair Display', serif;
+    font-weight: 800;
+    font-size: 1.5rem;
+    color: #fff;
+  }
+  .cl-mini-half-1 { background: linear-gradient(135deg, #6366F1, #4F46E5); }
+  .cl-mini-half-2 { background: linear-gradient(135deg, #14B8A6, #0D9488); }
+  .cl-mini-seam {
+    position: absolute;
+    top: 0; bottom: 0; left: 50%;
+    width: 2px;
+    background: repeating-linear-gradient(180deg, transparent, transparent 4px, rgba(255,255,255,.7) 4px, rgba(255,255,255,.7) 8px);
+    transform: translateX(-50%);
+  }
+
+  /* ─── SECTION ─── */
+  .cl-section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: .85rem;
+    padding: 0 .25rem;
+  }
+  .cl-section-title {
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #1E1B4B;
+  }
+  .cl-section-icon {
+    width: 32px; height: 32px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #4F46E5, #0D9488);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .9rem;
+    box-shadow: 0 4px 10px rgba(79,70,229,.25);
+  }
+  .cl-section-count {
+    font-family: 'Outfit', sans-serif;
+    font-size: .8rem;
+    color: #64748B;
+    font-weight: 600;
+  }
+
+  /* ─── CARDS ─── */
+  .cl-list {
+    display: flex;
+    flex-direction: column;
+    gap: .85rem;
+  }
+  .cl-card {
+    display: flex;
+    background: #fff;
+    border: 1.5px solid #E8E2D8;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(60,40,20,.05);
+    transition: all .2s ease;
+  }
+  .cl-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(60,40,20,.1);
+  }
+
+  /* Banda lateral con el rol */
+  .cl-card-band {
+    width: 70px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem .5rem;
+    color: #fff;
+    position: relative;
+  }
+  .cl-band-1 { background: linear-gradient(180deg, #6366F1, #4F46E5); }
+  .cl-band-2 { background: linear-gradient(180deg, #14B8A6, #0D9488); }
+  .cl-card-role {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    font-family: 'Outfit', sans-serif;
+    font-size: .78rem;
+    font-weight: 800;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+  .cl-card-role i {
+    font-size: 1.1rem;
+    transform: rotate(180deg);
+  }
+
+  /* Cuerpo del card */
+  .cl-card-body {
+    flex: 1;
+    padding: 1.1rem 1.25rem;
+    min-width: 0;
+  }
+  .cl-card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: .75rem;
+    margin-bottom: .35rem;
+  }
+  .cl-card-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #1E1B4B;
+    line-height: 1.25;
+  }
+  .cl-card-cat {
+    font-family: 'Outfit', sans-serif;
+    font-size: .68rem;
+    font-weight: 700;
+    color: #64748B;
+    background: #F1F4F8;
+    padding: .25rem .6rem;
+    border-radius: 99px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+  }
+  .cl-card-desc {
+    font-family: 'Outfit', sans-serif;
+    font-size: .85rem;
+    color: #64748B;
+    line-height: 1.55;
+    margin: 0 0 .9rem;
+  }
+
+  /* Pareja mini-display */
+  .cl-pair {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: .55rem;
+    padding: .7rem .8rem;
+    background: linear-gradient(135deg, #FAFAF7, #F5F5F0);
+    border: 1px solid #EEE7DC;
+    border-radius: 12px;
+    margin-bottom: .9rem;
+  }
+  .cl-pair-side {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .35rem .45rem;
+    border-radius: 10px;
+    transition: all .2s ease;
+  }
+  .cl-pair-me {
+    background: rgba(255,255,255,.85);
+    box-shadow: 0 2px 6px rgba(0,0,0,.06), 0 0 0 1.5px var(--me-c, #4F46E5);
+  }
+  .cl-pair-side:has(.cl-pair-avatar-1).cl-pair-me { --me-c: #4F46E5; }
+  .cl-pair-side:has(.cl-pair-avatar-2).cl-pair-me { --me-c: #0D9488; }
+
+  .cl-pair-avatar {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Playfair Display', serif;
+    font-weight: 800;
+    font-size: .95rem;
+    border: 2.5px solid #fff;
+    flex-shrink: 0;
+  }
+  .cl-pair-avatar-1 { background: linear-gradient(135deg, #6366F1, #4F46E5); }
+  .cl-pair-avatar-2 { background: linear-gradient(135deg, #14B8A6, #0D9488); }
+  .cl-pair-info { min-width: 0; }
+  .cl-pair-name {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    font-size: .82rem;
+    color: #1E293B;
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .cl-pair-half {
+    font-size: .65rem;
+    color: #94A3B8;
+    margin-top: .1rem;
+    font-weight: 500;
+  }
+  .cl-pair-bridge { display: flex; justify-content: center; }
+  .cl-pair-plus {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4F46E5, #0D9488);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Playfair Display', serif;
+    font-weight: 800;
+    font-size: .85rem;
+    box-shadow: 0 2px 6px rgba(99,102,241,.3);
+  }
+
+  /* Card footer */
+  .cl-card-footer {
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    flex-wrap: wrap;
+  }
+
+  .cl-status {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    padding: .35rem .7rem;
+    border-radius: 99px;
+    font-family: 'Outfit', sans-serif;
+    font-size: .75rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .cl-status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 8px currentColor;
+    animation: dotBlink 1.4s ease-in-out infinite;
+  }
+  .cl-status-go { background: #EEF2FF; color: #4F46E5; }
+  .cl-status-wait { background: #FFFBEB; color: #B45309; }
+  .cl-status-sent { background: #D1FAE5; color: #065F46; }
+  .cl-status-reviewed { background: #EDE9FE; color: #5B21B6; }
+  .cl-status-approved { background: linear-gradient(135deg, #FEF3C7, #FDE68A); color: #92400E; box-shadow: 0 2px 8px rgba(252,211,77,.3); }
+
+  .cl-reward {
+    display: inline-flex;
+    align-items: center;
+    gap: .25rem;
+    font-family: 'Outfit', sans-serif;
+    font-size: .78rem;
+    font-weight: 700;
+    color: #B45309;
+  }
+  .cl-reward i { color: #F59E0B; font-size: .75rem; }
+
+  /* CTA */
+  .cl-cta {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    padding: .55rem 1rem;
+    border-radius: 12px;
+    font-family: 'Outfit', sans-serif;
+    font-size: .82rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all .2s ease;
+    white-space: nowrap;
+  }
+  .cl-cta-go {
+    background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 50%, #0D9488 100%);
+    color: #fff;
+    box-shadow: 0 6px 16px rgba(79,70,229,.35);
+  }
+  .cl-cta-go:hover { transform: translateY(-1px); box-shadow: 0 10px 22px rgba(79,70,229,.45); }
+  .cl-cta-wait {
+    background: #FFFBEB;
+    color: #B45309;
+    border: 1.5px solid #FDE68A;
+  }
+  .cl-cta-view {
+    background: #fff;
+    color: #475569;
+    border: 1.5px solid #E2E8F0;
+  }
+  .cl-cta-view:hover { border-color: #4F46E5; color: #4F46E5; }
+
+  /* ─── EMPTY STATE ─── */
+  .cl-empty {
+    text-align: center;
+    padding: 3rem 1.5rem;
+    background: #fff;
+    border: 1.5px dashed #E8E2D8;
+    border-radius: 18px;
+  }
+  .cl-empty-mural {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 140px;
+    aspect-ratio: 800 / 420;
+    margin: 0 auto 1.25rem;
+    border-radius: 12px;
+    overflow: hidden;
+    opacity: .35;
+    box-shadow: 0 0 0 1.5px #CBD5E1;
+  }
+  .cl-empty-half:first-child { background: linear-gradient(135deg, #6366F1, #4F46E5); }
+  .cl-empty-half:last-child { background: linear-gradient(135deg, #14B8A6, #0D9488); }
+  .cl-empty-seam {
+    position: absolute;
+    top: 0; bottom: 0; left: 50%;
+    width: 2px;
+    background: repeating-linear-gradient(180deg, transparent, transparent 4px, rgba(255,255,255,.7) 4px, rgba(255,255,255,.7) 8px);
+    transform: translateX(-50%);
+  }
+  .cl-empty-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #1E1B4B;
+    margin-bottom: .35rem;
+  }
+  .cl-empty-sub {
+    font-family: 'Outfit', sans-serif;
+    font-size: .9rem;
+    color: #64748B;
+    line-height: 1.55;
+    max-width: 360px;
+    margin: 0 auto;
+  }
+
+  /* ─── ANIMATIONS ─── */
+  @keyframes dotBlink { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+
+  /* ═══════════════════════════════════════════════════════════ */
+  /*                    MODO OSCURO                              */
+  /* ═══════════════════════════════════════════════════════════ */
+  body.student-dark .cl-hero {
+    background:
+      radial-gradient(circle at 90% 10%, rgba(20,184,166,.2), transparent 50%),
+      radial-gradient(circle at 10% 90%, rgba(124,58,237,.2), transparent 50%),
+      linear-gradient(135deg, #1A1830, #14132A);
+    border-color: #2D2A4A;
+    box-shadow: 0 4px 20px rgba(0,0,0,.4);
+  }
+  body.student-dark .cl-hero-title { color: #F1EEFF; }
+  body.student-dark .cl-hero-sub { color: #C7C2E6; }
+  body.student-dark .cl-mini-mural {
+    box-shadow: 0 8px 20px rgba(0,0,0,.5), 0 0 0 1.5px #2D2A4A;
+  }
+
+  body.student-dark .cl-section-title { color: #F1EEFF; }
+  body.student-dark .cl-section-count { color: #8B86B0; }
+
+  body.student-dark .cl-card {
+    background: #1A1830;
+    border-color: #2D2A4A;
+    box-shadow: 0 2px 12px rgba(0,0,0,.3);
+  }
+  body.student-dark .cl-card:hover {
+    box-shadow: 0 8px 24px rgba(0,0,0,.5);
+  }
+  body.student-dark .cl-card-title { color: #F1EEFF; }
+  body.student-dark .cl-card-cat {
+    background: #14132A;
+    color: #A5B4FC;
+  }
+  body.student-dark .cl-card-desc { color: #8B86B0; }
+
+  body.student-dark .cl-pair {
+    background: linear-gradient(135deg, #14132A, #1A1830);
+    border-color: #2D2A4A;
+  }
+  body.student-dark .cl-pair-me {
+    background: rgba(255,255,255,.05);
+  }
+  body.student-dark .cl-pair-name { color: #F1EEFF; }
+  body.student-dark .cl-pair-half { color: #8B86B0; }
+
+  body.student-dark .cl-status-go { background: rgba(99,102,241,.18); color: #A5B4FC; }
+  body.student-dark .cl-status-wait { background: rgba(252,211,77,.15); color: #FCD34D; }
+  body.student-dark .cl-status-sent { background: rgba(16,185,129,.18); color: #6EE7B7; }
+  body.student-dark .cl-status-reviewed { background: rgba(167,139,250,.18); color: #C4B5FD; }
+  body.student-dark .cl-status-approved {
+    background: linear-gradient(135deg, rgba(252,211,77,.2), rgba(245,158,11,.2));
+    color: #FCD34D;
+    box-shadow: 0 2px 8px rgba(252,211,77,.15);
+  }
+  body.student-dark .cl-reward { color: #FCD34D; }
+  body.student-dark .cl-cta-wait {
+    background: rgba(252,211,77,.1);
+    color: #FCD34D;
+    border-color: rgba(252,211,77,.35);
+  }
+  body.student-dark .cl-cta-view {
+    background: #1A1830;
+    color: #C7C2E6;
+    border-color: #2D2A4A;
+  }
+  body.student-dark .cl-cta-view:hover { border-color: #818CF8; color: #A5B4FC; }
+
+  body.student-dark .cl-empty {
+    background: #1A1830;
+    border-color: #2D2A4A;
+  }
+  body.student-dark .cl-empty-title { color: #F1EEFF; }
+  body.student-dark .cl-empty-sub { color: #8B86B0; }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 680px) {
+    .cl-wrap { padding: .75rem .75rem 2rem; }
+    .cl-hero {
+      grid-template-columns: 1fr;
+      padding: 1.25rem 1rem;
+      text-align: center;
+    }
+    .cl-hero-content { max-width: none; }
+    .cl-hero-visual { order: -1; }
+    .cl-mini-mural { width: 110px; transform: rotate(-3deg); }
+    .cl-card { flex-direction: column; }
+    .cl-card-band { width: 100%; height: 38px; padding: .35rem; }
+    .cl-card-role { writing-mode: horizontal-tb; transform: none; font-size: .72rem; }
+    .cl-card-role i { transform: none; font-size: 1rem; }
+    .cl-card-body { padding: 1rem; }
+    .cl-pair { padding: .55rem; gap: .35rem; }
+    .cl-pair-avatar { width: 28px; height: 28px; font-size: .8rem; }
+    .cl-pair-name { font-size: .75rem; }
+    .cl-pair-half { font-size: .58rem; }
+    .cl-card-footer { gap: .4rem; }
+    .cl-cta { margin-left: 0; width: 100%; justify-content: center; }
+  }
+</style>
+
+<script>
+(function () {
+  var d = document.getElementById('topbarDate');
+  if (d) d.textContent = new Date().toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' });
+
+  var pb = document.getElementById('sidebarProfileBtn'),
+      pd = document.getElementById('profileDropdown'),
+      pc = document.getElementById('profileChevron');
+  if (pb && pd) {
+    pb.addEventListener('click', function (e) { e.stopPropagation(); var o = pd.classList.toggle('open'); if(pc) pc.style.transform = o ? 'rotate(180deg)' : ''; });
+    document.addEventListener('click', function () { pd.classList.remove('open'); if(pc) pc.style.transform = ''; });
+  }
+
+  var t = document.getElementById('sidebarToggle'),
+      s = document.getElementById('studentSidebar'),
+      ov = document.getElementById('sidebarOverlay');
+  if (t && s && ov) {
+    t.addEventListener('click', function () { s.classList.toggle('open'); ov.classList.toggle('open'); });
+    ov.addEventListener('click', function () { s.classList.remove('open'); ov.classList.remove('open'); });
+  }
+
+  var dt = document.getElementById('darkModeToggle'),
+      di = document.getElementById('darkModeIcon');
+  function sd(on) { document.body.classList.toggle('student-dark', on); if (di) di.className = on ? 'bi bi-sun-fill' : 'bi bi-moon-fill'; }
+  sd(localStorage.getItem('student_dark') === '1');
+  if (dt) dt.addEventListener('click', function () { var on = !document.body.classList.contains('student-dark'); sd(on); localStorage.setItem('student_dark', on ? '1' : '0'); });
+})();
+</script>
+{% endblock %}

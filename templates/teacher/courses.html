@@ -1,0 +1,224 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Cursos — Manitos Creativas{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/teacher.css' %}">{% endblock %}
+
+{% block body_content %}
+<div class="teacher-layout">
+  {% include 'teacher/_sidebar.html' %}
+  <main class="teacher-main">
+
+    <!-- Topbar -->
+    <div class="teacher-topbar">
+      <div style="display:flex;align-items:center;gap:.85rem;">
+        <button id="sidebar-toggle"
+          style="display:none;background:none;border:none;cursor:pointer;font-size:1.2rem;color:var(--t-text-mid);padding:.25rem;"
+          onclick="document.querySelector('.sidebar').classList.toggle('open')">
+          <i class="bi bi-list"></i>
+        </button>
+        <div class="teacher-topbar-title">Cursos</div>
+      </div>
+      <div class="topbar-actions">
+        <a href="{% url 'teacher_create_student' %}" class="btn btn-outline" style="font-size:.82rem;gap:.4rem;">
+          <i class="bi bi-person-plus"></i> Nuevo Estudiante
+        </a>
+        <button class="btn btn-primary" id="btnNuevoCurso" style="font-size:.82rem;gap:.4rem;">
+          <i class="bi bi-plus"></i> Nuevo Curso
+        </button>
+      </div>
+    </div>
+
+    <div class="teacher-content">
+
+      {% if messages %}
+        {% for msg in messages %}
+        <div style="display:flex;align-items:center;gap:.65rem;margin-bottom:1rem;padding:.75rem 1rem;border-radius:var(--t-radius);background:{% if msg.tags == 'error' %}var(--t-rose-light){% else %}var(--t-teal-light){% endif %};color:{% if msg.tags == 'error' %}var(--t-rose){% else %}var(--t-teal){% endif %};font-size:.82rem;font-weight:600;border:1px solid {% if msg.tags == 'error' %}#FECDD3{% else %}#99F6E4{% endif %};">
+          <i class="bi bi-{% if msg.tags == 'error' %}exclamation-circle{% else %}check-circle{% endif %}-fill" style="flex-shrink:0;"></i>
+          {{ msg }}
+        </div>
+        {% endfor %}
+      {% endif %}
+
+      <!-- Page header -->
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;margin-bottom:2rem;flex-wrap:wrap;">
+        <div>
+          <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--t-text-muted);margin-bottom:.35rem;">
+            Panel docente
+          </div>
+          <h1 style="font-family:var(--t-font-serif);font-size:1.75rem;font-weight:700;color:var(--t-text);letter-spacing:-.02em;line-height:1.1;margin:0;">
+            Mis Cursos
+          </h1>
+        </div>
+        <div style="display:flex;gap:1.5rem;">
+          <div style="text-align:right;">
+            <div style="font-family:var(--t-font-serif);font-size:1.5rem;font-weight:700;color:var(--t-indigo);line-height:1;">{{ courses|length }}</div>
+            <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--t-text-muted);font-weight:600;">curso{{ courses|length|pluralize:"s" }}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-family:var(--t-font-serif);font-size:1.5rem;font-weight:700;color:var(--t-text);line-height:1;">{{ total_students }}</div>
+            <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--t-text-muted);font-weight:600;">estudiantes</div>
+          </div>
+        </div>
+      </div>
+
+      {% if courses %}
+      <!-- Courses table -->
+      <div style="background:var(--t-surface);border:1px solid var(--t-border);border-radius:var(--t-radius-lg);overflow:hidden;box-shadow:var(--t-shadow-sm);">
+        <table style="width:100%;border-collapse:collapse;">
+          <thead>
+            <tr style="border-bottom:1px solid var(--t-border);">
+              <th style="padding:.8rem 1.25rem;text-align:left;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--t-text-muted);">Nombre del curso</th>
+              <th style="padding:.8rem 1.25rem;text-align:left;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--t-text-muted);">Descripción</th>
+              <th style="padding:.8rem 1.25rem;text-align:center;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--t-text-muted);">Estudiantes</th>
+              <th style="padding:.8rem 1.25rem;text-align:left;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--t-text-muted);">Creado</th>
+              <th style="padding:.8rem 1.25rem;"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for course in courses %}
+            <tr style="border-bottom:{% if not forloop.last %}1px solid var(--t-border-light){% else %}none{% endif %};transition:background .12s;">
+              <td style="padding:1rem 1.25rem;">
+                <a href="{% url 'teacher_course_detail' course.pk %}"
+                   style="font-family:var(--t-font-serif);font-size:.975rem;font-weight:600;color:var(--t-text);text-decoration:none;letter-spacing:-.01em;display:block;">
+                  {{ course.name }}
+                </a>
+              </td>
+              <td style="padding:1rem 1.25rem;font-size:.82rem;color:var(--t-text-muted);max-width:240px;">
+                {% if course.description %}
+                  {{ course.description|truncatechars:55 }}
+                {% else %}
+                  <span style="color:var(--t-border);font-style:italic;">Sin descripción</span>
+                {% endif %}
+              </td>
+              <td style="padding:1rem 1.25rem;text-align:center;">
+                <span style="display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:28px;padding:0 .6rem;background:var(--t-indigo-light);color:var(--t-indigo);border-radius:var(--t-radius-pill);font-size:.78rem;font-weight:700;">
+                  {{ course.student_count }}
+                </span>
+              </td>
+              <td style="padding:1rem 1.25rem;font-size:.78rem;color:var(--t-text-muted);white-space:nowrap;">
+                {{ course.created_at|date:"d M Y" }}
+              </td>
+              <td style="padding:1rem 1.25rem;">
+                <div style="display:flex;align-items:center;gap:.4rem;justify-content:flex-end;">
+                  <a href="{% url 'teacher_course_detail' course.pk %}"
+                     style="display:inline-flex;align-items:center;gap:.3rem;padding:.38rem .75rem;background:var(--t-indigo-light);color:var(--t-indigo);border-radius:var(--t-radius);font-size:.78rem;font-weight:600;text-decoration:none;transition:all .15s;">
+                    <i class="bi bi-people-fill"></i> Abrir
+                  </a>
+                  <button type="button"
+                    onclick="confirmarEliminar({{ course.pk }}, '{{ course.name|escapejs }}')"
+                    style="display:inline-flex;align-items:center;padding:.38rem .55rem;background:none;border:1px solid var(--t-border);border-radius:var(--t-radius);color:var(--t-text-muted);font-size:.78rem;cursor:pointer;transition:all .15s;"
+                    title="Eliminar">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      {% else %}
+      <!-- Empty state -->
+      <div style="background:var(--t-surface);border:1px solid var(--t-border);border-radius:var(--t-radius-lg);padding:4rem 2rem;text-align:center;box-shadow:var(--t-shadow-sm);">
+        <div style="width:52px;height:52px;border-radius:var(--t-radius-lg);background:var(--t-indigo-light);display:inline-flex;align-items:center;justify-content:center;margin-bottom:1rem;">
+          <i class="bi bi-mortarboard" style="font-size:1.4rem;color:var(--t-indigo);"></i>
+        </div>
+        <div style="font-family:var(--t-font-serif);font-size:1.1rem;font-weight:600;color:var(--t-text);margin-bottom:.35rem;">Sin cursos todavía</div>
+        <p style="font-size:.85rem;color:var(--t-text-muted);max-width:300px;margin:0 auto .5rem;">Crea tu primer curso para organizar y gestionar a tus estudiantes.</p>
+        <button onclick="document.getElementById('modalNuevoCurso').style.display='flex';document.body.style.overflow='hidden';"
+          style="margin-top:1rem;display:inline-flex;align-items:center;gap:.4rem;padding:.6rem 1.2rem;background:var(--t-indigo);color:#fff;border:none;border-radius:var(--t-radius);font-size:.85rem;font-weight:600;cursor:pointer;">
+          <i class="bi bi-plus"></i> Crear primer curso
+        </button>
+      </div>
+      {% endif %}
+
+    </div>
+
+    <!-- ── Modal: Nuevo Curso ── -->
+    <div id="modalNuevoCurso" style="display:none;position:fixed;inset:0;z-index:1000;align-items:center;justify-content:center;">
+      <div style="position:absolute;inset:0;background:rgba(10,22,40,.55);backdrop-filter:blur(4px);" id="backdropNuevo"></div>
+      <div style="position:relative;z-index:1;width:100%;max-width:440px;margin:1rem;background:var(--t-surface);border-radius:var(--t-radius-xl);box-shadow:0 32px 64px rgba(10,22,40,.22);border:1px solid var(--t-border);overflow:hidden;">
+
+        <div style="padding:1.5rem 1.5rem 0;">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.25rem;">
+            <div>
+              <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--t-indigo);margin-bottom:.3rem;">Nuevo registro</div>
+              <div style="font-family:var(--t-font-serif);font-size:1.2rem;font-weight:700;color:var(--t-text);letter-spacing:-.01em;">Crear Curso</div>
+            </div>
+            <button onclick="cerrarModal('modalNuevoCurso')"
+              style="width:30px;height:30px;border-radius:50%;background:var(--t-border-light);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--t-text-muted);font-size:.85rem;flex-shrink:0;transition:background .15s;">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+        </div>
+
+        <form method="post" style="padding:0 1.5rem 1.5rem;">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="create">
+          <div class="form-group">
+            <label class="form-label">Nombre del curso</label>
+            <input type="text" name="name" class="form-input" placeholder="ej: Transición A · 2025" required autofocus>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Descripción <span style="color:var(--t-text-muted);font-weight:400;">(opcional)</span></label>
+            <textarea name="description" class="form-textarea" rows="2" placeholder="Una breve descripción del grupo..."></textarea>
+          </div>
+          <div style="display:flex;gap:.6rem;margin-top:1.25rem;">
+            <button type="button" onclick="cerrarModal('modalNuevoCurso')" class="btn btn-outline" style="flex:1;">Cancelar</button>
+            <button type="submit" class="btn btn-primary" style="flex:2;"><i class="bi bi-check2"></i> Crear curso</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ── Modal: Eliminar Curso ── -->
+    <div id="modalEliminar" style="display:none;position:fixed;inset:0;z-index:1000;align-items:center;justify-content:center;">
+      <div style="position:absolute;inset:0;background:rgba(10,22,40,.55);backdrop-filter:blur(4px);" onclick="cerrarModal('modalEliminar')"></div>
+      <div style="position:relative;z-index:1;width:100%;max-width:380px;margin:1rem;background:var(--t-surface);border-radius:var(--t-radius-xl);box-shadow:0 32px 64px rgba(10,22,40,.22);border:1px solid var(--t-border);padding:1.75rem;">
+        <div style="width:44px;height:44px;border-radius:var(--t-radius-lg);background:var(--t-rose-light);display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;">
+          <i class="bi bi-trash" style="font-size:1.1rem;color:var(--t-rose);"></i>
+        </div>
+        <div style="font-family:var(--t-font-serif);font-size:1.05rem;font-weight:700;color:var(--t-text);text-align:center;margin-bottom:.4rem;">¿Eliminar curso?</div>
+        <p style="font-size:.83rem;color:var(--t-text-muted);text-align:center;line-height:1.55;margin-bottom:1.5rem;">
+          El curso <strong id="nombreCurso" style="color:var(--t-text);"></strong> será eliminado. Los estudiantes no serán borrados.
+        </p>
+        <form id="formEliminar" method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="delete">
+          <input type="hidden" name="course_id" id="courseIdInput">
+          <div style="display:flex;gap:.6rem;">
+            <button type="button" onclick="cerrarModal('modalEliminar')" class="btn btn-outline" style="flex:1;">Cancelar</button>
+            <button type="submit" style="flex:1;padding:.55rem;border:none;border-radius:var(--t-radius);background:var(--t-rose);color:#fff;font-size:.875rem;cursor:pointer;font-weight:600;transition:all .15s;">Eliminar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+if (window.innerWidth <= 768) document.getElementById('sidebar-toggle').style.display = 'block';
+window.addEventListener('resize', () => {
+  const tog = document.getElementById('sidebar-toggle');
+  if (tog) tog.style.display = window.innerWidth <= 768 ? 'block' : 'none';
+});
+function cerrarModal(id) { document.getElementById(id).style.display = 'none'; document.body.style.overflow = ''; }
+function abrirModal(id)  { document.getElementById(id).style.display = 'flex';  document.body.style.overflow = 'hidden'; }
+document.getElementById('btnNuevoCurso').addEventListener('click', () => abrirModal('modalNuevoCurso'));
+document.getElementById('backdropNuevo').addEventListener('click', () => cerrarModal('modalNuevoCurso'));
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { cerrarModal('modalNuevoCurso'); cerrarModal('modalEliminar'); } });
+function confirmarEliminar(pk, nombre) {
+  document.getElementById('courseIdInput').value = pk;
+  document.getElementById('nombreCurso').textContent = nombre;
+  abrirModal('modalEliminar');
+}
+
+/* Row hover */
+document.querySelectorAll('tbody tr').forEach(tr => {
+  tr.addEventListener('mouseenter', () => tr.style.background = 'var(--t-indigo-light)');
+  tr.addEventListener('mouseleave', () => tr.style.background = '');
+});
+</script>
+{% endblock %}

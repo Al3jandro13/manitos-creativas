@@ -1,0 +1,294 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ course.name }} — Manitos Creativas{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/teacher.css' %}">{% endblock %}
+
+{% block body_content %}
+<div class="teacher-layout">
+  {% include 'teacher/_sidebar.html' %}
+  <main class="teacher-main">
+
+    <!-- Topbar -->
+    <div class="teacher-topbar">
+      <div style="display:flex;align-items:center;gap:.65rem;min-width:0;">
+        <button id="sidebar-toggle"
+          style="display:none;background:none;border:none;cursor:pointer;font-size:1.2rem;color:var(--t-text-mid);padding:.25rem;"
+          onclick="document.querySelector('.sidebar').classList.toggle('open')">
+          <i class="bi bi-list"></i>
+        </button>
+        <a href="{% url 'teacher_courses' %}"
+           style="display:inline-flex;align-items:center;gap:.3rem;font-size:.82rem;font-weight:600;color:var(--t-text-muted);text-decoration:none;white-space:nowrap;flex-shrink:0;transition:color .15s;">
+          <i class="bi bi-arrow-left" style="font-size:.75rem;"></i> Cursos
+        </a>
+        <i class="bi bi-chevron-right" style="font-size:.6rem;color:var(--t-border);flex-shrink:0;"></i>
+        <div class="teacher-topbar-title" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ course.name }}</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-outline" id="btnEditarCurso" style="font-size:.82rem;">
+          <i class="bi bi-pencil"></i> Editar
+        </button>
+        <button class="btn btn-outline" id="btnAgregarEstudiante" style="font-size:.82rem;">
+          <i class="bi bi-person-plus"></i> Agregar existente
+        </button>
+        <a href="{% url 'teacher_create_student' %}?curso={{ course.pk }}" class="btn btn-primary" style="font-size:.82rem;">
+          <i class="bi bi-person-badge-fill"></i> Crear estudiante
+        </a>
+      </div>
+    </div>
+
+    <div class="teacher-content">
+
+      {% if messages %}
+        {% for msg in messages %}
+        <div style="display:flex;align-items:center;gap:.65rem;margin-bottom:1rem;padding:.75rem 1rem;border-radius:var(--t-radius);background:{% if msg.tags == 'error' %}var(--t-rose-light){% else %}var(--t-teal-light){% endif %};color:{% if msg.tags == 'error' %}var(--t-rose){% else %}var(--t-teal){% endif %};font-size:.82rem;font-weight:600;border:1px solid {% if msg.tags == 'error' %}#FECDD3{% else %}#99F6E4{% endif %};">
+          <i class="bi bi-{% if msg.tags == 'error' %}exclamation-circle{% else %}check-circle{% endif %}-fill" style="flex-shrink:0;"></i>
+          {{ msg }}
+        </div>
+        {% endfor %}
+      {% endif %}
+
+      <!-- Course header -->
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1.5rem;margin-bottom:2rem;flex-wrap:wrap;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--t-text-muted);margin-bottom:.35rem;">
+            Detalle de curso
+          </div>
+          <h1 style="font-family:var(--t-font-serif);font-size:1.75rem;font-weight:700;color:var(--t-text);letter-spacing:-.02em;line-height:1.15;margin:0 0 .4rem;">
+            {{ course.name }}
+          </h1>
+          {% if course.description %}
+          <p style="font-size:.88rem;color:var(--t-text-muted);margin:0;line-height:1.55;">{{ course.description }}</p>
+          {% endif %}
+        </div>
+
+        <!-- Stats -->
+        <div style="display:flex;gap:1px;background:var(--t-border);border-radius:var(--t-radius-lg);overflow:hidden;border:1px solid var(--t-border);flex-shrink:0;">
+          <div style="background:var(--t-surface);padding:.9rem 1.4rem;text-align:center;min-width:90px;">
+            <div style="font-family:var(--t-font-serif);font-size:1.6rem;font-weight:700;color:var(--t-indigo);line-height:1;">{{ enrolled.count }}</div>
+            <div style="font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:var(--t-text-muted);font-weight:600;margin-top:.2rem;">inscritos</div>
+          </div>
+          <div style="background:var(--t-surface);padding:.9rem 1.4rem;text-align:center;min-width:90px;">
+            <div style="font-family:var(--t-font-serif);font-size:1.6rem;font-weight:700;color:var(--t-text);line-height:1;">{{ available.count }}</div>
+            <div style="font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:var(--t-text-muted);font-weight:600;margin-top:.2rem;">disponibles</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Students table -->
+      <div style="background:var(--t-surface);border:1px solid var(--t-border);border-radius:var(--t-radius-lg);overflow:hidden;box-shadow:var(--t-shadow-sm);">
+
+        <div style="padding:.9rem 1.25rem;border-bottom:1px solid var(--t-border);display:flex;align-items:center;justify-content:space-between;gap:.75rem;">
+          <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--t-text-muted);">
+            Estudiantes inscritos
+          </div>
+          {% if enrolled %}
+          <div style="font-size:.75rem;color:var(--t-text-muted);">{{ enrolled.count }} registro{{ enrolled.count|pluralize:"s" }}</div>
+          {% endif %}
+        </div>
+
+        {% if enrolled %}
+        <table style="width:100%;border-collapse:collapse;">
+          <thead>
+            <tr style="border-bottom:1px solid var(--t-border-light);">
+              <th style="padding:.65rem 1.25rem;text-align:left;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--t-text-muted);">Estudiante</th>
+              <th style="padding:.65rem 1.25rem;text-align:left;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--t-text-muted);">Nivel</th>
+              <th style="padding:.65rem 1.25rem;text-align:center;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--t-text-muted);">Estrellas</th>
+              <th style="padding:.65rem 1.25rem;text-align:center;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--t-text-muted);">Edad</th>
+              <th style="padding:.65rem 1.25rem;"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for student in enrolled %}
+            <tr style="border-bottom:{% if not forloop.last %}1px solid var(--t-border-light){% else %}none{% endif %};transition:background .12s;" class="student-row">
+              <td style="padding:.9rem 1.25rem;">
+                <div style="display:flex;align-items:center;gap:.75rem;">
+                  <div style="width:34px;height:34px;border-radius:50%;background:var(--t-indigo-light);display:flex;align-items:center;justify-content:center;color:var(--t-indigo);font-weight:700;font-size:.8rem;flex-shrink:0;font-family:var(--t-font-serif);">
+                    {{ student.first_name|first|upper }}{{ student.last_name|first|upper }}
+                  </div>
+                  <div>
+                    <div style="font-weight:600;font-size:.9rem;color:var(--t-text);line-height:1.2;">{{ student.get_full_name }}</div>
+                    <div style="font-size:.75rem;color:var(--t-text-muted);margin-top:.1rem;">@{{ student.username }}</div>
+                  </div>
+                </div>
+              </td>
+              <td style="padding:.9rem 1.25rem;">
+                {% if student.student_profile %}
+                <span style="display:inline-flex;align-items:center;padding:.2rem .6rem;background:var(--t-indigo-light);color:var(--t-indigo);border-radius:var(--t-radius-pill);font-size:.72rem;font-weight:700;">
+                  Transición {{ student.student_profile.level }}
+                </span>
+                {% else %}
+                <span style="color:var(--t-border);">—</span>
+                {% endif %}
+              </td>
+              <td style="padding:.9rem 1.25rem;text-align:center;">
+                {% if student.student_profile %}
+                <span style="font-size:.85rem;font-weight:600;color:var(--t-amber);">
+                  ★ {{ student.student_profile.total_stars }}
+                </span>
+                {% else %}—{% endif %}
+              </td>
+              <td style="padding:.9rem 1.25rem;text-align:center;font-size:.85rem;color:var(--t-text-muted);">
+                {% if student.student_profile %}{{ student.student_profile.age }}{% else %}—{% endif %}
+              </td>
+              <td style="padding:.9rem 1.25rem;">
+                <form method="post" style="margin:0;display:flex;justify-content:flex-end;">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="remove">
+                  <input type="hidden" name="student_id" value="{{ student.pk }}">
+                  <button type="submit"
+                    style="display:inline-flex;align-items:center;gap:.3rem;padding:.3rem .65rem;background:none;border:1px solid var(--t-border);border-radius:var(--t-radius);color:var(--t-text-muted);font-size:.75rem;cursor:pointer;font-weight:600;transition:all .15s;white-space:nowrap;"
+                    title="Remover del curso">
+                    <i class="bi bi-x"></i> Remover
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div style="padding:3.5rem 2rem;text-align:center;">
+          <div style="width:44px;height:44px;border-radius:var(--t-radius-lg);background:var(--t-border-light);display:inline-flex;align-items:center;justify-content:center;margin-bottom:.85rem;">
+            <i class="bi bi-people" style="font-size:1.15rem;color:var(--t-text-muted);"></i>
+          </div>
+          <div style="font-size:.9rem;font-weight:600;color:var(--t-text-muted);margin-bottom:.3rem;">Ningún estudiante inscrito</div>
+          <p style="font-size:.8rem;color:var(--t-text-muted);margin:0;">Usa los botones de arriba para agregar o crear estudiantes.</p>
+        </div>
+        {% endif %}
+      </div>
+
+    </div>
+
+    <!-- ── Modal: Agregar estudiante existente ── -->
+    <div id="modalAgregar" style="display:none;position:fixed;inset:0;z-index:1000;align-items:center;justify-content:center;">
+      <div style="position:absolute;inset:0;background:rgba(10,22,40,.55);backdrop-filter:blur(4px);" id="backdropAgregar"></div>
+      <div style="position:relative;z-index:1;width:100%;max-width:460px;margin:1rem;background:var(--t-surface);border-radius:var(--t-radius-xl);box-shadow:0 32px 64px rgba(10,22,40,.22);border:1px solid var(--t-border);display:flex;flex-direction:column;max-height:88vh;overflow:hidden;">
+
+        <div style="padding:1.4rem 1.4rem .9rem;flex-shrink:0;">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1rem;">
+            <div>
+              <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--t-indigo);margin-bottom:.3rem;">Inscribir</div>
+              <div style="font-family:var(--t-font-serif);font-size:1.15rem;font-weight:700;color:var(--t-text);letter-spacing:-.01em;">Agregar Estudiante</div>
+            </div>
+            <button onclick="cerrarModal('modalAgregar')"
+              style="width:30px;height:30px;border-radius:50%;background:var(--t-border-light);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--t-text-muted);font-size:.85rem;flex-shrink:0;">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+          <div style="position:relative;">
+            <i class="bi bi-search" style="position:absolute;left:.85rem;top:50%;transform:translateY(-50%);color:var(--t-text-muted);font-size:.82rem;pointer-events:none;"></i>
+            <input type="text" id="buscarEstudiante" placeholder="Buscar por nombre o usuario…"
+              style="width:100%;padding:.65rem .9rem .65rem 2.2rem;border:1.5px solid var(--t-border);border-radius:var(--t-radius);font-size:.85rem;outline:none;background:var(--t-bg);color:var(--t-text);box-sizing:border-box;transition:border-color .15s;"
+              onfocus="this.style.borderColor='var(--t-indigo)'" onblur="this.style.borderColor='var(--t-border)'">
+          </div>
+        </div>
+
+        <div style="overflow-y:auto;flex:1;border-top:1px solid var(--t-border-light);" id="listaDisponibles">
+          {% if available %}
+            {% for student in available %}
+            <form method="post" style="margin:0;">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="add">
+              <input type="hidden" name="student_id" value="{{ student.pk }}">
+              <button type="submit" class="student-option"
+                data-name="{{ student.get_full_name|lower }} {{ student.username|lower }}"
+                style="width:100%;display:flex;align-items:center;gap:.85rem;padding:.85rem 1.4rem;background:none;border:none;border-bottom:1px solid var(--t-border-light);cursor:pointer;text-align:left;transition:background .12s;">
+                <div style="width:34px;height:34px;border-radius:50%;background:var(--t-indigo-light);display:flex;align-items:center;justify-content:center;color:var(--t-indigo);font-weight:700;font-size:.8rem;flex-shrink:0;font-family:var(--t-font-serif);">
+                  {{ student.first_name|first|upper }}{{ student.last_name|first|upper }}
+                </div>
+                <div style="flex:1;min-width:0;">
+                  <div style="font-weight:600;font-size:.88rem;color:var(--t-text);">{{ student.get_full_name }}</div>
+                  <div style="font-size:.75rem;color:var(--t-text-muted);">
+                    @{{ student.username }}
+                    {% if student.student_profile %} · Transición {{ student.student_profile.level }}{% endif %}
+                  </div>
+                </div>
+                <i class="bi bi-plus-circle" style="color:var(--t-indigo);font-size:.9rem;flex-shrink:0;"></i>
+              </button>
+            </form>
+            {% endfor %}
+          {% else %}
+          <div style="padding:3rem 2rem;text-align:center;color:var(--t-text-muted);font-size:.85rem;">
+            Todos los estudiantes registrados ya están en este curso.
+          </div>
+          {% endif %}
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── Modal: Editar Curso ── -->
+    <div id="modalEditar" style="display:none;position:fixed;inset:0;z-index:1000;align-items:center;justify-content:center;">
+      <div style="position:absolute;inset:0;background:rgba(10,22,40,.55);backdrop-filter:blur(4px);" onclick="cerrarModal('modalEditar')"></div>
+      <div style="position:relative;z-index:1;width:100%;max-width:440px;margin:1rem;background:var(--t-surface);border-radius:var(--t-radius-xl);box-shadow:0 32px 64px rgba(10,22,40,.22);border:1px solid var(--t-border);overflow:hidden;">
+        <div style="padding:1.5rem 1.5rem 0;">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.25rem;">
+            <div>
+              <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--t-indigo);margin-bottom:.3rem;">Modificar</div>
+              <div style="font-family:var(--t-font-serif);font-size:1.2rem;font-weight:700;color:var(--t-text);letter-spacing:-.01em;">Editar Curso</div>
+            </div>
+            <button onclick="cerrarModal('modalEditar')"
+              style="width:30px;height:30px;border-radius:50%;background:var(--t-border-light);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--t-text-muted);font-size:.85rem;flex-shrink:0;">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+        </div>
+        <form method="post" style="padding:0 1.5rem 1.5rem;">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="edit">
+          <div class="form-group">
+            <label class="form-label">Nombre del curso</label>
+            <input type="text" name="name" class="form-input" value="{{ course.name }}" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Descripción <span style="color:var(--t-text-muted);font-weight:400;">(opcional)</span></label>
+            <textarea name="description" class="form-textarea" rows="2">{{ course.description }}</textarea>
+          </div>
+          <div style="display:flex;gap:.6rem;margin-top:1.25rem;">
+            <button type="button" onclick="cerrarModal('modalEditar')" class="btn btn-outline" style="flex:1;">Cancelar</button>
+            <button type="submit" class="btn btn-primary" style="flex:2;"><i class="bi bi-check2"></i> Guardar cambios</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+if (window.innerWidth <= 768) document.getElementById('sidebar-toggle').style.display = 'block';
+window.addEventListener('resize', () => {
+  const tog = document.getElementById('sidebar-toggle');
+  if (tog) tog.style.display = window.innerWidth <= 768 ? 'block' : 'none';
+});
+
+function cerrarModal(id) { document.getElementById(id).style.display = 'none'; document.body.style.overflow = ''; }
+function abrirModal(id)  { document.getElementById(id).style.display = 'flex';  document.body.style.overflow = 'hidden'; }
+
+document.getElementById('btnAgregarEstudiante').addEventListener('click', () => abrirModal('modalAgregar'));
+document.getElementById('btnEditarCurso').addEventListener('click', () => abrirModal('modalEditar'));
+document.getElementById('backdropAgregar').addEventListener('click', () => cerrarModal('modalAgregar'));
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { cerrarModal('modalAgregar'); cerrarModal('modalEditar'); } });
+
+/* Search */
+const buscar = document.getElementById('buscarEstudiante');
+if (buscar) {
+  buscar.addEventListener('input', function () {
+    const q = this.value.toLowerCase();
+    document.querySelectorAll('.student-option').forEach(btn => {
+      btn.closest('form').style.display = btn.dataset.name.includes(q) ? '' : 'none';
+    });
+  });
+}
+
+/* Row hover */
+document.querySelectorAll('.student-row').forEach(tr => {
+  tr.addEventListener('mouseenter', () => tr.style.background = 'var(--t-border-light)');
+  tr.addEventListener('mouseleave', () => tr.style.background = '');
+});
+document.querySelectorAll('.student-option').forEach(btn => {
+  btn.addEventListener('mouseenter', () => btn.style.background = 'var(--t-indigo-light)');
+  btn.addEventListener('mouseleave', () => btn.style.background = '');
+});
+</script>
+{% endblock %}

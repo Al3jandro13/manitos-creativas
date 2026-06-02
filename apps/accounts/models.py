@@ -62,6 +62,11 @@ class StudentProfile(models.Model):
     )
     level = models.CharField(max_length=1, choices=LEVEL_CHOICES, default='A')
     age = models.PositiveIntegerField(default=5)
+    birth_date = models.DateField(
+        verbose_name='Fecha de nacimiento',
+        null=True,
+        blank=True,
+    )
     parent_name = models.CharField(max_length=150)
     parent_email = models.EmailField()
     parent_phone = models.CharField(max_length=20, blank=True)

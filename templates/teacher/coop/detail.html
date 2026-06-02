@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ coop.title }} — Manitos Creativas{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/teacher.css' %}">{% endblock %}
+
+{% block body_content %}
+<div class="teacher-layout">
+  {% include 'teacher/_sidebar.html' %}
+  <main class="teacher-main">
+
+    <div class="teacher-topbar">
+      <div style="display:flex;align-items:center;gap:.85rem;">
+        <button id="sidebar-toggle"
+          style="display:none;background:none;border:none;cursor:pointer;font-size:1.2rem;color:var(--t-text-mid);padding:.25rem;"
+          onclick="document.querySelector('.sidebar').classList.toggle('open')">
+          <i class="bi bi-list"></i>
+        </button>
+        <a href="{% url 'coop_list' %}" style="font-size:.8rem;color:var(--t-text-muted);text-decoration:none;display:flex;align-items:center;gap:.3rem;">
+          <i class="bi bi-chevron-left"></i> Parejas
+        </a>
+        <div class="teacher-topbar-title" style="font-size:1rem;">{{ coop.title }}</div>
+      </div>
+      <div class="topbar-actions">
+        <a href="{% url 'coop_edit' coop.pk %}" class="btn btn-outline" title="Editar">
+          <i class="bi bi-pencil"></i> Editar
+        </a>
+        <button type="button" class="btn btn-outline"
+          style="border-color:var(--t-rose);color:var(--t-rose);"
+          onclick="openDeleteCoop()" title="Eliminar">
+          <i class="bi bi-trash"></i> Eliminar
+        </button>
+        {% if can_review %}
+        <a href="{% url 'coop_review' coop.pk %}" class="btn btn-primary">
+          <i class="bi bi-pencil-square"></i> Revisar ambas partes
+        </a>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="teacher-content">
+
+      <!-- Activity info card -->
+      <div style="background:var(--t-surface);border:1px solid var(--t-border);border-radius:var(--t-radius-lg);padding:1.35rem;margin-bottom:1.5rem;box-shadow:0 1px 4px rgba(0,0,0,.05);">
+        <div style="display:flex;align-items:flex-start;gap:1rem;flex-wrap:wrap;">
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.5rem;flex-wrap:wrap;">
+              <span class="badge badge-blue">{{ coop.category }}</span>
+              <span style="font-size:.75rem;color:var(--t-text-muted);display:flex;align-items:center;gap:.3rem;">
+                <i class="bi bi-calendar3"></i> Creada {{ coop.created_at|date:"d M Y" }}
+              </span>
+              <span style="font-size:.75rem;color:var(--t-amber);display:flex;align-items:center;gap:.3rem;">
+                <i class="bi bi-star-fill"></i> {{ coop.reward_stars }} estrellas
+              </span>
+            </div>
+            <p style="font-size:.875rem;color:var(--t-text-mid);line-height:1.65;margin:0;">{{ coop.description }}</p>
+            {% if coop.instructions %}
+            <p style="font-size:.8rem;color:var(--t-text-muted);margin-top:.6rem;font-style:italic;">{{ coop.instructions }}</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Student cards side by side -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.1rem;">
+
+        <!-- Part 1 -->
+        <div style="background:var(--t-surface);border:1px solid var(--t-border);border-radius:var(--t-radius-lg);overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.05);">
+          <div style="background:var(--t-indigo-light);padding:1rem 1.2rem;border-bottom:1px solid #C7D2FE;display:flex;align-items:center;gap:.6rem;">
+            <span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;background:var(--t-indigo);color:#fff;border-radius:50%;font-size:.75rem;font-weight:800;">1</span>
+            <div style="flex:1;min-width:0;">
+              <div style="font-family:var(--t-font-serif);font-size:.9rem;font-weight:700;color:var(--t-indigo);">Parte 1</div>
+              <div style="font-size:.75rem;color:var(--t-text-mid);">{{ coop.student1.get_full_name|default:coop.student1.username }}</div>
+            </div>
+          </div>
+          <div style="padding:1.2rem;">
+            {% if sub1 %}
+              {% if sub1.status == 'waiting' %}
+              <span class="badge badge-yellow"><i class="bi bi-hourglass"></i> Esperando</span>
+              {% elif sub1.status == 'in_progress' %}
+              <span class="badge badge-blue"><i class="bi bi-pencil"></i> En progreso</span>
+              {% elif sub1.status == 'submitted' %}
+              <span class="badge badge-green"><i class="bi bi-check-circle-fill"></i> Enviado ✓</span>
+              {% elif sub1.status in 'reviewed,approved' %}
+              <span class="badge badge-purple"><i class="bi bi-patch-check-fill"></i> Revisado</span>
+              {% endif %}
+              {% if sub1.submitted_at %}
+              <p style="font-size:.75rem;color:var(--t-text-muted);margin-top:.6rem;display:flex;align-items:center;gap:.3rem;">
+                <i class="bi bi-clock"></i> Enviado {{ sub1.submitted_at|date:"d M Y H:i" }}
+              </p>
+              {% endif %}
+              {% if sub1.stars_awarded %}
+              <p style="font-size:.8rem;color:var(--t-amber);margin-top:.4rem;display:flex;align-items:center;gap:.3rem;font-weight:600;">
+                <i class="bi bi-star-fill"></i> {{ sub1.stars_awarded }} estrellas otorgadas
+              </p>
+              {% endif %}
+              {% if sub1.teacher_feedback %}
+              <p style="font-size:.78rem;color:var(--t-text-mid);margin-top:.5rem;font-style:italic;line-height:1.5;">
+                "{{ sub1.teacher_feedback }}"
+              </p>
+              {% endif %}
+            {% else %}
+              <span style="font-size:.8rem;color:var(--t-text-muted);">Sin datos</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Part 2 -->
+        <div style="background:var(--t-surface);border:1px solid var(--t-border);border-radius:var(--t-radius-lg);overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.05);">
+          <div style="background:var(--t-teal-light);padding:1rem 1.2rem;border-bottom:1px solid #99F6E4;display:flex;align-items:center;gap:.6rem;">
+            <span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;background:var(--t-teal);color:#fff;border-radius:50%;font-size:.75rem;font-weight:800;">2</span>
+            <div style="flex:1;min-width:0;">
+              <div style="font-family:var(--t-font-serif);font-size:.9rem;font-weight:700;color:var(--t-teal);">Parte 2</div>
+              <div style="font-size:.75rem;color:var(--t-text-mid);">{{ coop.student2.get_full_name|default:coop.student2.username }}</div>
+            </div>
+          </div>
+          <div style="padding:1.2rem;">
+            {% if sub2 %}
+              {% if sub2.status == 'waiting' %}
+              <span class="badge badge-yellow"><i class="bi bi-hourglass"></i> Esperando</span>
+              {% elif sub2.status == 'in_progress' %}
+              <span class="badge badge-blue"><i class="bi bi-pencil"></i> En progreso</span>
+              {% elif sub2.status == 'submitted' %}
+              <span class="badge badge-green"><i class="bi bi-check-circle-fill"></i> Enviado ✓</span>
+              {% elif sub2.status in 'reviewed,approved' %}
+              <span class="badge badge-purple"><i class="bi bi-patch-check-fill"></i> Revisado</span>
+              {% endif %}
+              {% if sub2.submitted_at %}
+              <p style="font-size:.75rem;color:var(--t-text-muted);margin-top:.6rem;display:flex;align-items:center;gap:.3rem;">
+                <i class="bi bi-clock"></i> Enviado {{ sub2.submitted_at|date:"d M Y H:i" }}
+              </p>
+              {% endif %}
+              {% if sub2.stars_awarded %}
+              <p style="font-size:.8rem;color:var(--t-amber);margin-top:.4rem;display:flex;align-items:center;gap:.3rem;font-weight:600;">
+                <i class="bi bi-star-fill"></i> {{ sub2.stars_awarded }} estrellas otorgadas
+              </p>
+              {% endif %}
+              {% if sub2.teacher_feedback %}
+              <p style="font-size:.78rem;color:var(--t-text-mid);margin-top:.5rem;font-style:italic;line-height:1.5;">
+                "{{ sub2.teacher_feedback }}"
+              </p>
+              {% endif %}
+            {% else %}
+              <span style="font-size:.8rem;color:var(--t-text-muted);">Sin datos</span>
+            {% endif %}
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Review CTA when ready -->
+      {% if can_review %}
+      <div style="margin-top:1.25rem;background:linear-gradient(135deg,var(--t-indigo-light),var(--t-teal-light));border:1px solid #C7D2FE;border-radius:var(--t-radius-lg);padding:1.25rem 1.35rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
+        <div>
+          <div style="font-family:var(--t-font-serif);font-weight:700;color:var(--t-indigo);font-size:.95rem;">
+            <i class="bi bi-check2-all"></i> ¡Ambas partes enviadas!
+          </div>
+          <div style="font-size:.8rem;color:var(--t-text-mid);margin-top:.2rem;">Ya puedes revisar y calificar el trabajo colaborativo.</div>
+        </div>
+        <a href="{% url 'coop_review' coop.pk %}" class="btn btn-primary">
+          <i class="bi bi-pencil-square"></i> Revisar ambas partes
+        </a>
+      </div>
+      {% endif %}
+
+    </div>
+
+    <!-- Modal Eliminar -->
+    <div id="modalDeleteCoop" style="display:none;position:fixed;inset:0;z-index:1000;align-items:center;justify-content:center;">
+      <div style="position:absolute;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);" onclick="closeDeleteCoop()"></div>
+      <div style="position:relative;z-index:1;width:100%;max-width:440px;margin:1rem;background:var(--t-surface);border-radius:var(--t-radius-lg);box-shadow:0 24px 48px rgba(0,0,0,.3);border:1px solid var(--t-border);overflow:hidden;">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:1.1rem 1.35rem;border-bottom:1px solid var(--t-border);">
+          <div style="font-family:var(--t-font-serif);font-size:1.05rem;font-weight:700;color:var(--t-text);">
+            <i class="bi bi-trash" style="color:var(--t-rose);margin-right:.4rem;"></i> Eliminar actividad
+          </div>
+          <button onclick="closeDeleteCoop()" style="background:none;border:none;cursor:pointer;font-size:1.1rem;color:var(--t-text-muted);">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+        <div style="padding:1.35rem;">
+          <p style="font-size:.9rem;color:var(--t-text-mid);line-height:1.65;margin-bottom:.65rem;">
+            ¿Eliminar <strong style="color:var(--t-text);">{{ coop.title }}</strong>?
+          </p>
+          <div style="background:var(--t-rose-light);border:1px solid #FECDD3;color:var(--t-rose);padding:.7rem .9rem;border-radius:10px;font-size:.8rem;line-height:1.55;margin-bottom:1.1rem;display:flex;gap:.55rem;align-items:flex-start;">
+            <i class="bi bi-exclamation-triangle-fill" style="flex-shrink:0;margin-top:.1rem;"></i>
+            <span>Se eliminarán también todas las entregas de los estudiantes asociadas a esta actividad. Esta acción no se puede deshacer.</span>
+          </div>
+          <form method="post" action="{% url 'coop_delete' coop.pk %}">
+            {% csrf_token %}
+            <div style="display:flex;gap:.55rem;">
+              <button type="button" onclick="closeDeleteCoop()" class="btn btn-outline" style="flex:1;">Cancelar</button>
+              <button type="submit" class="btn btn-primary" style="flex:1;background:var(--t-rose);border-color:var(--t-rose);">
+                <i class="bi bi-trash"></i> Sí, eliminar
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+if (window.innerWidth <= 768) document.getElementById('sidebar-toggle').style.display = 'block';
+window.addEventListener('resize', () => {
+  const tog = document.getElementById('sidebar-toggle');
+  if (tog) tog.style.display = window.innerWidth <= 768 ? 'block' : 'none';
+});
+
+function openDeleteCoop() {
+  document.getElementById('modalDeleteCoop').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+function closeDeleteCoop() {
+  document.getElementById('modalDeleteCoop').style.display = 'none';
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDeleteCoop(); });
+</script>
+{% endblock %}

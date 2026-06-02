@@ -7,9 +7,339 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/student.css' %}">
+{% if is_birthday %}
+<style>
+  /* ═══════════════════════════════════════════
+     BIRTHDAY — FULL-SCREEN CELEBRATION
+  ═══════════════════════════════════════════ */
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap');
+
+  .bday-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: #0d0020;
+    height: 100vh;
+    width: 100vw;
+  }
+
+  /* Fondo animado con ondas de color */
+  .bday-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background:
+      radial-gradient(ellipse 120% 80% at 10% 20%,  #6d28d9 0%, transparent 55%),
+      radial-gradient(ellipse 100% 70% at 90% 80%,  #be185d 0%, transparent 55%),
+      radial-gradient(ellipse  80% 60% at 50% 50%,  #1e1b4b 0%, transparent 70%),
+      radial-gradient(ellipse  90% 60% at 80% 10%,  #c2410c 0%, transparent 50%),
+      radial-gradient(ellipse  70% 50% at 20% 90%,  #065f46 0%, transparent 50%),
+      #0d0020;
+    animation: bdayBgPulse 6s ease-in-out infinite alternate;
+  }
+  @keyframes bdayBgPulse {
+    0%   { filter: brightness(1)   hue-rotate(0deg); }
+    100% { filter: brightness(1.2) hue-rotate(25deg); }
+  }
+
+  /* Canvas de confetti */
+  .bday-confetti-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Emojis flotantes por toda la pantalla */
+  .bday-floaters {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2;
+  }
+  .bday-float {
+    position: absolute;
+    animation: bdayDrift ease-in-out infinite;
+    line-height: 1;
+    user-select: none;
+  }
+  .f1  { font-size: clamp(2rem,4vw,3.5rem); top:  3%; left:  2%; animation-duration:4.5s; animation-delay:0s;   }
+  .f2  { font-size: clamp(2rem,4vw,3rem);   top:  2%; left: 83%; animation-duration:5s;   animation-delay:0.5s; }
+  .f3  { font-size: clamp(1.8rem,3vw,3rem); top: 72%; left:  2%; animation-duration:4s;   animation-delay:0.8s; }
+  .f4  { font-size: clamp(2rem,4vw,3.5rem); top: 78%; left: 86%; animation-duration:5.5s; animation-delay:1.2s; }
+  .f5  { font-size: clamp(1.5rem,3vw,2.5rem);top:42%; left:  1%; animation-duration:3.8s; animation-delay:0.3s; }
+  .f6  { font-size: clamp(1.5rem,3vw,2.5rem);top:40%; left: 93%; animation-duration:4.2s; animation-delay:1s;   }
+  .f7  { font-size: clamp(2rem,3.5vw,3rem); top: 88%; left: 42%; animation-duration:5s;   animation-delay:0.6s; }
+  .f8  { font-size: clamp(1.8rem,3vw,2.8rem);top:  4%; left: 48%; animation-duration:4.8s; animation-delay:1.5s; }
+  .f9  { font-size: clamp(1.5rem,2.5vw,2.5rem);top:18%;left:88%; animation-duration:4s;   animation-delay:0.9s; }
+  .f10 { font-size: clamp(1.5rem,2.5vw,2.5rem);top:68%;left: 8%; animation-duration:5.2s; animation-delay:0.2s; }
+  .f11 { font-size: clamp(1.8rem,3vw,2.8rem);top:86%; left:66%; animation-duration:4.6s; animation-delay:1.8s; }
+  .f12 { font-size: clamp(1.2rem,2vw,2rem); top:58%; left: 95%; animation-duration:3.5s; animation-delay:0.7s; }
+  @keyframes bdayDrift {
+    0%,100% { transform: translateY(0)    rotate(-6deg) scale(1);    }
+    40%      { transform: translateY(-20px) rotate(7deg)  scale(1.05); }
+    70%      { transform: translateY(10px)  rotate(-3deg) scale(0.97); }
+  }
+
+  /* Contenido central — todo cabe en 100vh */
+  .bday-center {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(0.25rem, 1.2vh, 0.9rem);
+    padding: 18px 1rem;        /* deja espacio a las barras */
+    text-align: center;
+    width: 100%;
+    max-width: 960px;
+    height: 100%;
+    animation: bdayCenterIn 0.9s cubic-bezier(0.22,1,.36,1) both;
+  }
+  @keyframes bdayCenterIn {
+    from { opacity:0; transform: scale(0.8) translateY(30px); }
+    to   { opacity:1; transform: scale(1)   translateY(0); }
+  }
+
+  /* Corona */
+  .bday-crown {
+    font-size: clamp(2.5rem, 6vh, 5rem);
+    animation: bdayCrownSpin 1.2s cubic-bezier(0.22,1,.36,1) 0.2s both;
+    filter: drop-shadow(0 0 20px rgba(252,211,77,0.8));
+    line-height: 1;
+  }
+  @keyframes bdayCrownSpin {
+    from { opacity:0; transform: scale(0) rotate(-180deg); }
+    to   { opacity:1; transform: scale(1) rotate(0deg); }
+  }
+
+  /* Título — una sola línea, tamaño por altura de pantalla */
+  .bday-title {
+    font-family: 'Fredoka One', 'Outfit', sans-serif;
+    font-size: clamp(3rem, 11vh, 8rem);
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    background: linear-gradient(
+      135deg,
+      #FCD34D  0%,
+      #FB923C 20%,
+      #F472B6 45%,
+      #A78BFA 70%,
+      #6EE7B7 100%
+    );
+    background-size: 200% 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: bdayTitleIn 0.8s ease 0.4s both, bdayGradientShift 4s ease infinite;
+    filter: drop-shadow(0 3px 16px rgba(244,114,182,0.5));
+  }
+  @keyframes bdayTitleIn {
+    from { opacity:0; transform: translateY(24px) scale(0.92); }
+    to   { opacity:1; transform: translateY(0)    scale(1); }
+  }
+  @keyframes bdayGradientShift {
+    0%,100% { background-position: 0%   50%; }
+    50%      { background-position: 100% 50%; }
+  }
+
+  /* Nombre */
+  .bday-name {
+    font-family: 'Fredoka One', 'Outfit', sans-serif;
+    font-size: clamp(1.8rem, 6vh, 4rem);
+    font-weight: 900;
+    color: #FDE68A;
+    text-shadow: 0 0 30px rgba(252,211,77,0.7), 0 3px 12px rgba(0,0,0,0.4);
+    animation: bdayNameIn 0.8s ease 0.6s both;
+    letter-spacing: 0.02em;
+    line-height: 1;
+  }
+  @keyframes bdayNameIn {
+    from { opacity:0; transform: translateX(-24px); }
+    to   { opacity:1; transform: translateX(0); }
+  }
+
+  /* Badge de edad */
+  .bday-age-badge {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #F59E0B, #EF4444, #EC4899);
+    border-radius: 50%;
+    width:  clamp(90px, 14vh, 140px);
+    height: clamp(90px, 14vh, 140px);
+    box-shadow:
+      0 0 0 5px rgba(245,158,11,0.4),
+      0 0 0 11px rgba(245,158,11,0.15),
+      0 12px 40px rgba(239,68,68,0.5);
+    animation: bdayAgeIn 0.9s cubic-bezier(0.22,1,.36,1) 0.8s both,
+               bdayAgePulse 2s ease-in-out 1.8s infinite;
+    flex-shrink: 0;
+  }
+  @keyframes bdayAgeIn {
+    from { opacity:0; transform: scale(0) rotate(20deg); }
+    to   { opacity:1; transform: scale(1) rotate(0deg); }
+  }
+  @keyframes bdayAgePulse {
+    0%,100% { box-shadow: 0 0 0 5px  rgba(245,158,11,0.4),  0 0 0 11px rgba(245,158,11,0.15), 0 12px 40px rgba(239,68,68,0.5); }
+    50%      { box-shadow: 0 0 0 10px rgba(245,158,11,0.5), 0 0 0 22px rgba(245,158,11,0.12), 0 12px 60px rgba(239,68,68,0.6); }
+  }
+  .bday-age-number {
+    font-family: 'Fredoka One', sans-serif;
+    font-size: clamp(2.8rem, 7vh, 5rem);
+    font-weight: 900;
+    color: #fff;
+    line-height: 1;
+    text-shadow: 0 3px 10px rgba(0,0,0,0.3);
+  }
+  .bday-age-label {
+    font-size: clamp(0.6rem, 1.3vh, 0.85rem);
+    font-weight: 700;
+    color: rgba(255,255,255,0.9);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-top: -2px;
+  }
+
+  /* Mensaje */
+  .bday-message {
+    font-size: clamp(0.85rem, 2vh, 1.25rem);
+    color: rgba(255,255,255,0.9);
+    line-height: 1.5;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.4);
+    animation: bdayNameIn 0.8s ease 1s both;
+    max-width: 560px;
+  }
+
+  /* Fila de estrellas */
+  .bday-stars-row {
+    font-size: clamp(1.1rem, 2.5vh, 2rem);
+    letter-spacing: 0.35em;
+    animation: bdayStarsShimmer 1.8s ease-in-out infinite;
+    filter: drop-shadow(0 0 6px rgba(252,211,77,0.6));
+    line-height: 1;
+  }
+  @keyframes bdayStarsShimmer {
+    0%,100% { opacity:1;   transform:scale(1); }
+    50%      { opacity:0.7; transform:scale(1.04); }
+  }
+
+  /* Botón */
+  .bday-btn {
+    font-family: 'Fredoka One', 'Outfit', sans-serif;
+    font-size: clamp(1.1rem, 2.5vh, 1.6rem);
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    color: #fff;
+    background: linear-gradient(135deg, #F59E0B, #EC4899, #8B5CF6, #06B6D4);
+    background-size: 300% 300%;
+    border: none;
+    border-radius: 100px;
+    padding: clamp(0.7rem, 1.8vh, 1.1rem) clamp(2rem, 5vw, 4rem);
+    cursor: pointer;
+    box-shadow:
+      0 6px 30px rgba(236,72,153,0.6),
+      0 0 60px rgba(139,92,246,0.3),
+      inset 0 1px 0 rgba(255,255,255,0.25);
+    animation: bdayBtnIn 0.8s cubic-bezier(0.22,1,.36,1) 1.2s both,
+               bdayBtnGradient 3s ease infinite;
+    transition: transform 0.15s, box-shadow 0.15s;
+    flex-shrink: 0;
+  }
+  @keyframes bdayBtnIn {
+    from { opacity:0; transform:scale(0.7) translateY(16px); }
+    to   { opacity:1; transform:scale(1)   translateY(0); }
+  }
+  @keyframes bdayBtnGradient {
+    0%   { background-position:0%   50%; }
+    50%  { background-position:100% 50%; }
+    100% { background-position:0%   50%; }
+  }
+  .bday-btn:hover  { transform:scale(1.07) translateY(-3px); box-shadow:0 12px 40px rgba(236,72,153,0.7),0 0 80px rgba(139,92,246,0.4); }
+  .bday-btn:active { transform:scale(0.96); }
+
+  /* Barras de color en top y bottom */
+  .bday-stripe {
+    position: absolute;
+    left: 0; right: 0;
+    height: 10px;
+    z-index: 4;
+    background: linear-gradient(90deg,#F59E0B,#EC4899,#8B5CF6,#06B6D4,#10B981,#F59E0B);
+    background-size: 200% 100%;
+    animation: bdayStripeScroll 3s linear infinite;
+  }
+  .bday-stripe-top    { top: 0; }
+  .bday-stripe-bottom { bottom: 0; }
+  @keyframes bdayStripeScroll {
+    from { background-position:0%   0; }
+    to   { background-position:200% 0; }
+  }
+</style>
+{% endif %}
 {% endblock %}
 
 {% block body_content %}
+{% if is_birthday %}
+<div id="birthdayOverlay" class="bday-overlay">
+
+  <!-- Fondo animado -->
+  <div class="bday-bg"></div>
+
+  <!-- Canvas confetti -->
+  <canvas id="confettiCanvas" class="bday-confetti-canvas"></canvas>
+
+  <!-- Barras arcoíris top/bottom -->
+  <div class="bday-stripe bday-stripe-top"></div>
+  <div class="bday-stripe bday-stripe-bottom"></div>
+
+  <!-- Emojis flotantes por toda la pantalla -->
+  <div class="bday-floaters" aria-hidden="true">
+    <span class="bday-float f1">🎂</span>
+    <span class="bday-float f2">🎉</span>
+    <span class="bday-float f3">🎈</span>
+    <span class="bday-float f4">🌈</span>
+    <span class="bday-float f5">✨</span>
+    <span class="bday-float f6">🎊</span>
+    <span class="bday-float f7">🎀</span>
+    <span class="bday-float f8">⭐</span>
+    <span class="bday-float f9">🦄</span>
+    <span class="bday-float f10">🍭</span>
+    <span class="bday-float f11">🎁</span>
+    <span class="bday-float f12">💫</span>
+  </div>
+
+  <!-- Contenido central full-screen -->
+  <div class="bday-center">
+    <div class="bday-crown">👑</div>
+    <h1 class="bday-title">¡Feliz Cumpleaños!</h1>
+    <div class="bday-name">{{ request.user.first_name }} 🎊</div>
+    {% if birthday_age %}
+    <div class="bday-age-badge">
+      <span class="bday-age-number">{{ birthday_age }}</span>
+      <span class="bday-age-label">añitos</span>
+    </div>
+    {% endif %}
+    <p class="bday-message">
+      Hoy es un día muy especial ✨<br>
+      ¡El universo entero te manda un abrazo gigante! 🤗
+    </p>
+    <div class="bday-stars-row" aria-hidden="true">⭐ 🌟 💫 ⭐ 🌟 💫 ⭐</div>
+    <button id="closeBdayBtn" class="bday-btn">🎮 ¡A jugar!</button>
+  </div>
+
+</div>
+{% endif %}
 <div class="student-layout">
 
   <!-- ═══════════ SIDEBAR ═══════════ -->
@@ -46,40 +376,6 @@
         <span>Mis Logros</span>
       </a>
     </nav>
-
-    <!-- Activities in sidebar -->
-    <div class="sidebar-activities-section">
-      <div class="sidebar-section-title">ACTIVIDADES RECIENTES</div>
-      {% if recent_submissions %}
-        {% for sub in recent_submissions|slice:":3" %}
-        <div class="sidebar-activity-item">
-          <div class="sidebar-activity-icon">
-            {% if sub.activity.category.name == 'colorear' %}🖍️
-            {% elif sub.activity.category.name == 'dibujo_libre' %}✏️
-            {% elif sub.activity.category.name == 'puntillismo' %}🎨
-            {% elif sub.activity.category.name == 'rompecabezas' %}🧩
-            {% elif sub.activity.category.name == 'cuento' %}📖
-            {% elif sub.activity.category.name == 'consonantes' %}🔤
-            {% elif sub.activity.category.name == 'numeros' %}🔢
-            {% elif sub.activity.category.name == 'sumas' %}➕
-            {% else %}⭐{% endif %}
-          </div>
-          <div class="sidebar-activity-info">
-            <div class="sidebar-activity-name">{{ sub.activity.title|truncatechars:22 }}</div>
-            <div class="sidebar-activity-status done">Completada</div>
-          </div>
-        </div>
-        {% endfor %}
-      {% else %}
-      <div class="sidebar-activity-empty">
-        <i class="bi bi-clipboard2"></i>
-        <span>Sin actividades recientes</span>
-      </div>
-      {% endif %}
-      <a href="{% url 'student_activities' %}" class="sidebar-activities-link">
-        Ver todas <i class="bi bi-arrow-right"></i>
-      </a>
-    </div>
 
     <div style="flex:1;"></div>
 
@@ -440,21 +736,106 @@
     });
   }
 
-  // Dark mode
+  // Dark mode (topbar toggle)
   const darkToggle = document.getElementById('darkModeToggle');
   const darkIcon   = document.getElementById('darkModeIcon');
   function applyDark(on) {
     document.body.classList.toggle('student-dark', on);
+    localStorage.setItem('student_dark', on ? '1' : '0');
     if (darkIcon) darkIcon.className = on ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
   }
   applyDark(localStorage.getItem('student_dark') === '1');
   if (darkToggle) {
     darkToggle.addEventListener('click', function () {
-      const on = !document.body.classList.contains('student-dark');
-      applyDark(on);
-      localStorage.setItem('student_dark', on ? '1' : '0');
+      applyDark(!document.body.classList.contains('student-dark'));
     });
   }
 })();
 </script>
+
+{% if is_birthday %}
+<script>
+(function () {
+  const overlay = document.getElementById('birthdayOverlay');
+  const closeBtn = document.getElementById('closeBdayBtn');
+
+  function closeOverlay() {
+    running = false;
+    overlay.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+    overlay.style.opacity = '0';
+    overlay.style.transform = 'scale(1.05)';
+    setTimeout(function () { overlay.remove(); }, 500);
+  }
+
+  if (closeBtn) closeBtn.addEventListener('click', closeOverlay);
+  overlay.addEventListener('click', function (e) {
+    if (e.target === overlay) closeOverlay();
+  });
+
+  /* Confetti */
+  const canvas = document.getElementById('confettiCanvas');
+  const ctx = canvas.getContext('2d');
+
+  function resize() {
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const COLORS = [
+    '#F9A8D4','#FCD34D','#93C5FD','#6EE7B7',
+    '#C4B5FD','#FCA5A1','#ffffff','#FDE68A',
+    '#FB923C','#34D399','#60A5FA','#F472B6',
+  ];
+
+  const particles = [];
+  for (let i = 0; i < 220; i++) {
+    particles.push({
+      x:     Math.random() * window.innerWidth,
+      y:     Math.random() * window.innerHeight - window.innerHeight,
+      w:     Math.random() * 16 + 8,
+      h:     Math.random() * 9 + 5,
+      color: COLORS[Math.floor(Math.random() * COLORS.length)],
+      speed: Math.random() * 3 + 1,
+      angle: Math.random() * Math.PI * 2,
+      spin:  (Math.random() - 0.5) * 0.18,
+      drift: (Math.random() - 0.5) * 1.8,
+      shape: Math.random() > 0.35 ? 'rect' : 'circle',
+    });
+  }
+
+  var running = true;
+
+  function draw() {
+    if (!running) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach(function (p) {
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.angle);
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = 0.85;
+      if (p.shape === 'circle') {
+        ctx.beginPath();
+        ctx.arc(0, 0, p.w / 2, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      }
+      ctx.restore();
+      p.y     += p.speed;
+      p.x     += p.drift;
+      p.angle += p.spin;
+      if (p.y > canvas.height + 20) {
+        p.y = -20;
+        p.x = Math.random() * canvas.width;
+      }
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+</script>
+{% endif %}
 {% endblock %}

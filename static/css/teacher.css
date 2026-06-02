@@ -240,6 +240,82 @@
   font-family: var(--t-font-sans);
 }
 
+/* ── Sidebar Theme Toggle ── */
+.sidebar-theme-section {
+  padding: 0 .85rem .65rem;
+}
+.sidebar-theme-btn {
+  display: flex;
+  align-items: center;
+  gap: .72rem;
+  width: 100%;
+  padding: .6rem .75rem;
+  border-radius: 10px;
+  border: 1.5px solid rgba(255,255,255,.11);
+  background: rgba(255,255,255,.05);
+  color: rgba(255,255,255,.7);
+  font-family: var(--t-font-sans);
+  font-size: .82rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: background .18s, border-color .18s, color .18s;
+}
+.sidebar-theme-btn:hover {
+  background: rgba(255,255,255,.1);
+  border-color: rgba(255,255,255,.22);
+  color: rgba(255,255,255,.92);
+}
+.sidebar-theme-icon-wrap {
+  width: 28px; height: 28px;
+  border-radius: 7px;
+  background: rgba(255,255,255,.07);
+  display: flex; align-items: center; justify-content: center;
+  font-size: .85rem;
+  flex-shrink: 0;
+  transition: background .18s;
+}
+.sidebar-theme-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  line-height: 1.2;
+}
+.sidebar-theme-sub {
+  font-size: .65rem;
+  font-weight: 400;
+  opacity: .5;
+}
+.sidebar-theme-pill {
+  width: 36px; height: 20px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.13);
+  position: relative;
+  flex-shrink: 0;
+  transition: background .22s;
+}
+.sidebar-theme-pill::after {
+  content: '';
+  position: absolute;
+  left: 3px; top: 3px;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.55);
+  transition: transform .22s cubic-bezier(.34,1.56,.64,1), background .22s;
+}
+.sidebar-theme-btn[data-dark="1"] .sidebar-theme-pill {
+  background: rgba(251,191,36,.35);
+}
+.sidebar-theme-btn[data-dark="1"] .sidebar-theme-pill::after {
+  transform: translateX(16px);
+  background: #FCD34D;
+}
+.sidebar-theme-btn[data-dark="1"] .sidebar-theme-icon-wrap {
+  background: rgba(251,191,36,.18);
+  color: #FCD34D;
+}
+
 /* ── Profile section at bottom ── */
 .sidebar-profile-wrap {
   border-top: 1px solid rgba(255,255,255,.07);
@@ -346,6 +422,9 @@
   flex-direction: column;
   transition: background .25s ease;
 }
+
+/* Hide the global floating theme-toggle from base.html — teacher has its own topbar button */
+body:has(.teacher-layout) #theme-toggle { display: none !important; }
 
 /* Dark mode toggle — topbar button */
 .teacher-layout .dark-mode-toggle {
@@ -1423,6 +1502,10 @@ body.teacher-dark .teacher-layout {
   --t-text:            #E2E8F0;
   --t-text-mid:        #94A3B8;
   --t-text-muted:      #64748B;
+  --t-text-light:      #64748B;
+
+  --t-card-bg:         #111D2E;
+  --t-input-bg:        #0B1524;
 
   --t-indigo-light:    rgba(99,102,241,.15);
   --t-teal-light:      rgba(13,148,136,.14);

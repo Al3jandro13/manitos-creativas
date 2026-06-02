@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Actividades en Parejas — Manitos Creativas{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/teacher.css' %}">{% endblock %}
+
+{% block body_content %}
+<div class="teacher-layout">
+  {% include 'teacher/_sidebar.html' %}
+  <main class="teacher-main">
+
+    <div class="teacher-topbar">
+      <div style="display:flex;align-items:center;gap:.85rem;">
+        <button id="sidebar-toggle"
+          style="display:none;background:none;border:none;cursor:pointer;font-size:1.2rem;color:var(--t-text-mid);padding:.25rem;"
+          onclick="document.querySelector('.sidebar').classList.toggle('open')">
+          <i class="bi bi-list"></i>
+        </button>
+        <div class="teacher-topbar-title"><i class="bi bi-people-fill"></i> Actividades en Parejas</div>
+      </div>
+      <div class="topbar-actions">
+        <a href="{% url 'coop_create' %}" class="btn btn-primary">
+          <i class="bi bi-plus"></i> Nueva actividad en pareja
+        </a>
+      </div>
+    </div>
+
+    <div class="teacher-content">
+
+      <!-- Stats -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.75rem;">
+
+        <div class="stat-card">
+          <div class="stat-icon" style="background:var(--t-indigo-light);color:var(--t-indigo);">
+            <i class="bi bi-people-fill"></i>
+          </div>
+          <div>
+            <div style="font-size:1.75rem;font-weight:800;color:var(--t-text);font-family:var(--t-font-serif);line-height:1;">{{ total }}</div>
+            <div style="font-size:.75rem;color:var(--t-text-muted);margin-top:.15rem;font-weight:500;">Total</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#EFF6FF;color:#3B82F6;">
+            <i class="bi bi-hourglass-split"></i>
+          </div>
+          <div>
+            <div style="font-size:1.75rem;font-weight:800;color:var(--t-text);font-family:var(--t-font-serif);line-height:1;">{{ in_progress }}</div>
+            <div style="font-size:.75rem;color:var(--t-text-muted);margin-top:.15rem;font-weight:500;">En progreso</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon" style="background:var(--t-teal-light);color:var(--t-teal);">
+            <i class="bi bi-patch-check-fill"></i>
+          </div>
+          <div>
+            <div style="font-size:1.75rem;font-weight:800;color:var(--t-text);font-family:var(--t-font-serif);line-height:1;">{{ completed }}</div>
+            <div style="font-size:.75rem;color:var(--t-text-muted);margin-top:.15rem;font-weight:500;">Completadas</div>
+          </div>
+        </div>
+
+      </div>
+
+      {% if coops %}
+      <div style="display:flex;flex-direction:column;gap:.7rem;">
+        {% for coop in coops %}
+        {% with subs=coop.submissions.all %}
+        <div class="activity-list-item" style="gap:1rem;">
+
+          <div class="activity-list-icon" style="background:var(--t-indigo-light);color:var(--t-indigo);">
+            <i class="bi bi-people-fill"></i>
+          </div>
+
+          <div class="activity-list-info" style="flex:1;min-width:0;">
+            <div class="activity-list-title">{{ coop.title }}</div>
+            <div class="activity-list-meta" style="flex-wrap:wrap;gap:.4rem;">
+              <span class="badge badge-blue">{{ coop.category }}</span>
+              <span style="font-size:.72rem;color:var(--t-text-mid);display:inline-flex;align-items:center;gap:.25rem;">
+                <i class="bi bi-person-fill" style="color:var(--t-indigo);"></i> {{ coop.student1.get_full_name|default:coop.student1.username }}
+              </span>
+              <span style="font-size:.72rem;color:var(--t-text-muted);">+</span>
+              <span style="font-size:.72rem;color:var(--t-text-mid);display:inline-flex;align-items:center;gap:.25rem;">
+                <i class="bi bi-person-fill" style="color:var(--t-teal);"></i> {{ coop.student2.get_full_name|default:coop.student2.username }}
+              </span>
+              <span style="font-size:.72rem;color:var(--t-text-muted);">·</span>
+              <span style="font-size:.72rem;color:var(--t-text-muted);">{{ coop.created_at|date:"d M Y" }}</span>
+            </div>
+          </div>
+
+          <!-- Estado de cada parte -->
+          <div style="display:flex;gap:.4rem;align-items:center;flex-shrink:0;">
+            {% for sub in subs %}
+            {% if sub.status == 'waiting' %}
+            <span class="badge badge-yellow" style="font-size:.68rem;">P{{ sub.step }} Esperando</span>
+            {% elif sub.status == 'in_progress' %}
+            <span class="badge badge-blue" style="font-size:.68rem;">P{{ sub.step }} En progreso</span>
+            {% elif sub.status == 'submitted' %}
+            <span class="badge badge-green" style="font-size:.68rem;">P{{ sub.step }} Enviado ✓</span>
+            {% else %}
+            <span class="badge badge-purple" style="font-size:.68rem;">P{{ sub.step }} Revisado</span>
+            {% endif %}
+            {% endfor %}
+          </div>
+
+          <div style="display:flex;gap:.4rem;align-items:center;flex-shrink:0;">
+            <a href="{% url 'coop_detail' coop.pk %}" class="btn btn-outline" style="padding:.38rem .85rem;font-size:.8rem;">
+              Ver →
+            </a>
+            <a href="{% url 'coop_edit' coop.pk %}" class="btn btn-outline" style="padding:.38rem .7rem;font-size:.8rem;" title="Editar">
+              <i class="bi bi-pencil"></i>
+            </a>
+            <button type="button" class="btn btn-outline"
+              style="padding:.38rem .7rem;font-size:.8rem;border-color:var(--t-rose);color:var(--t-rose);"
+              onclick="openDeleteCoop({{ coop.pk }}, '{{ coop.title|escapejs }}')" title="Eliminar">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+
+        </div>
+        {% endwith %}
+        {% endfor %}
+      </div>
+
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-state-icon"><i class="bi bi-people"></i></div>
+        <div class="empty-state-title">Aún no hay actividades en parejas</div>
+        <p style="font-size:.875rem;color:var(--t-text-muted);margin-bottom:1.25rem;line-height:1.6;">
+          Crea tu primera actividad colaborativa y conecta a dos estudiantes 🎨
+        </p>
+        <a href="{% url 'coop_create' %}" class="btn btn-primary"><i class="bi bi-plus"></i> Crear primera actividad</a>
+      </div>
+      {% endif %}
+
+    </div>
+
+    <!-- Modal Eliminar -->
+    <div id="modalDeleteCoop" style="display:none;position:fixed;inset:0;z-index:1000;align-items:center;justify-content:center;">
+      <div style="position:absolute;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);" onclick="closeDeleteCoop()"></div>
+      <div style="position:relative;z-index:1;width:100%;max-width:440px;margin:1rem;background:var(--t-surface);border-radius:var(--t-radius-lg);box-shadow:0 24px 48px rgba(0,0,0,.3);border:1px solid var(--t-border);overflow:hidden;">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:1.1rem 1.35rem;border-bottom:1px solid var(--t-border);">
+          <div style="font-family:var(--t-font-serif);font-size:1.05rem;font-weight:700;color:var(--t-text);">
+            <i class="bi bi-trash" style="color:var(--t-rose);margin-right:.4rem;"></i> Eliminar actividad
+          </div>
+          <button onclick="closeDeleteCoop()" style="background:none;border:none;cursor:pointer;font-size:1.1rem;color:var(--t-text-muted);">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+        <div style="padding:1.35rem;">
+          <p style="font-size:.9rem;color:var(--t-text-mid);line-height:1.65;margin-bottom:.65rem;">
+            ¿Eliminar <strong id="deleteCoopTitle" style="color:var(--t-text);"></strong>?
+          </p>
+          <div style="background:var(--t-rose-light);border:1px solid #FECDD3;color:var(--t-rose);padding:.7rem .9rem;border-radius:10px;font-size:.8rem;line-height:1.55;margin-bottom:1.1rem;display:flex;gap:.55rem;align-items:flex-start;">
+            <i class="bi bi-exclamation-triangle-fill" style="flex-shrink:0;margin-top:.1rem;"></i>
+            <span>Se eliminarán también todas las entregas de los estudiantes. Esta acción no se puede deshacer.</span>
+          </div>
+          <form id="formDeleteCoop" method="post">
+            {% csrf_token %}
+            <div style="display:flex;gap:.55rem;">
+              <button type="button" onclick="closeDeleteCoop()" class="btn btn-outline" style="flex:1;">Cancelar</button>
+              <button type="submit" class="btn btn-primary" style="flex:1;background:var(--t-rose);border-color:var(--t-rose);">
+                <i class="bi bi-trash"></i> Sí, eliminar
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+if (window.innerWidth <= 768) document.getElementById('sidebar-toggle').style.display = 'block';
+window.addEventListener('resize', () => {
+  const tog = document.getElementById('sidebar-toggle');
+  if (tog) tog.style.display = window.innerWidth <= 768 ? 'block' : 'none';
+});
+
+function openDeleteCoop(pk, title) {
+  document.getElementById('formDeleteCoop').action = '/actividades/parejas/' + pk + '/eliminar/';
+  document.getElementById('deleteCoopTitle').textContent = title;
+  document.getElementById('modalDeleteCoop').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+function closeDeleteCoop() {
+  document.getElementById('modalDeleteCoop').style.display = 'none';
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDeleteCoop(); });
+</script>
+{% endblock %}

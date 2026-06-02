@@ -54,14 +54,10 @@
             <textarea name="description" class="form-textarea" rows="4" placeholder="Explica qué deben hacer los estudiantes...">{{ request.POST.description }}</textarea>
           </div>
 
-          <div class="form-row-3">
+          <div class="form-row-2">
             <div class="form-group">
               <label class="form-label"><i class="bi bi-star"></i> Estrellas de recompensa</label>
               <input type="number" name="reward_stars" class="form-input" min="0" max="20" value="{{ request.POST.reward_stars|default:'5' }}">
-            </div>
-            <div class="form-group">
-              <label class="form-label"><i class="bi bi-lightning"></i> Dificultad (1–5)</label>
-              <input type="number" name="difficulty" class="form-input" min="1" max="5" value="{{ request.POST.difficulty|default:'2' }}">
             </div>
             <div class="form-group">
               <label class="form-label"><i class="bi bi-calendar3"></i> Fecha límite</label>
@@ -71,7 +67,7 @@
 
           <div class="form-group">
             <label style="display:flex;align-items:center;gap:.55rem;cursor:pointer;font-family:var(--t-font-sans);font-weight:500;font-size:.875rem;color:var(--t-text-mid);">
-              <input type="checkbox" name="assigned_to_all" {% if request.POST.assigned_to_all %}checked{% endif %}
+              <input type="checkbox" name="assigned_to_all" {% if request.POST.assigned_to_all or not request.POST %}checked{% endif %}
                 style="width:16px;height:16px;accent-color:var(--t-indigo);border-radius:4px;cursor:pointer;">
               Asignar a todos los estudiantes
             </label>

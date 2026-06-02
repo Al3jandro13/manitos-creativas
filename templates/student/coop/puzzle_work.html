@@ -1,0 +1,1042 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ coop.title }} — Rompecabezas en Pareja{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/student.css' %}">{% endblock %}
+
+{% block body_content %}
+<div class="student-layout">
+  {% include 'student/_sidebar.html' with active_page='activities' %}
+
+  <div class="student-main">
+    <header class="student-topbar">
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Abrir menú"><i class="bi bi-list"></i></button>
+      <div class="topbar-breadcrumb">
+        <a href="{% url 'student_coop_list' %}" class="breadcrumb-link">Mis Parejas</a>
+        <i class="bi bi-chevron-right" style="font-size:.7rem;color:#9CA3AF;"></i>
+        <span class="bc-current">{{ coop.title }}</span>
+      </div>
+      <div class="topbar-actions">
+        <div class="topbar-date"><i class="bi bi-calendar3"></i><span id="topbarDate"></span></div>
+        <div class="topbar-stars-chip"><i class="bi bi-star-fill"></i><span>{{ profile.total_stars|default:"0" }} estrellas</span></div>
+        <button class="dark-mode-toggle" id="darkModeToggle" aria-label="Cambiar modo"><i class="bi bi-moon-fill" id="darkModeIcon"></i></button>
+      </div>
+    </header>
+
+    <div class="student-scroll">
+      <div class="pz-coop-wrap">
+
+        <!-- HEADER -->
+        <div class="pz-coop-header">
+          <div class="pz-coop-tape pz-coop-tape-l"></div>
+          <div class="pz-coop-tape pz-coop-tape-r"></div>
+
+          <div class="pz-coop-pill"><i class="bi bi-puzzle-fill"></i> Rompecabezas en pareja</div>
+          <h1 class="pz-coop-title">{{ coop.title }}</h1>
+
+          <div class="pz-coop-duo">
+            <div class="pz-coop-side {% if my_sub.step == 1 %}pz-coop-me{% endif %}">
+              <div class="pz-coop-avatar pz-coop-avatar-1">
+                {{ coop.student1.first_name|first|upper }}{{ coop.student1.last_name|first|upper }}
+              </div>
+              <div class="pz-coop-name">{{ coop.student1.first_name|default:coop.student1.username }}</div>
+              <div class="pz-coop-role">Mitad izquierda</div>
+              {% if my_sub.step == 1 %}<div class="pz-coop-you">¡ERES TÚ!</div>{% endif %}
+            </div>
+            <div class="pz-coop-bridge">
+              <span class="pz-coop-plus">+</span>
+            </div>
+            <div class="pz-coop-side {% if my_sub.step == 2 %}pz-coop-me{% endif %}">
+              <div class="pz-coop-avatar pz-coop-avatar-2">
+                {{ coop.student2.first_name|first|upper }}{{ coop.student2.last_name|first|upper }}
+              </div>
+              <div class="pz-coop-name">{{ coop.student2.first_name|default:coop.student2.username }}</div>
+              <div class="pz-coop-role">Mitad derecha</div>
+              {% if my_sub.step == 2 %}<div class="pz-coop-you">¡ERES TÚ!</div>{% endif %}
+            </div>
+          </div>
+        </div>
+
+        {% if waiting_for_partner %}
+        <!-- ESPERANDO -->
+        <div class="pz-wait">
+          <div class="pz-wait-icon">⏳</div>
+          <div class="pz-wait-title">¡Espera a tu compañero/a!</div>
+          <p class="pz-wait-sub">
+            <strong>{{ partner.first_name|default:partner.username }}</strong> está armando su mitad del rompecabezas.<br>
+            Cuando termine, tú podrás continuar con la otra mitad ✨
+          </p>
+          <a href="{% url 'student_coop_list' %}" class="pz-back-btn">
+            <i class="bi bi-arrow-left"></i> Volver a Mis Parejas
+          </a>
+        </div>
+
+        {% elif already_submitted %}
+        <!-- COMPLETADO -->
+        <div class="pz-done">
+          <div class="pz-done-burst">
+            {% if my_sub.status == 'approved' %}🌟{% elif my_sub.status == 'reviewed' %}⭐{% else %}🎉{% endif %}
+          </div>
+          <div class="pz-done-title">
+            {% if my_sub.status == 'approved' %}¡Tu rompecabezas fue aprobado!
+            {% elif my_sub.status == 'reviewed' %}¡Tu profe ya lo revisó!
+            {% else %}¡Tu mitad fue enviada!{% endif %}
+          </div>
+          {% if my_sub.stars_awarded %}
+          <div class="pz-done-stars">
+            <i class="bi bi-star-fill"></i> +{{ my_sub.stars_awarded }} estrellas
+          </div>
+          {% endif %}
+          {% if my_sub.teacher_feedback %}
+          <div class="pz-feedback">
+            <div class="pz-feedback-label">Comentario de tu profe</div>
+            <div class="pz-feedback-text">"{{ my_sub.teacher_feedback }}"</div>
+          </div>
+          {% endif %}
+          <a href="{% url 'student_coop_list' %}" class="pz-back-btn">
+            <i class="bi bi-arrow-left"></i> Volver a Mis Parejas
+          </a>
+        </div>
+
+        {% elif can_work %}
+        <!-- ARMAR ROMPECABEZAS -->
+        <div class="pz-mission">
+          <div class="pz-mission-pill pz-mission-pill-{{ my_sub.step }}">
+            <i class="bi bi-{{ my_sub.step }}-circle-fill"></i> Tu misión
+          </div>
+          <div class="pz-mission-text">
+            {% if my_sub.step == 1 %}
+            Arrastra las piezas a la <strong>mitad izquierda</strong> del marco para armar tu parte del rompecabezas.
+            Cuando termines, <strong>{{ partner.first_name|default:partner.username }}</strong> hará la mitad derecha.
+            {% else %}
+            <strong>{{ partner.first_name|default:partner.username }}</strong> ya armó la mitad izquierda.
+            Arrastra las piezas a la <strong>mitad derecha</strong> para completar el rompecabezas juntos.
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="pz-stats">
+          <div class="pz-stat">
+            <i class="bi bi-check2-circle"></i>
+            <span id="statCorrect">0</span>/<span id="statTotal">{{ total_my_pieces }}</span>
+            <small>en su lugar</small>
+          </div>
+          <div class="pz-stat">
+            <i class="bi bi-arrows-move"></i>
+            <span id="statMoves">0</span>
+            <small>movimientos</small>
+          </div>
+        </div>
+
+        <!-- Marco del rompecabezas -->
+        <div class="pz-board-wrap">
+          <div class="pz-board" id="puzzleBoard"
+            data-rows="{{ coop.puzzle_rows }}"
+            data-cols="{{ coop.puzzle_cols }}"
+            data-step="{{ my_sub.step }}"
+            data-img="{{ coop.puzzle_image.image.url }}"
+            {% if partner_sub.drawing_data %}data-partner="{{ partner_sub.drawing_data }}"{% endif %}>
+            <!-- las celdas se generan por JS -->
+          </div>
+
+          <!-- Etiquetas de las dos mitades -->
+          <div class="pz-board-labels">
+            <div class="pz-board-label pz-board-label-l {% if my_sub.step == 1 %}pz-board-label-active{% endif %}">
+              <span class="pz-label-dot pz-label-dot-1"></span>
+              {{ coop.student1.first_name|default:coop.student1.username }}
+            </div>
+            <div class="pz-board-label pz-board-label-r {% if my_sub.step == 2 %}pz-board-label-active{% endif %}">
+              <span class="pz-label-dot pz-label-dot-2"></span>
+              {{ coop.student2.first_name|default:coop.student2.username }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Bandeja de piezas -->
+        <div class="pz-tray-wrap">
+          <div class="pz-tray-title">
+            <i class="bi bi-grid-3x3-gap-fill"></i>
+            Tus piezas <span class="pz-tray-hint">Arrastra cada una a su lugar</span>
+          </div>
+          <div class="pz-tray" id="puzzleTray"></div>
+        </div>
+
+        <!-- Submit -->
+        <form id="puzzleForm" method="post" action="{% url 'student_coop_work' coop.pk %}">
+          {% csrf_token %}
+          <input type="hidden" name="drawing_data" id="drawingDataInput">
+          <button type="button" onclick="submitPuzzle()" class="pz-submit" id="submitBtn" disabled>
+            <span class="pz-submit-inner">
+              {% if my_sub.step == 1 %}
+              🚀 Enviar mi mitad a {{ partner.first_name|default:partner.username }}
+              {% else %}
+              ✨ ¡Terminar el rompecabezas juntos!
+              {% endif %}
+            </span>
+            <span class="pz-submit-shine"></span>
+          </button>
+          <p class="pz-submit-hint" id="submitHint">Coloca todas las piezas en su lugar para enviar.</p>
+        </form>
+
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- WIN overlay -->
+<div class="pz-win" id="pzWin">
+  <div class="pz-win-box">
+    <div class="pz-win-burst">🎉</div>
+    <div class="pz-win-title">¡Excelente!</div>
+    <div class="pz-win-sub">Armaste tu mitad del rompecabezas</div>
+    <button onclick="document.getElementById('pzWin').classList.remove('show')" class="pz-win-btn">
+      Continuar
+    </button>
+  </div>
+</div>
+
+<style>
+  .pz-coop-wrap { max-width: 980px; margin: 0 auto; padding: 1rem 1.25rem 3rem; }
+
+  /* HEADER */
+  .pz-coop-header {
+    position: relative;
+    background:
+      radial-gradient(circle at 20% 0%, rgba(124,58,237,.08), transparent 60%),
+      radial-gradient(circle at 80% 100%, rgba(13,148,136,.08), transparent 60%),
+      linear-gradient(180deg, #FDFCFB, #F6F4F1);
+    border: 1.5px solid #E8E2D8;
+    border-radius: 24px;
+    padding: 1.6rem 1.5rem 1.4rem;
+    margin-bottom: 1.25rem;
+    box-shadow: 0 2px 16px rgba(60,40,20,.06);
+    overflow: hidden;
+  }
+  .pz-coop-tape {
+    position: absolute; width: 90px; height: 22px; top: -10px;
+    background: repeating-linear-gradient(45deg, #FCD34D, #FCD34D 6px, #FBBF24 6px, #FBBF24 12px);
+    opacity: .85; box-shadow: 0 2px 4px rgba(0,0,0,.1);
+  }
+  .pz-coop-tape-l { left: 22px; transform: rotate(-7deg); }
+  .pz-coop-tape-r { right: 22px; transform: rotate(8deg); background: repeating-linear-gradient(45deg, #C7D2FE, #C7D2FE 6px, #A5B4FC 6px, #A5B4FC 12px); }
+  .pz-coop-pill {
+    display: inline-flex; align-items: center; gap: .4rem;
+    background: linear-gradient(135deg, #4F46E5, #7C3AED);
+    color: #fff; padding: .35rem .85rem; border-radius: 99px;
+    font-family: 'Outfit', sans-serif; font-size: .72rem; font-weight: 800;
+    letter-spacing: .08em; text-transform: uppercase; margin-bottom: .65rem;
+    box-shadow: 0 4px 12px rgba(79,70,229,.3);
+  }
+  .pz-coop-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: clamp(1.5rem, 3vw, 2.1rem);
+    font-weight: 800; color: #1E1B4B;
+    margin: 0 0 1rem; line-height: 1.15; letter-spacing: -.01em;
+  }
+  .pz-coop-duo {
+    display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 1rem; padding-top: .5rem;
+  }
+  .pz-coop-side {
+    display: flex; flex-direction: column; align-items: center; text-align: center;
+    padding: .8rem .65rem; border-radius: 16px; transition: all .3s ease; position: relative;
+  }
+  .pz-coop-me {
+    background: linear-gradient(180deg, rgba(255,255,255,.9), rgba(255,255,255,.5));
+    box-shadow: 0 4px 16px rgba(0,0,0,.08), 0 0 0 2px var(--me-c, #4F46E5);
+    transform: translateY(-3px);
+  }
+  .pz-coop-side:has(.pz-coop-avatar-1).pz-coop-me { --me-c: #4F46E5; }
+  .pz-coop-side:has(.pz-coop-avatar-2).pz-coop-me { --me-c: #0D9488; }
+  .pz-coop-avatar {
+    width: 54px; height: 54px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Playfair Display', serif; font-size: 1.25rem; font-weight: 800;
+    color: #fff; margin-bottom: .4rem;
+    box-shadow: 0 6px 16px rgba(0,0,0,.18), inset 0 -3px 6px rgba(0,0,0,.15);
+    border: 3px solid #fff;
+  }
+  .pz-coop-avatar-1 { background: linear-gradient(135deg, #6366F1, #4F46E5); }
+  .pz-coop-avatar-2 { background: linear-gradient(135deg, #14B8A6, #0D9488); }
+  .pz-coop-name { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: .9rem; color: #1E293B; }
+  .pz-coop-role { font-size: .68rem; color: #94A3B8; margin-top: .1rem; font-weight: 500; }
+  .pz-coop-you {
+    margin-top: .35rem; font-size: .62rem; font-weight: 800; color: #fff;
+    background: var(--me-c, #4F46E5); padding: .15rem .55rem; border-radius: 99px;
+    letter-spacing: .1em;
+  }
+  .pz-coop-bridge { display: flex; justify-content: center; }
+  .pz-coop-plus {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: linear-gradient(135deg, #4F46E5, #0D9488);
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    font-size: 1.15rem; font-weight: 800; font-family: 'Playfair Display', serif;
+    box-shadow: 0 4px 12px rgba(99,102,241,.4);
+  }
+
+  /* MISSION */
+  .pz-mission {
+    background: #fff; border: 1.5px solid #E8E2D8;
+    border-left: 4px solid var(--mc, #4F46E5);
+    border-radius: 14px; padding: .95rem 1.1rem;
+    margin-bottom: 1rem;
+    display: flex; align-items: flex-start; gap: 1rem; flex-wrap: wrap;
+  }
+  .pz-mission:has(.pz-mission-pill-2) { --mc: #0D9488; }
+  .pz-mission-pill {
+    display: inline-flex; align-items: center; gap: .35rem;
+    background: var(--mb, #EEF2FF); color: var(--mc, #4F46E5);
+    padding: .35rem .75rem; border-radius: 99px;
+    font-family: 'Outfit', sans-serif; font-size: .72rem; font-weight: 800;
+    text-transform: uppercase; letter-spacing: .05em;
+    flex-shrink: 0; white-space: nowrap;
+  }
+  .pz-mission-pill-1 { --mb: #EEF2FF; --mc: #4F46E5; }
+  .pz-mission-pill-2 { --mb: #F0FDFA; --mc: #0D9488; }
+  .pz-mission-text {
+    font-family: 'Outfit', sans-serif; font-size: .9rem; color: #334155;
+    line-height: 1.6; flex: 1; min-width: 200px;
+  }
+  .pz-mission-text strong { color: #1E1B4B; font-weight: 700; }
+
+  /* STATS */
+  .pz-stats {
+    display: flex; gap: .75rem; margin-bottom: .85rem;
+  }
+  .pz-stat {
+    flex: 1; display: flex; align-items: center; gap: .5rem;
+    background: #fff; border: 1.5px solid #E8E2D8;
+    border-radius: 12px; padding: .65rem .85rem;
+    font-family: 'Outfit', sans-serif;
+  }
+  .pz-stat i { color: #4F46E5; font-size: 1.15rem; }
+  .pz-stat span { font-weight: 800; color: #1E1B4B; font-size: 1.05rem; }
+  .pz-stat small { color: #94A3B8; font-size: .7rem; font-weight: 600; }
+
+  /* BOARD */
+  .pz-board-wrap { position: relative; margin-bottom: 1.25rem; }
+  .pz-board {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 800 / 420;
+    background: #FFFEFB;
+    border-radius: 16px;
+    box-shadow: 0 0 0 1.5px #E8E2D8, 0 12px 32px rgba(60,40,20,.12);
+    display: grid;
+    overflow: hidden;
+  }
+  .pz-cell {
+    position: relative;
+    background:
+      repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(0,0,0,.025) 8px, rgba(0,0,0,.025) 16px);
+    border: 1px dashed rgba(0,0,0,.08);
+    transition: background .2s ease;
+  }
+  .pz-cell-mine {
+    background: linear-gradient(135deg, rgba(99,102,241,.06), rgba(99,102,241,.02));
+    border-color: rgba(99,102,241,.2);
+  }
+  .pz-cell-mine.pz-step-2 {
+    background: linear-gradient(135deg, rgba(20,184,166,.06), rgba(20,184,166,.02));
+    border-color: rgba(20,184,166,.2);
+  }
+  .pz-cell-mine.pz-cell-hover {
+    background: linear-gradient(135deg, rgba(99,102,241,.18), rgba(99,102,241,.1));
+    border-color: #4F46E5;
+  }
+  .pz-cell-mine.pz-step-2.pz-cell-hover {
+    background: linear-gradient(135deg, rgba(20,184,166,.18), rgba(20,184,166,.1));
+    border-color: #0D9488;
+  }
+  .pz-cell-partner-img {
+    width: 100%; height: 100%; display: block;
+    object-fit: cover; object-position: var(--obj-pos, center);
+  }
+  .pz-cell-placed { background: none; border: none; }
+  .pz-cell-placed img {
+    width: 100%; height: 100%; display: block;
+    pointer-events: none;
+  }
+
+  .pz-board-labels {
+    position: absolute; top: 0; left: 0; right: 0;
+    display: flex; justify-content: space-between;
+    padding: .55rem .75rem;
+    pointer-events: none;
+  }
+  .pz-board-label {
+    background: rgba(255,255,255,.95);
+    backdrop-filter: blur(6px);
+    border: 1.5px solid #E8E2D8;
+    border-radius: 99px;
+    padding: .25rem .65rem;
+    font-family: 'Outfit', sans-serif;
+    font-size: .7rem; font-weight: 700;
+    color: #475569;
+    display: inline-flex; align-items: center; gap: .35rem;
+  }
+  .pz-board-label-active { border-color: var(--lc, #4F46E5); color: var(--lc, #4F46E5); }
+  .pz-board-label-l.pz-board-label-active { --lc: #4F46E5; }
+  .pz-board-label-r.pz-board-label-active { --lc: #0D9488; }
+  .pz-label-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .pz-label-dot-1 { background: linear-gradient(135deg, #6366F1, #4F46E5); }
+  .pz-label-dot-2 { background: linear-gradient(135deg, #14B8A6, #0D9488); }
+
+  /* SEAM */
+  .pz-board::after {
+    content: '';
+    position: absolute;
+    top: 0; bottom: 0; left: 50%;
+    width: 2px;
+    background: repeating-linear-gradient(180deg, transparent, transparent 6px, rgba(99,102,241,.35) 6px, rgba(99,102,241,.35) 12px);
+    transform: translateX(-50%);
+    pointer-events: none;
+    z-index: 3;
+  }
+
+  /* TRAY */
+  .pz-tray-wrap {
+    background: #fff;
+    border: 1.5px solid #E8E2D8;
+    border-radius: 16px;
+    padding: 1rem;
+    margin-bottom: 1.25rem;
+    box-shadow: 0 2px 8px rgba(60,40,20,.04);
+  }
+  .pz-tray-title {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800; font-size: .85rem;
+    color: #1E1B4B;
+    margin-bottom: .85rem;
+    display: flex; align-items: center; gap: .45rem;
+  }
+  .pz-tray-hint {
+    margin-left: auto;
+    font-weight: 500;
+    font-size: .75rem;
+    color: #94A3B8;
+  }
+  .pz-tray {
+    display: flex; flex-wrap: wrap; gap: .75rem;
+    min-height: 80px;
+    padding: .75rem;
+    background: linear-gradient(135deg, #FAFAF7, #F5F5F0);
+    border-radius: 10px;
+    align-items: center;
+    justify-content: center;
+  }
+  .pz-piece {
+    cursor: grab;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,.15), 0 1px 3px rgba(0,0,0,.1);
+    border: 2px solid #fff;
+    transition: transform .15s ease, box-shadow .15s ease;
+    user-select: none;
+    -webkit-user-drag: element;
+    touch-action: none;
+    position: relative;
+  }
+  .pz-piece:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 8px 20px rgba(0,0,0,.2);
+  }
+  .pz-piece:active, .pz-piece.dragging {
+    cursor: grabbing;
+    transform: scale(1.08) rotate(-2deg);
+    box-shadow: 0 12px 28px rgba(0,0,0,.3);
+    z-index: 100;
+  }
+  .pz-piece img {
+    display: block;
+    pointer-events: none;
+  }
+
+  /* SUBMIT */
+  .pz-submit {
+    position: relative;
+    width: 100%; margin-top: 1rem;
+    padding: 1.1rem 1.5rem;
+    background: linear-gradient(135deg, #1E1B4B 0%, #4F46E5 50%, #0D9488 100%);
+    color: #fff; border: none; border-radius: 18px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.05rem; font-weight: 800;
+    cursor: pointer; overflow: hidden;
+    box-shadow: 0 12px 28px rgba(79,70,229,.4), 0 4px 8px rgba(0,0,0,.1);
+    letter-spacing: .01em;
+    transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+  }
+  .pz-submit:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+    transform: none;
+  }
+  .pz-submit:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 36px rgba(79,70,229,.5);
+  }
+  .pz-submit-inner { position: relative; z-index: 2; }
+  .pz-submit-shine {
+    position: absolute; top: 0; left: -75%; width: 50%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.4), transparent);
+    transform: skewX(-20deg);
+    animation: pzShine 3s ease-in-out infinite;
+  }
+  .pz-submit-hint {
+    text-align: center;
+    font-size: .8rem; color: #94A3B8;
+    font-family: 'Outfit', sans-serif;
+    margin-top: .5rem;
+  }
+
+  /* WAIT */
+  .pz-wait, .pz-done {
+    text-align: center;
+    background: #fff;
+    border: 1.5px solid #E8E2D8;
+    border-radius: 18px;
+    padding: 2.5rem 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 12px rgba(60,40,20,.05);
+  }
+  .pz-wait-icon { font-size: 4.5rem; margin-bottom: .85rem; animation: pzPulse 2s ease-in-out infinite; }
+  .pz-wait-title, .pz-done-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.45rem; font-weight: 800;
+    color: #1E1B4B; margin-bottom: .55rem;
+  }
+  .pz-wait-sub {
+    font-family: 'Outfit', sans-serif;
+    font-size: .92rem; color: #64748B;
+    line-height: 1.65; max-width: 460px; margin: 0 auto 1.5rem;
+  }
+  .pz-done-burst { font-size: 4.5rem; margin-bottom: .5rem; }
+  .pz-done-stars {
+    display: inline-flex; align-items: center; gap: .35rem;
+    background: linear-gradient(135deg, #FBBF24, #F59E0B);
+    color: #fff; padding: .5rem .9rem; border-radius: 99px;
+    font-family: 'Outfit', sans-serif; font-weight: 800;
+    margin-bottom: 1.25rem;
+    box-shadow: 0 6px 16px rgba(245,158,11,.4);
+  }
+  .pz-feedback {
+    background: #F8FAFC; border: 1.5px solid #E2E8F0;
+    border-radius: 14px; padding: .85rem 1.1rem;
+    max-width: 460px; margin: 0 auto 1.5rem;
+    text-align: left;
+  }
+  .pz-feedback-label {
+    font-family: 'Outfit', sans-serif;
+    font-size: .68rem; font-weight: 800; color: #94A3B8;
+    text-transform: uppercase; letter-spacing: .08em;
+    margin-bottom: .3rem;
+  }
+  .pz-feedback-text {
+    font-family: 'Outfit', sans-serif;
+    font-size: .88rem; color: #334155;
+    line-height: 1.55; font-style: italic;
+  }
+  .pz-back-btn {
+    display: inline-flex; align-items: center; gap: .4rem;
+    padding: .65rem 1.25rem; background: #fff;
+    border: 1.5px solid #E2E8F0; border-radius: 10px;
+    font-family: 'Outfit', sans-serif;
+    font-size: .88rem; font-weight: 600; color: #475569;
+    text-decoration: none; transition: all .15s ease;
+  }
+  .pz-back-btn:hover { border-color: #4F46E5; color: #4F46E5; }
+
+  /* WIN OVERLAY */
+  .pz-win {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.55);
+    backdrop-filter: blur(6px);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 9999;
+    opacity: 0; pointer-events: none; transition: opacity .3s ease;
+  }
+  .pz-win.show { opacity: 1; pointer-events: all; }
+  .pz-win-box {
+    background: #fff; border-radius: 24px;
+    padding: 2.5rem 2rem; text-align: center;
+    max-width: 360px; width: 90%;
+    box-shadow: 0 20px 60px rgba(0,0,0,.3);
+    transform: scale(.85); transition: transform .3s ease;
+  }
+  .pz-win.show .pz-win-box { transform: scale(1); }
+  .pz-win-burst { font-size: 3.5rem; margin-bottom: .5rem; }
+  .pz-win-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem; color: #1E1B4B;
+    margin-bottom: .3rem; font-weight: 800;
+  }
+  .pz-win-sub {
+    font-family: 'Outfit', sans-serif;
+    font-size: .95rem; color: #64748B;
+    margin-bottom: 1.25rem;
+  }
+  .pz-win-btn {
+    padding: .7rem 1.5rem;
+    background: linear-gradient(135deg, #4F46E5, #0D9488);
+    color: #fff; border: none; border-radius: 12px;
+    font-family: 'Outfit', sans-serif;
+    font-size: .92rem; font-weight: 700; cursor: pointer;
+    box-shadow: 0 6px 14px rgba(79,70,229,.35);
+  }
+
+  /* ANIMATIONS */
+  @keyframes pzShine { 0%, 100% { left: -75%; } 50% { left: 125%; } }
+  @keyframes pzPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+  @keyframes pzBounce { 0% { transform: scale(0); } 60% { transform: scale(1.2); } 100% { transform: scale(1); } }
+  .pz-piece-placed { animation: pzBounce .35s cubic-bezier(.5,1.5,.5,1); }
+
+  @keyframes pzShake {
+    0%, 100% { transform: translateX(0) scale(1); }
+    20% { transform: translateX(-5px) scale(1.02); }
+    40% { transform: translateX(5px) scale(1.02); }
+    60% { transform: translateX(-3px) scale(1.02); }
+    80% { transform: translateX(3px) scale(1.02); }
+  }
+  .pz-piece-bounce { animation: pzShake .3s ease-in-out; }
+
+  /* DARK MODE */
+  body.student-dark .pz-coop-header {
+    background:
+      radial-gradient(circle at 20% 0%, rgba(124,58,237,.18), transparent 60%),
+      radial-gradient(circle at 80% 100%, rgba(20,184,166,.18), transparent 60%),
+      linear-gradient(180deg, #1A1830, #14132A);
+    border-color: #2D2A4A;
+  }
+  body.student-dark .pz-coop-title { color: #F1EEFF; }
+  body.student-dark .pz-coop-name { color: #F1EEFF; }
+  body.student-dark .pz-coop-role { color: #8B86B0; }
+  body.student-dark .pz-mission, body.student-dark .pz-tray-wrap, body.student-dark .pz-stat, body.student-dark .pz-wait, body.student-dark .pz-done, body.student-dark .pz-feedback {
+    background: #1A1830;
+    border-color: #2D2A4A;
+  }
+  body.student-dark .pz-mission-text { color: #C7C2E6; }
+  body.student-dark .pz-mission-text strong { color: #F1EEFF; }
+  body.student-dark .pz-mission-pill-1 { background: rgba(99,102,241,.18); color: #A5B4FC; }
+  body.student-dark .pz-mission-pill-2 { background: rgba(20,184,166,.18); color: #5EEAD4; }
+  body.student-dark .pz-stat span { color: #F1EEFF; }
+  body.student-dark .pz-stat i { color: #A5B4FC; }
+  body.student-dark .pz-tray-title { color: #F1EEFF; }
+  body.student-dark .pz-tray { background: linear-gradient(135deg, #14132A, #1A1830); }
+  body.student-dark .pz-board {
+    box-shadow: 0 0 0 1.5px #2D2A4A, 0 12px 32px rgba(0,0,0,.5);
+  }
+  body.student-dark .pz-board-label {
+    background: rgba(26,24,48,.95);
+    border-color: #2D2A4A;
+    color: #C7C2E6;
+  }
+  body.student-dark .pz-wait-title, body.student-dark .pz-done-title { color: #F1EEFF; }
+  body.student-dark .pz-wait-sub { color: #C7C2E6; }
+  body.student-dark .pz-feedback { background: #14132A; }
+  body.student-dark .pz-feedback-text { color: #C7C2E6; }
+  body.student-dark .pz-back-btn { background: #14132A; border-color: #2D2A4A; color: #C7C2E6; }
+  body.student-dark .pz-back-btn:hover { border-color: #818CF8; color: #A5B4FC; }
+  body.student-dark .pz-win-box { background: #1A1830; }
+  body.student-dark .pz-win-title { color: #F1EEFF; }
+  body.student-dark .pz-win-sub { color: #C7C2E6; }
+
+  /* RESPONSIVE */
+  @media (max-width: 720px) {
+    .pz-coop-wrap { padding: .75rem .5rem 2rem; }
+    .pz-coop-header { padding: 1.25rem 1rem 1rem; }
+    .pz-coop-avatar { width: 44px; height: 44px; font-size: 1rem; }
+    .pz-coop-plus { width: 28px; height: 28px; font-size: 1rem; }
+    .pz-stats { flex-direction: column; gap: .5rem; }
+    .pz-submit { font-size: .9rem; padding: .9rem 1rem; }
+  }
+</style>
+
+<script>
+{% if can_work %}
+(function() {
+  const board = document.getElementById('puzzleBoard');
+  const tray  = document.getElementById('puzzleTray');
+  const ROWS  = parseInt(board.dataset.rows);
+  const COLS  = parseInt(board.dataset.cols);
+  const STEP  = parseInt(board.dataset.step);
+  const IMG_URL = board.dataset.img;
+  const PARTNER_URL = board.dataset.partner || null;
+
+  // Mi zona: step 1 → cols 0..COLS/2-1; step 2 → cols COLS/2..COLS-1
+  const HALF = COLS / 2;
+  const MY_COL_START = (STEP === 1) ? 0    : HALF;
+  const MY_COL_END   = (STEP === 1) ? HALF : COLS;
+
+  const totalMyPieces = ROWS * HALF;
+  document.getElementById('statTotal').textContent = totalMyPieces;
+
+  let movesCount = 0;
+  let placedCount = 0;
+  const placedMap = {};   // { "row-col": true } para mi mitad
+
+  // Construir grid del board
+  board.style.gridTemplateRows    = `repeat(${ROWS}, 1fr)`;
+  board.style.gridTemplateColumns = `repeat(${COLS}, 1fr)`;
+
+  // Crear celdas
+  const cells = [];
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'pz-cell';
+      cell.dataset.row = r;
+      cell.dataset.col = c;
+      const isMine = (c >= MY_COL_START && c < MY_COL_END);
+      const isPartnerSide = !isMine;
+
+      if (isMine) {
+        cell.classList.add('pz-cell-mine');
+        if (STEP === 2) cell.classList.add('pz-step-2');
+      }
+
+      // Si es la zona del partner y ya hay imagen del partner → mostrar como completa
+      if (isPartnerSide && PARTNER_URL && STEP === 2) {
+        // El partner ya completó su mitad. Mostrar su imagen como composición
+        // (su drawing_data es la mitad izquierda completa renderizada)
+        // Lo manejamos abajo con un único overlay
+      }
+
+      board.appendChild(cell);
+      cells.push(cell);
+    }
+  }
+
+  // ─── Cargar imagen base y generar piezas ────────────────
+  const baseImg = new Image();
+  baseImg.crossOrigin = 'anonymous';
+  baseImg.onload = function() {
+    // Crear un canvas para recortar piezas
+    const W = 800, H = 420;
+    const off = document.createElement('canvas');
+    off.width  = W;
+    off.height = H;
+    const octx = off.getContext('2d');
+    // Dibujar la imagen completa cubriendo el board
+    octx.fillStyle = '#FFFEFB';
+    octx.fillRect(0, 0, W, H);
+    const ratio = Math.max(W / baseImg.width, H / baseImg.height);
+    const w = baseImg.width * ratio;
+    const h = baseImg.height * ratio;
+    const x = (W - w) / 2;
+    const y = (H - h) / 2;
+    octx.drawImage(baseImg, x, y, w, h);
+
+    // Si es step 2 y hay partner_sub, pintar su mitad izquierda como ya colocada
+    if (STEP === 2 && PARTNER_URL) {
+      drawPartnerHalf();
+    }
+
+    // Generar piezas de mi mitad (solo mis columnas)
+    const pieceW = W / COLS;
+    const pieceH = H / ROWS;
+    const myPieces = [];
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = MY_COL_START; c < MY_COL_END; c++) {
+        const piece = document.createElement('canvas');
+        piece.width  = pieceW;
+        piece.height = pieceH;
+        const pctx = piece.getContext('2d');
+        pctx.drawImage(off, c * pieceW, r * pieceH, pieceW, pieceH, 0, 0, pieceW, pieceH);
+
+        const dataURL = piece.toDataURL('image/png');
+        myPieces.push({ row: r, col: c, src: dataURL });
+      }
+    }
+    // Shuffle
+    myPieces.sort(() => Math.random() - .5);
+
+    // Render piezas en tray
+    myPieces.forEach(p => {
+      const el = document.createElement('div');
+      el.className = 'pz-piece';
+      el.dataset.row = p.row;
+      el.dataset.col = p.col;
+      el.dataset.src = p.src;
+      el.style.width  = (pieceW * 0.65) + 'px';
+      el.style.height = (pieceH * 0.65) + 'px';
+      const im = document.createElement('img');
+      im.src = p.src;
+      im.style.width = '100%';
+      im.style.height = '100%';
+      el.appendChild(im);
+      tray.appendChild(el);
+      makeDraggable(el);
+    });
+  };
+  baseImg.onerror = function() {
+    tray.innerHTML = '<div style="color:#EF4444;font-size:.9rem;padding:1rem;">No se pudo cargar la imagen del rompecabezas.</div>';
+  };
+  baseImg.src = IMG_URL;
+
+  // ─── Dibujar mitad del partner ya completa (step 2) ─────
+  function drawPartnerHalf() {
+    if (!PARTNER_URL) return;
+    const partnerImg = new Image();
+    partnerImg.onload = function() {
+      // partner_sub.drawing_data ya es la mitad izquierda completa (400x420)
+      // La aplicamos como overlay sobre las celdas izquierdas
+      const halfCells = cells.filter(c =>
+        parseInt(c.dataset.col) < HALF
+      );
+      // Crear un canvas a escala correcta
+      const W = 800, H = 420;
+      const off = document.createElement('canvas');
+      off.width = W / 2;
+      off.height = H;
+      const octx = off.getContext('2d');
+      octx.drawImage(partnerImg, 0, 0, W/2, H);
+
+      const pieceW = (W/2) / HALF;
+      const pieceH = H / ROWS;
+      halfCells.forEach(cell => {
+        const r = parseInt(cell.dataset.row);
+        const c = parseInt(cell.dataset.col);
+        const small = document.createElement('canvas');
+        small.width  = pieceW;
+        small.height = pieceH;
+        small.getContext('2d').drawImage(off, c * pieceW, r * pieceH, pieceW, pieceH, 0, 0, pieceW, pieceH);
+        const im = document.createElement('img');
+        im.src = small.toDataURL('image/png');
+        im.style.width = '100%';
+        im.style.height = '100%';
+        im.style.display = 'block';
+        cell.classList.add('pz-cell-placed');
+        cell.appendChild(im);
+      });
+    };
+    partnerImg.src = PARTNER_URL;
+  }
+
+  // ─── Drag & Drop (mouse + touch) ────────────────────────
+  let dragging = null;
+  let ghostEl = null;
+  let dragOffset = { x: 0, y: 0 };
+
+  function makeDraggable(el) {
+    el.addEventListener('mousedown', startDrag);
+    el.addEventListener('touchstart', startDrag, { passive: false });
+  }
+
+  function startDrag(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    const el = e.currentTarget;
+    if (el.classList.contains('placed')) return;
+    dragging = el;
+    el.classList.add('dragging');
+
+    const rect = el.getBoundingClientRect();
+    const src  = e.touches ? e.touches[0] : e;
+    dragOffset.x = src.clientX - rect.left;
+    dragOffset.y = src.clientY - rect.top;
+
+    // Crear ghost flotante
+    ghostEl = el.cloneNode(true);
+    ghostEl.style.position = 'fixed';
+    ghostEl.style.left = (src.clientX - dragOffset.x) + 'px';
+    ghostEl.style.top  = (src.clientY - dragOffset.y) + 'px';
+    ghostEl.style.width  = rect.width + 'px';
+    ghostEl.style.height = rect.height + 'px';
+    ghostEl.style.pointerEvents = 'none';
+    ghostEl.style.zIndex = '9999';
+    ghostEl.style.opacity = '.92';
+    ghostEl.style.margin = '0';
+    document.body.appendChild(ghostEl);
+    el.style.visibility = 'hidden';
+
+    document.addEventListener('mousemove', onDrag);
+    document.addEventListener('mouseup',   endDrag);
+    document.addEventListener('touchmove', onDrag, { passive: false });
+    document.addEventListener('touchend',  endDrag);
+    document.addEventListener('touchcancel', endDrag);
+  }
+
+  function onDrag(e) {
+    if (!dragging) return;
+    e.preventDefault();
+    const src = e.touches ? e.touches[0] : e;
+    ghostEl.style.left = (src.clientX - dragOffset.x) + 'px';
+    ghostEl.style.top  = (src.clientY - dragOffset.y) + 'px';
+
+    // Highlight cell bajo el centro de la pieza (no la esquina)
+    cells.forEach(c => c.classList.remove('pz-cell-hover'));
+    const centerX = src.clientX - dragOffset.x + (ghostEl.offsetWidth  / 2);
+    const centerY = src.clientY - dragOffset.y + (ghostEl.offsetHeight / 2);
+    const target = getCellAt(centerX, centerY);
+    if (target && target.classList.contains('pz-cell-mine') && !target.classList.contains('pz-cell-placed')) {
+      target.classList.add('pz-cell-hover');
+    }
+  }
+
+  function endDrag(e) {
+    if (!dragging) return;
+    const src = (e.changedTouches ? e.changedTouches[0] : e);
+    // Calcular el centro de la pieza arrastrada
+    const centerX = src.clientX - dragOffset.x + (ghostEl.offsetWidth  / 2);
+    const centerY = src.clientY - dragOffset.y + (ghostEl.offsetHeight / 2);
+    const target = getCellAt(centerX, centerY);
+    cells.forEach(c => c.classList.remove('pz-cell-hover'));
+
+    movesCount++;
+    document.getElementById('statMoves').textContent = movesCount;
+
+    let placed = false;
+    if (target && target.classList.contains('pz-cell-mine') && !target.classList.contains('pz-cell-placed')) {
+      const targetRow = parseInt(target.dataset.row);
+      const targetCol = parseInt(target.dataset.col);
+      const pieceRow  = parseInt(dragging.dataset.row);
+      const pieceCol  = parseInt(dragging.dataset.col);
+
+      if (targetRow === pieceRow && targetCol === pieceCol) {
+        // ✓ Posición correcta
+        const im = document.createElement('img');
+        im.src = dragging.dataset.src;
+        im.style.width = '100%';
+        im.style.height = '100%';
+        im.style.display = 'block';
+        target.classList.add('pz-cell-placed');
+        target.classList.add('pz-piece-placed');
+        target.innerHTML = '';
+        target.appendChild(im);
+        placedMap[`${targetRow}-${targetCol}`] = true;
+        placedCount++;
+        document.getElementById('statCorrect').textContent = placedCount;
+        dragging.remove();
+        placed = true;
+        // Pequeño flash visual de éxito
+        flashCell(target, '#10B981');
+        checkComplete();
+      } else {
+        // ✗ Celda incorrecta - feedback negativo
+        flashCell(target, '#EF4444');
+      }
+    }
+
+    // Limpiar ghost y restaurar pieza si no se colocó
+    if (ghostEl) ghostEl.remove();
+    ghostEl = null;
+    if (dragging && !placed) {
+      dragging.classList.remove('dragging');
+      dragging.style.visibility = '';
+      dragging.style.opacity = '';
+      // Animación de rebote
+      dragging.classList.add('pz-piece-bounce');
+      setTimeout(() => { if (dragging) dragging.classList.remove('pz-piece-bounce'); }, 300);
+    }
+    dragging = null;
+    document.removeEventListener('mousemove', onDrag);
+    document.removeEventListener('mouseup',   endDrag);
+    document.removeEventListener('touchmove', onDrag);
+    document.removeEventListener('touchend',  endDrag);
+    document.removeEventListener('touchcancel', endDrag);
+  }
+
+  function flashCell(cell, color) {
+    const orig = cell.style.boxShadow;
+    cell.style.boxShadow = `inset 0 0 0 3px ${color}`;
+    cell.style.transition = 'box-shadow .2s ease';
+    setTimeout(() => { cell.style.boxShadow = orig; }, 350);
+  }
+
+  // ─── Cálculo geométrico de la celda bajo (x,y) ──────────
+  // Mucho más confiable que elementFromPoint cuando hay ghost flotante
+  function getCellAt(x, y) {
+    const rect = board.getBoundingClientRect();
+    if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) return null;
+    const relX = x - rect.left;
+    const relY = y - rect.top;
+    const cellW = rect.width  / COLS;
+    const cellH = rect.height / ROWS;
+    const col = Math.floor(relX / cellW);
+    const row = Math.floor(relY / cellH);
+    if (col < 0 || col >= COLS || row < 0 || row >= ROWS) return null;
+    return cells.find(c => parseInt(c.dataset.row) === row && parseInt(c.dataset.col) === col);
+  }
+
+  // ─── Verificar completitud + submit ────────────────────
+  function checkComplete() {
+    if (placedCount >= totalMyPieces) {
+      document.getElementById('submitBtn').disabled = false;
+      document.getElementById('submitHint').textContent = '¡Todas las piezas en su lugar! Ya puedes enviar 🎉';
+      document.getElementById('pzWin').classList.add('show');
+    }
+  }
+
+  // ─── Submit ─────────────────────────────────────────────
+  window.submitPuzzle = function() {
+    // Componer un canvas con SOLO mi mitad armada
+    const W = 800, H = 420;
+    const out = document.createElement('canvas');
+    out.width = W / 2;
+    out.height = H;
+    const octx = out.getContext('2d');
+    octx.fillStyle = '#FFFEFB';
+    octx.fillRect(0, 0, W/2, H);
+
+    const pieceW = W / COLS;
+    const pieceH = H / ROWS;
+
+    // Renderizar mi mitad
+    const promises = [];
+    cells.forEach(cell => {
+      const c = parseInt(cell.dataset.col);
+      const r = parseInt(cell.dataset.row);
+      if (c < MY_COL_START || c >= MY_COL_END) return;
+      const img = cell.querySelector('img');
+      if (!img) return;
+      const p = new Promise(resolve => {
+        if (img.complete) resolve(img);
+        else img.onload = () => resolve(img);
+      }).then(im => {
+        const dx = (c - MY_COL_START) * pieceW;
+        const dy = r * pieceH;
+        octx.drawImage(im, dx, dy, pieceW, pieceH);
+      });
+      promises.push(p);
+    });
+
+    Promise.all(promises).then(() => {
+      document.getElementById('drawingDataInput').value = out.toDataURL('image/png');
+      document.getElementById('puzzleForm').submit();
+    });
+  };
+})();
+{% endif %}
+
+// Layout
+(function () {
+  var d = document.getElementById('topbarDate');
+  if (d) d.textContent = new Date().toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' });
+
+  var pb = document.getElementById('sidebarProfileBtn'),
+      pd = document.getElementById('profileDropdown'),
+      pc = document.getElementById('profileChevron');
+  if (pb && pd) {
+    pb.addEventListener('click', function (e) { e.stopPropagation(); var o = pd.classList.toggle('open'); if(pc) pc.style.transform = o ? 'rotate(180deg)' : ''; });
+    document.addEventListener('click', function () { pd.classList.remove('open'); if(pc) pc.style.transform = ''; });
+  }
+
+  var t = document.getElementById('sidebarToggle'),
+      s = document.getElementById('studentSidebar'),
+      ov = document.getElementById('sidebarOverlay');
+  if (t && s && ov) {
+    t.addEventListener('click', function () { s.classList.toggle('open'); ov.classList.toggle('open'); });
+    ov.addEventListener('click', function () { s.classList.remove('open'); ov.classList.remove('open'); });
+  }
+
+  var dt = document.getElementById('darkModeToggle'),
+      di = document.getElementById('darkModeIcon');
+  function sd(on) { document.body.classList.toggle('student-dark', on); if (di) di.className = on ? 'bi bi-sun-fill' : 'bi bi-moon-fill'; }
+  sd(localStorage.getItem('student_dark') === '1');
+  if (dt) dt.addEventListener('click', function () { var on = !document.body.classList.contains('student-dark'); sd(on); localStorage.setItem('student_dark', on ? '1' : '0'); });
+})();
+</script>
+{% endblock %}

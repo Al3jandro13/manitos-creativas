@@ -164,18 +164,18 @@
       <div class="hi-cards-grid reveal delay-2">
         <div class="hi-card hi-card-purple">
           <div class="hi-card-icon"><i class="bi bi-palette-fill"></i></div>
-          <span class="hi-card-num" data-count="12">0</span>
+          <span class="hi-card-num" data-count="11">0</span>
           <span class="hi-card-label">Tipos de<br>actividades</span>
         </div>
         <div class="hi-card hi-card-pink">
           <div class="hi-card-icon"><i class="bi bi-controller"></i></div>
-          <span class="hi-card-num" data-count="8">0</span>
+          <span class="hi-card-num" data-count="11">0</span>
           <span class="hi-card-label">Juegos<br>educativos</span>
         </div>
         <div class="hi-card hi-card-yellow">
           <div class="hi-card-icon"><i class="bi bi-star-fill"></i></div>
-          <span class="hi-card-num" data-count="5">0</span>
-          <span class="hi-card-label">Dimensiones<br>de evaluación</span>
+          <span class="hi-card-num" data-count="2">0</span>
+          <span class="hi-card-label">Niveles<br>Transición A y B</span>
         </div>
         <div class="hi-card hi-card-teal">
           <div class="hi-card-icon"><i class="bi bi-heart-fill"></i></div>
@@ -219,9 +219,9 @@
         <p class="feature-desc">Los niños ganan estrellas y medallas por cada logro, manteniéndolos motivados y comprometidos.</p>
       </div>
       <div class="feature-card reveal delay-4" data-accent="green">
-        <div class="feature-icon-wrap feature-icon-green"><i class="bi bi-bar-chart-fill"></i></div>
-        <div class="feature-title">Reportes Semanales</div>
-        <p class="feature-desc">Los profesores registran notas y reportes detallados con 5 dimensiones de evaluación formativa.</p>
+        <div class="feature-icon-wrap feature-icon-green"><i class="bi bi-people-fill"></i></div>
+        <div class="feature-title">Gestión de Cursos</div>
+        <p class="feature-desc">Los profesores organizan sus estudiantes en cursos y hacen seguimiento del progreso individual.</p>
       </div>
       <div class="feature-card reveal delay-5" data-accent="blue">
         <div class="feature-icon-wrap feature-icon-blue"><i class="bi bi-universal-access"></i></div>
@@ -258,7 +258,6 @@
           <div class="activity-pill"><span class="activity-pill-icon"><i class="bi bi-brush-fill"></i></span><span>Colorear</span></div>
           <div class="activity-pill"><span class="activity-pill-icon"><i class="bi bi-circle-fill"></i></span><span>Puntillismo</span></div>
           <div class="activity-pill"><span class="activity-pill-icon"><i class="bi bi-pencil-fill"></i></span><span>Dibujo Libre</span></div>
-          <div class="activity-pill"><span class="activity-pill-icon"><i class="bi bi-image-fill"></i></span><span>Actividades Libres</span></div>
         </div>
       </div>
 
@@ -269,22 +268,22 @@
         </div>
         <div class="activity-cat-pills">
           <div class="activity-pill"><span class="activity-pill-icon"><i class="bi bi-puzzle-fill"></i></span><span>Rompecabezas</span></div>
-          <div class="activity-pill"><span class="activity-pill-icon"><i class="bi bi-book-open-fill"></i></span><span>Cuentos Interactivos</span></div>
-          <div class="activity-pill"><span class="activity-pill-icon"><i class="bi bi-123"></i></span><span>Números 1–100</span></div>
-          <div class="activity-pill"><span class="activity-pill-icon"><i class="bi bi-plus-lg"></i></span><span>Sumas y Restas</span></div>
+          <div class="activity-pill"><span class="activity-pill-icon"><i class="bi bi-book-open-fill"></i></span><span>Cuento Interactivo</span></div>
+          <div class="activity-pill"><span class="activity-pill-icon"><i class="bi bi-grid-3x3-gap-fill"></i></span><span>Sopa de Letras</span></div>
+          <div class="activity-pill"><span class="activity-pill-icon"><i class="bi bi-arrow-repeat"></i></span><span>Serpiente</span></div>
         </div>
       </div>
 
       <div class="activity-category reveal delay-3">
-        <div class="activity-cat-label activity-cat-lenguaje">
-          <i class="bi bi-chat-heart-fill"></i>
-          <span>Lenguaje</span>
+        <div class="activity-cat-label activity-cat-aprender">
+          <i class="bi bi-lightbulb-fill"></i>
+          <span>Aprender</span>
         </div>
         <div class="activity-cat-pills">
           <div class="activity-pill"><span class="activity-pill-icon"><i class="bi bi-alphabet-uppercase"></i></span><span>Consonantes</span></div>
-          <div class="activity-pill"><span class="activity-pill-icon"><i class="bi bi-hand-index-thumb-fill"></i></span><span>Lenguaje de Señas</span></div>
-          <div class="activity-pill"><span class="activity-pill-icon"><i class="bi bi-binoculars-fill"></i></span><span>Exploración Sensorial</span></div>
-          <div class="activity-pill activity-pill-more"><span class="activity-pill-icon"><i class="bi bi-stars"></i></span><span>¡Y mucho más!</span></div>
+          <div class="activity-pill"><span class="activity-pill-icon"><i class="bi bi-123"></i></span><span>Números 1–100</span></div>
+          <div class="activity-pill"><span class="activity-pill-icon"><i class="bi bi-plus-lg"></i></span><span>Sumas</span></div>
+          <div class="activity-pill"><span class="activity-pill-icon"><i class="bi bi-dash-lg"></i></span><span>Restas</span></div>
         </div>
       </div>
 
@@ -319,6 +318,17 @@
           {% elif entry.medal_type == 'rainbow' %}<i class="bi bi-palette-fill" style="color:#7C3AED;"></i>
           {% else %}<i class="bi bi-award-fill" style="color:#F59E0B;"></i>{% endif %}
         </span>
+        {% if entry.submission and entry.submission.drawing_data %}
+        <div style="width:100%;border-radius:10px;overflow:hidden;margin:.5rem 0;aspect-ratio:4/3;background:#f1f5f9;">
+          <img src="{{ entry.submission.drawing_data }}" alt="Dibujo de {{ entry.student.get_full_name }}"
+               style="width:100%;height:100%;object-fit:cover;display:block;">
+        </div>
+        {% elif entry.image %}
+        <div style="width:100%;border-radius:10px;overflow:hidden;margin:.5rem 0;aspect-ratio:4/3;background:#f1f5f9;">
+          <img src="{{ entry.image.url }}" alt="Imagen"
+               style="width:100%;height:100%;object-fit:cover;display:block;">
+        </div>
+        {% endif %}
         <div class="fame-student-name">
           {{ entry.student.get_full_name|default:entry.student.username }}
         </div>
@@ -377,16 +387,16 @@
         <span class="role-emoji"><i class="bi bi-person-workspace"></i></span>
         <h3 class="role-title">Soy Profesor/a</h3>
         <p class="role-desc">
-          Gestiona tu salón de forma creativa. Crea actividades, registra evaluaciones,
-          genera reportes semanales y celebra los logros de tus estudiantes.
+          Gestiona tu salón desde un solo lugar. Crea actividades, organiza cursos,
+          revisa entregas y celebra los logros de tus estudiantes.
         </p>
         <ul class="role-features">
-          <li>Dashboard con estadísticas en tiempo real</li>
-          <li>12 tipos de actividades configurables</li>
-          <li>Plantillas de notas (S/A/B/En Proceso)</li>
-          <li>Reportes semanales con 5 dimensiones</li>
-          <li>Tablero de fama y anuncios</li>
-          <li>Gestión de recursos didácticos</li>
+          <li>Dashboard con estadísticas del salón</li>
+          <li>Crea y asigna 11 tipos de actividades</li>
+          <li>Revisión de entregas con retroalimentación</li>
+          <li>Gestión de cursos y estudiantes</li>
+          <li>Tablero de Fama y anuncios al salón</li>
+          <li>Imágenes personalizadas para colorear y puzzles</li>
         </ul>
         <a href="{% url 'login' %}" class="btn-role btn-role-teacher">
           <i class="bi bi-box-arrow-in-right"></i> Ingresar como Profesor/a →
@@ -400,16 +410,16 @@
         <span class="role-emoji"><i class="bi bi-person-fill"></i></span>
         <h3 class="role-title">Mi hijo/a es Estudiante</h3>
         <p class="role-desc">
-          Crea la cuenta de tu pequeño/a y déjalo explorar un mundo lleno de juegos,
-          arte y aprendizaje diseñado especialmente para preescolar.
+          Registra a tu pequeño/a y déjalo explorar arte, juegos y aprendizaje
+          en un entorno diseñado para preescolar.
         </p>
         <ul class="role-features">
           <li>Panel colorido y fácil de usar</li>
-          <li>8 juegos educativos interactivos</li>
-          <li>Actividades asignadas por el profesor</li>
-          <li>Sistema de estrellas y medallas</li>
-          <li>Cuentos, dibujos y rompecabezas</li>
-          <li>Lenguaje de señas básico (LSC)</li>
+          <li>Actividades asignadas por el/la profesor/a</li>
+          <li>Colorear, puntillismo y dibujo libre</li>
+          <li>Rompecabezas, serpiente y sopa de letras</li>
+          <li>Números, consonantes, sumas y restas</li>
+          <li>Sistema de estrellas y Tablero de Fama</li>
         </ul>
         <a href="{% url 'register_student' %}" class="btn-role btn-role-student">
           <i class="bi bi-star-fill"></i> Registrar a mi hijo/a →

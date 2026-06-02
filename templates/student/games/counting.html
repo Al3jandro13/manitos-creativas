@@ -1,0 +1,332 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Contar Objetos — Manitos Creativas{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/student.css' %}">
+<style>
+  .cnt-page { max-width: 640px; margin: 0 auto; padding-bottom: 2rem; }
+
+  .cnt-title {
+    font-family: var(--font-display);
+    font-size: 2rem; color: #1E3A5F; margin: 0 0 1.25rem;
+  }
+
+  .cnt-stats {
+    display: flex; gap: .75rem; margin-bottom: 1.5rem;
+  }
+  .cnt-stat {
+    flex: 1; background: #fff; border: 2px solid #E2E8F0;
+    border-radius: 14px; padding: .65rem .75rem; text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,.04);
+  }
+  .cnt-stat-val {
+    display: block; font-family: var(--font-display);
+    font-size: 1.6rem; line-height: 1.1; color: #4F46E5;
+  }
+  .cnt-stat-lbl {
+    display: block; font-family: var(--font-accent);
+    font-size: .7rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .07em; color: #94A3B8; margin-top: .1rem;
+  }
+
+  /* Tarjeta de pregunta */
+  .cnt-card {
+    background: #fff; border: 2px solid #E2E8F0;
+    border-radius: 20px; padding: 1.5rem 1.25rem;
+    text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,.07);
+    margin-bottom: 1.5rem;
+  }
+  .cnt-question {
+    font-family: var(--font-accent); font-size: 1rem;
+    font-weight: 700; color: #64748B; margin-bottom: 1rem;
+    text-transform: uppercase; letter-spacing: .05em;
+  }
+  .cnt-objects {
+    display: flex; flex-wrap: wrap; gap: .5rem;
+    justify-content: center; margin-bottom: 1.5rem;
+    min-height: 80px; align-items: center;
+  }
+  .cnt-obj {
+    font-size: 2.5rem;
+    animation: popIn .3s ease backwards;
+  }
+  @keyframes popIn {
+    from { transform: scale(0); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+  }
+
+  /* Input de respuesta */
+  .cnt-answer-row {
+    display: flex; gap: .75rem; justify-content: center; align-items: center;
+  }
+  .cnt-input {
+    width: 90px; padding: .65rem .5rem;
+    border: 2.5px solid #C7D2FE; border-radius: 12px;
+    font-family: var(--font-display); font-size: 2rem;
+    text-align: center; color: #1E3A5F; outline: none;
+    transition: border-color .15s;
+  }
+  .cnt-input:focus { border-color: #4F46E5; }
+  .cnt-input.correct { border-color: #86EFAC; background: #F0FDF4; }
+  .cnt-input.wrong   { border-color: #FCA5A5; background: #FEF2F2; animation: shake .3s ease; }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25%      { transform: translateX(-6px); }
+    75%      { transform: translateX(6px); }
+  }
+  .cnt-btn {
+    padding: .65rem 1.4rem; border-radius: 12px;
+    background: #4F46E5; color: #fff; border: none;
+    font-family: var(--font-accent); font-size: .92rem; font-weight: 800;
+    cursor: pointer; transition: transform .1s, background .15s;
+  }
+  .cnt-btn:hover { background: #4338CA; transform: translateY(-1px); }
+  .cnt-btn:active { transform: translateY(0); }
+
+  /* Feedback */
+  .cnt-feedback {
+    height: 2rem; display: flex; align-items: center;
+    justify-content: center; font-family: var(--font-accent);
+    font-size: 1rem; font-weight: 800; margin-top: .75rem;
+    transition: opacity .2s;
+  }
+  .cnt-feedback.ok  { color: #16A34A; }
+  .cnt-feedback.bad { color: #DC2626; }
+
+  /* Botón guardar */
+  .cnt-save-row {
+    display: flex; justify-content: center; gap: .75rem;
+    flex-wrap: wrap; margin-top: 1rem;
+  }
+
+  /* Selección de dificultad */
+  .cnt-diff-row { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+  .cnt-diff-btn {
+    padding: .4rem .9rem; border-radius: 10px;
+    border: 2px solid #E2E8F0; background: #fff;
+    font-family: var(--font-accent); font-size: .8rem; font-weight: 700;
+    cursor: pointer; transition: all .15s; color: #475569;
+  }
+  .cnt-diff-btn:hover { border-color: #818CF8; color: #4F46E5; }
+  .cnt-diff-btn.active { background: #4F46E5; border-color: #4F46E5; color: #fff; }
+
+  /* Dark */
+  body.student-dark .cnt-title { color: #93C5FD; }
+  body.student-dark .cnt-stat { background: #0E1E30; border-color: rgba(255,255,255,.07); }
+  body.student-dark .cnt-stat-val { color: #60A5FA; }
+  body.student-dark .cnt-card { background: #0E1E30; border-color: rgba(255,255,255,.07); }
+  body.student-dark .cnt-question { color: #94A3B8; }
+  body.student-dark .cnt-input { background: #0A1726; border-color: rgba(99,102,241,.35); color: #F1F5F9; }
+  body.student-dark .cnt-input:focus { border-color: #818CF8; }
+  body.student-dark .cnt-diff-btn { background: #0A1726; border-color: rgba(255,255,255,.08); color: #CBD5E1; }
+  body.student-dark .cnt-diff-btn.active { background: #4F46E5; border-color: #4F46E5; color: #fff; }
+</style>
+{% endblock %}
+
+{% block body_content %}
+<div class="student-layout">
+  {% include 'student/_sidebar.html' with active_page='games' %}
+
+  <div class="student-main">
+    <header class="student-topbar">
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Abrir menú"><i class="bi bi-list"></i></button>
+      <div class="topbar-breadcrumb">
+        <a href="{% url 'games_home' %}" class="breadcrumb-link">Mis Juegos</a>
+        <i class="bi bi-chevron-right" style="font-size:.7rem;color:#9CA3AF;"></i>
+        <span class="bc-current">Contar Objetos</span>
+      </div>
+      <div class="topbar-actions">
+        <div class="topbar-date"><i class="bi bi-calendar3"></i><span id="topbarDate"></span></div>
+        <div class="topbar-stars-chip"><i class="bi bi-star-fill"></i><span>{{ profile.total_stars|default:"0" }} estrellas</span></div>
+        <button class="dark-mode-toggle" id="darkModeToggle" aria-label="Cambiar modo"><i class="bi bi-moon-fill" id="darkModeIcon"></i></button>
+      </div>
+    </header>
+
+    <div class="student-scroll">
+      {% include 'student/games/_activity_banner.html' %}
+      <div class="cnt-page">
+
+        <h1 class="cnt-title">🔢 Contar Objetos</h1>
+
+        <!-- Dificultad -->
+        <div class="cnt-diff-row">
+          <button class="cnt-diff-btn active" data-max="5">Fácil (1–5)</button>
+          <button class="cnt-diff-btn" data-max="10">Medio (1–10)</button>
+          <button class="cnt-diff-btn" data-max="20">Difícil (1–20)</button>
+        </div>
+
+        <!-- Stats -->
+        <div class="cnt-stats">
+          <div class="cnt-stat">
+            <span class="cnt-stat-val" id="correctVal">0</span>
+            <span class="cnt-stat-lbl">Correctas</span>
+          </div>
+          <div class="cnt-stat">
+            <span class="cnt-stat-val" id="wrongVal">0</span>
+            <span class="cnt-stat-lbl">Errores</span>
+          </div>
+          <div class="cnt-stat">
+            <span class="cnt-stat-val" id="starsVal">0</span>
+            <span class="cnt-stat-lbl"><i class="bi bi-star-fill" style="color:#D97706;font-size:.75em;"></i> Estrellas</span>
+          </div>
+        </div>
+
+        <!-- Tarjeta -->
+        <div class="cnt-card">
+          <div class="cnt-question">¿Cuántos objetos ves?</div>
+          <div class="cnt-objects" id="objDisplay"></div>
+          <div class="cnt-answer-row">
+            <input type="number" class="cnt-input" id="answerInput" min="0" max="30" placeholder="?">
+            <button class="cnt-btn" id="checkBtn">Comprobar</button>
+          </div>
+          <div class="cnt-feedback" id="feedback"></div>
+        </div>
+
+        <!-- Guardar -->
+        <div class="cnt-save-row">
+          <button class="btn btn-secondary" id="saveBtn" style="display:none">
+            <i class="bi bi-floppy-fill"></i> Guardar estrellas
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<script>
+const SETS = [
+  { emoji: '🍎', name: 'manzanas' },
+  { emoji: '⭐', name: 'estrellas' },
+  { emoji: '🐝', name: 'abejas' },
+  { emoji: '🌸', name: 'flores' },
+  { emoji: '🐠', name: 'peces' },
+  { emoji: '🦋', name: 'mariposas' },
+  { emoji: '🌙', name: 'lunas' },
+  { emoji: '🍓', name: 'fresas' },
+  { emoji: '🐸', name: 'ranas' },
+  { emoji: '🚂', name: 'trenes' },
+];
+
+let maxCount = 5;
+let correct = 0, wrong = 0, saved = false;
+let currentCount = 0;
+
+function newQuestion() {
+  currentCount = 1 + Math.floor(Math.random() * maxCount);
+  const set = SETS[Math.floor(Math.random() * SETS.length)];
+
+  const display = document.getElementById('objDisplay');
+  display.innerHTML = '';
+  for (let i = 0; i < currentCount; i++) {
+    const span = document.createElement('span');
+    span.className = 'cnt-obj';
+    span.textContent = set.emoji;
+    span.style.animationDelay = (i * 0.05) + 's';
+    display.appendChild(span);
+  }
+
+  const input = document.getElementById('answerInput');
+  input.value = '';
+  input.className = 'cnt-input';
+  input.focus();
+
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('feedback').className = 'cnt-feedback';
+}
+
+function checkAnswer() {
+  const input = document.getElementById('answerInput');
+  const val = parseInt(input.value, 10);
+  const fb = document.getElementById('feedback');
+
+  if (isNaN(val)) { fb.textContent = '¡Escribe un número!'; fb.className = 'cnt-feedback bad'; return; }
+
+  if (val === currentCount) {
+    correct++;
+    input.className = 'cnt-input correct';
+    fb.textContent = '¡Correcto! 🎉';
+    fb.className = 'cnt-feedback ok';
+    if (window.Toast) Toast.show('¡Muy bien!', 'success');
+    if (correct % 5 === 0 && window.Confetti) Confetti.fire();
+    setTimeout(newQuestion, 900);
+  } else {
+    wrong++;
+    input.className = 'cnt-input wrong';
+    fb.textContent = 'La respuesta es ' + currentCount + '. ¡Inténtalo de nuevo!';
+    fb.className = 'cnt-feedback bad';
+    setTimeout(newQuestion, 1500);
+  }
+
+  updateHUD();
+}
+
+function calcStars() {
+  const total = correct + wrong;
+  if (total < 5) return 0;
+  const ratio = correct / total;
+  if (ratio >= .9) return 5;
+  if (ratio >= .75) return 4;
+  if (ratio >= .6) return 3;
+  if (ratio >= .45) return 2;
+  return 1;
+}
+
+function updateHUD() {
+  document.getElementById('correctVal').textContent = correct;
+  document.getElementById('wrongVal').textContent   = wrong;
+  const stars = calcStars();
+  document.getElementById('starsVal').textContent   = stars;
+  if ((correct + wrong) >= 10) document.getElementById('saveBtn').style.display = '';
+}
+
+document.getElementById('checkBtn').addEventListener('click', checkAnswer);
+document.getElementById('answerInput').addEventListener('keydown', e => { if (e.key === 'Enter') checkAnswer(); });
+
+document.querySelectorAll('.cnt-diff-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.cnt-diff-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    maxCount = +btn.dataset.max;
+    correct = 0; wrong = 0; saved = false;
+    updateHUD();
+    document.getElementById('saveBtn').style.display = 'none';
+    newQuestion();
+  });
+});
+
+function getCookie(n) { for (let c of document.cookie.split(';')) { const [k, v] = c.trim().split('='); if (k === n) return decodeURIComponent(v); } return ''; }
+
+document.getElementById('saveBtn').addEventListener('click', function () {
+  if (saved) return; saved = true;
+  const stars = calcStars();
+  fetch('{% url "save_game_score" %}', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+    body: JSON.stringify({ game_type: 'counting', score: correct, stars_earned: stars, activity_id: {{ activity_id|default:'null' }} }),
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (window.Toast) Toast.show('¡Guardado! +' + (data.stars_earned || stars) + ' estrellas ⭐', 'success');
+    this.disabled = true;
+    this.innerHTML = '<i class="bi bi-check-circle-fill"></i> Guardado';
+  })
+  .catch(() => { saved = false; if (window.Toast) Toast.show('Error al guardar.', 'error'); });
+});
+
+newQuestion();
+
+(function () {
+  var d = document.getElementById('topbarDate');
+  if (d) d.textContent = new Date().toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' });
+  var pb = document.getElementById('sidebarProfileBtn'), pd = document.getElementById('profileDropdown'), pc = document.getElementById('profileChevron');
+  if (pb && pd) { pb.addEventListener('click', function (e) { e.stopPropagation(); var o = pd.classList.toggle('open'); if (pc) pc.style.transform = o ? 'rotate(180deg)' : ''; }); document.addEventListener('click', function () { pd.classList.remove('open'); if (pc) pc.style.transform = ''; }); }
+  var t = document.getElementById('sidebarToggle'), s = document.getElementById('studentSidebar'), ov = document.getElementById('sidebarOverlay');
+  if (t && s && ov) { t.addEventListener('click', function () { s.classList.toggle('open'); ov.classList.toggle('open'); }); ov.addEventListener('click', function () { s.classList.remove('open'); ov.classList.remove('open'); }); }
+  var dt = document.getElementById('darkModeToggle'), di = document.getElementById('darkModeIcon');
+  function sd(on) { document.body.classList.toggle('student-dark', on); if (di) di.className = on ? 'bi bi-sun-fill' : 'bi bi-moon-fill'; }
+  sd(localStorage.getItem('student_dark') === '1');
+  if (dt) dt.addEventListener('click', function () { var on = !document.body.classList.contains('student-dark'); sd(on); localStorage.setItem('student_dark', on ? '1' : '0'); });
+})();
+</script>
+{% endblock %}

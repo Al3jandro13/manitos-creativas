@@ -22,33 +22,38 @@
     </a>
 
     <div class="nav-section-title">Actividades</div>
-    <a href="{% url 'activities_list' %}" class="sidebar-item {% if 'activities' in request.path and 'detail' not in request.path and 'crear' not in request.path and 'revision' not in request.path %}active{% endif %}">
+    <a href="{% url 'activities_list' %}" class="sidebar-item {% if 'activities' in request.path and 'detail' not in request.path and 'crear' not in request.path and 'revision' not in request.path and 'entregas' not in request.path %}active{% endif %}">
       <span class="item-icon"><i class="bi bi-collection-fill"></i></span>
       <span>Mis Actividades</span>
     </a>
-    <a href="{% url 'create_activity' %}" class="sidebar-item {% if 'crear' in request.path %}active{% endif %}">
-      <span class="item-icon"><i class="bi bi-plus-circle-fill"></i></span>
-      <span>Crear Actividad</span>
+    <a href="{% url 'submissions_overview' %}" class="sidebar-item {% if 'entregas' in request.path %}active{% endif %}">
+      <span class="item-icon"><i class="bi bi-inbox-fill"></i></span>
+      <span>Entregas de Estudiantes</span>
     </a>
-
+    <a href="{% url 'coop_list' %}" class="sidebar-item {% if 'parejas' in request.path %}active{% endif %}">
+      <span class="item-icon"><i class="bi bi-people-fill"></i></span>
+      <span>Actividades en Parejas</span>
+    </a>
     <div class="nav-section-title">Estudiantes</div>
-    <a href="{% url 'grades' %}" class="sidebar-item {% if request.resolver_match.url_name == 'grades' %}active{% endif %}">
-      <span class="item-icon"><i class="bi bi-bar-chart-fill"></i></span>
-      <span>Notas</span>
+    <a href="{% url 'teacher_students' %}" class="sidebar-item {% if request.resolver_match.url_name in 'teacher_students teacher_student_detail teacher_student_edit' %}active{% endif %}">
+      <span class="item-icon"><i class="bi bi-people-fill"></i></span>
+      <span>Usuarios</span>
     </a>
-    <a href="{% url 'weekly_reports' %}" class="sidebar-item {% if request.resolver_match.url_name == 'weekly_reports' %}active{% endif %}">
-      <span class="item-icon"><i class="bi bi-calendar3"></i></span>
-      <span>Reportes Semanales</span>
+    <a href="{% url 'teacher_courses' %}" class="sidebar-item {% if request.resolver_match.url_name in 'teacher_courses teacher_course_detail' %}active{% endif %}">
+      <span class="item-icon"><i class="bi bi-mortarboard-fill"></i></span>
+      <span>Cursos</span>
     </a>
 
     <div class="nav-section-title">Juegos</div>
-    <a href="{% url 'puzzle_images_list' %}" class="sidebar-item {% if request.resolver_match.url_name == 'puzzle_images_list' %}active{% endif %}">
-      <span class="item-icon"><i class="bi bi-puzzle-fill"></i></span>
-      <span>Imágenes Rompecabezas</span>
+    <a href="{% url 'teacher_games_hub' %}" class="sidebar-item {% if request.resolver_match.url_name in 'teacher_games_hub puzzle_images_list coloring_images_list' %}active{% endif %}">
+      <span class="item-icon"><i class="bi bi-controller"></i></span>
+      <span>Gestión de Juegos</span>
     </a>
-    <a href="{% url 'coloring_images_list' %}" class="sidebar-item {% if request.resolver_match.url_name == 'coloring_images_list' %}active{% endif %}">
-      <span class="item-icon"><i class="bi bi-palette-fill"></i></span>
-      <span>Bocetos para Colorear</span>
+
+    <div class="nav-section-title">Documentos</div>
+    <a href="{% url 'documents_list' %}" class="sidebar-item {% if request.resolver_match.url_name in 'documents_list generate_document download_document preview_document' %}active{% endif %}">
+      <span class="item-icon"><i class="bi bi-file-earmark-text-fill"></i></span>
+      <span>Mis Documentos</span>
     </a>
 
     <div class="nav-section-title">Comunicación</div>
@@ -105,6 +110,13 @@ if (localStorage.getItem('teacher-dark') === '1') {
 
 document.addEventListener('DOMContentLoaded', function () {
 
+  function applyTeacherDark(dark) {
+    document.body.classList.toggle('teacher-dark', dark);
+    localStorage.setItem('teacher-dark', dark ? '1' : '0');
+    var topbarIcon = document.getElementById('darkModeIcon');
+    if (topbarIcon) topbarIcon.className = dark ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
+  }
+
   /* ── Inject dark mode toggle into topbar ── */
   var topbar = document.querySelector('.teacher-topbar');
   if (topbar) {
@@ -123,11 +135,7 @@ document.addEventListener('DOMContentLoaded', function () {
     actions.appendChild(btn);
 
     btn.addEventListener('click', function () {
-      var dark = !document.body.classList.contains('teacher-dark');
-      document.body.classList.toggle('teacher-dark', dark);
-      localStorage.setItem('teacher-dark', dark ? '1' : '0');
-      var ic = document.getElementById('darkModeIcon');
-      if (ic) ic.className = dark ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
+      applyTeacherDark(!document.body.classList.contains('teacher-dark'));
     });
   }
 

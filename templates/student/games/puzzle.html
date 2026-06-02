@@ -24,6 +24,7 @@
     </header>
 
     <div class="student-scroll">
+      {% include 'student/games/_activity_banner.html' %}
       <div class="pz-wrap">
 
         <!-- ══ SETUP ══════════════════════════════════════════ -->
@@ -681,7 +682,7 @@ function saveScore() {
   fetch('{% url "save_game_score" %}',{
     method:'POST',
     headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},
-    body:JSON.stringify({game_type:'puzzle',score:completedCount,stars_earned:stars}),
+    body:JSON.stringify({game_type:'puzzle',score:completedCount,stars_earned:stars,activity_id:{{ activity_id|default:'null' }}}),
   })
   .then(r=>r.json())
   .then(d=>{btn.innerHTML=`<i class="bi bi-check-circle-fill"></i> ¡+${d.stars_earned} estrellas guardadas!`;if(window.Toast)Toast.show(`¡+${d.stars_earned} estrellas!`,'success');})

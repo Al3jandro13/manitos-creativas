@@ -24,6 +24,7 @@
     </header>
 
     <div class="student-scroll">
+      {% include 'student/games/_activity_banner.html' %}
       <div style="max-width:900px;margin:0 auto;">
 
         <div class="game-page-header" style="background:linear-gradient(135deg,#D97706,#B45309);">
@@ -94,7 +95,7 @@ function saveScore() {
   fetch('{% url "save_game_score" %}', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
-    body: JSON.stringify({ game_type: 'numbers', score: clicked.size, stars_earned: stars }),
+    body: JSON.stringify({ game_type: 'numbers', score: clicked.size, stars_earned: stars, activity_id: {{ activity_id|default:'null' }} }),
   })
   .then(r => r.json())
   .then(data => {

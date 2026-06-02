@@ -69,35 +69,53 @@
       <!-- Logros grid -->
       <div class="logros-grid">
         {% for entry in fame_entries %}
-        <div class="logro-card">
-          <div class="logro-medal-wrap">
-            {% if entry.medal_type == 'gold' %}
-              <i class="bi bi-trophy-fill" style="color:#D97706;font-size:2.2rem;"></i>
-            {% elif entry.medal_type == 'silver' %}
-              <i class="bi bi-trophy-fill" style="color:#94A3B8;font-size:2.2rem;"></i>
-            {% elif entry.medal_type == 'bronze' %}
-              <i class="bi bi-trophy-fill" style="color:#B45309;font-size:2.2rem;"></i>
-            {% elif entry.medal_type == 'heart' %}
-              <i class="bi bi-heart-fill" style="color:#EC4899;font-size:2.2rem;"></i>
-            {% elif entry.medal_type == 'rainbow' %}
-              <span style="font-size:2.2rem;">🌈</span>
-            {% else %}
-              <i class="bi bi-star-fill" style="color:#FBBF24;font-size:2.2rem;"></i>
-            {% endif %}
+        <div class="logro-card" style="padding:0;overflow:hidden;">
+
+          {% if entry.submission and entry.submission.drawing_data and entry.submission.drawing_data != 'null' %}
+          <div style="height:150px;overflow:hidden;border-radius:var(--s-radius-lg) var(--s-radius-lg) 0 0;">
+            <img src="{{ entry.submission.drawing_data }}" alt="Mi trabajo"
+              style="width:100%;height:100%;object-fit:cover;">
           </div>
-          <div class="logro-medal-type">
-            {% if entry.medal_type == 'gold' %}Medalla de Oro
-            {% elif entry.medal_type == 'silver' %}Medalla de Plata
-            {% elif entry.medal_type == 'bronze' %}Medalla de Bronce
-            {% elif entry.medal_type == 'heart' %}Corazón
-            {% elif entry.medal_type == 'rainbow' %}Arcoíris
-            {% else %}Estrella{% endif %}
-          </div>
-          <div class="logro-title">{{ entry.title }}</div>
-          {% if entry.description %}
-          <div class="logro-description">{{ entry.description }}</div>
           {% endif %}
-          <div class="logro-date"><i class="bi bi-calendar3"></i> {{ entry.created_at|date:"d M Y" }}</div>
+
+          <div style="padding:1.1rem;">
+            <div class="logro-medal-wrap">
+              {% if entry.medal_type == 'gold' %}
+                <i class="bi bi-trophy-fill" style="color:#D97706;font-size:2.2rem;"></i>
+              {% elif entry.medal_type == 'silver' %}
+                <i class="bi bi-trophy-fill" style="color:#94A3B8;font-size:2.2rem;"></i>
+              {% elif entry.medal_type == 'bronze' %}
+                <i class="bi bi-trophy-fill" style="color:#B45309;font-size:2.2rem;"></i>
+              {% elif entry.medal_type == 'heart' %}
+                <i class="bi bi-heart-fill" style="color:#EC4899;font-size:2.2rem;"></i>
+              {% elif entry.medal_type == 'rainbow' %}
+                <span style="font-size:2.2rem;">🌈</span>
+              {% else %}
+                <i class="bi bi-star-fill" style="color:#FBBF24;font-size:2.2rem;"></i>
+              {% endif %}
+            </div>
+            <div class="logro-medal-type">
+              {% if entry.medal_type == 'gold' %}Medalla de Oro
+              {% elif entry.medal_type == 'silver' %}Medalla de Plata
+              {% elif entry.medal_type == 'bronze' %}Medalla de Bronce
+              {% elif entry.medal_type == 'heart' %}Corazón
+              {% elif entry.medal_type == 'rainbow' %}Arcoíris
+              {% else %}Estrella{% endif %}
+            </div>
+            <div class="logro-title">{{ entry.title }}</div>
+            {% if entry.submission %}
+            <div style="font-size:.75rem;color:var(--s-indigo);margin-bottom:.3rem;"><i class="bi bi-tag"></i> {{ entry.submission.activity.title }}</div>
+            {% endif %}
+            {% if entry.description %}
+            <div class="logro-description">{{ entry.description }}</div>
+            {% endif %}
+            {% if entry.submission and entry.submission.stars_awarded %}
+            <div style="font-size:.8rem;color:#FBBF24;margin-top:.3rem;">
+              {% for i in "12345"|make_list %}{% if forloop.counter <= entry.submission.stars_awarded %}⭐{% endif %}{% endfor %}
+            </div>
+            {% endif %}
+            <div class="logro-date"><i class="bi bi-calendar3"></i> {{ entry.created_at|date:"d M Y" }}</div>
+          </div>
         </div>
         {% endfor %}
       </div>

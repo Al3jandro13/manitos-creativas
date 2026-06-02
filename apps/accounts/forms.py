@@ -56,6 +56,14 @@ class StudentRegisterForm(forms.ModelForm):
         min_value=3, max_value=7,
         widget=forms.NumberInput(attrs={'class': 'form-input', 'placeholder': '5'})
     )
+    birth_date = forms.DateField(
+        label='Fecha de nacimiento del niño/a',
+        widget=forms.DateInput(attrs={
+            'class': 'form-input',
+            'type': 'date',
+        }),
+        input_formats=['%Y-%m-%d', '%d/%m/%Y'],
+    )
     selected_avatar = forms.ChoiceField(
         label='Elige el avatar de tu niño/a',
         choices=StudentProfile.AVATAR_CHOICES,
@@ -99,6 +107,7 @@ class StudentRegisterForm(forms.ModelForm):
                 parent_phone=self.cleaned_data.get('parent_phone', ''),
                 level=self.cleaned_data['level'],
                 age=self.cleaned_data['age'],
+                birth_date=self.cleaned_data['birth_date'],
                 selected_avatar=self.cleaned_data['selected_avatar'],
             )
         return user

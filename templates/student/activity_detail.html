@@ -69,7 +69,7 @@
       <div class="drawing-tools" id="drawing-tools">
         <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;">
           <span style="font-size:.8rem;font-weight:700;color:var(--text-mid);">Color:</span>
-          {% for color in "#7C3AED,#EC4899,#FBBF24,#10B981,#3B82F6,#F97316,#1E1B4B,#EF4444,#FFFFFF"|split:"," %}
+          {% for color in colors %}
           <button class="color-btn {% if forloop.first %}selected{% endif %}" style="background:{{ color }};" data-color="{{ color }}" title="{{ color }}"></button>
           {% endfor %}
         </div>

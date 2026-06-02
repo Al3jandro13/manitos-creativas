@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Documentos — Manitos Creativas{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/teacher.css' %}">
+<style>
+  .docs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.25rem;
+    margin-top: 1.5rem;
+  }
+  .doc-card {
+    background: var(--t-card-bg, #fff);
+    border: 1px solid var(--t-border, #e5e7eb);
+    border-radius: 12px;
+    padding: 1.25rem 1.4rem;
+    display: flex;
+    flex-direction: column;
+    gap: .6rem;
+    transition: box-shadow .2s, transform .15s;
+  }
+  .doc-card:hover { box-shadow: 0 4px 18px rgba(0,0,0,.10); transform: translateY(-2px); }
+  .doc-card-type {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    font-size: .72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    padding: .25rem .65rem;
+    border-radius: 20px;
+    width: fit-content;
+  }
+  .type-circular    { background: #E8F5E9; color: #1B5E20; }
+  .type-comunicado  { background: #E3F2FD; color: #0D47A1; }
+  .type-informe     { background: #FFF3E0; color: #E65100; }
+  .type-citacion    { background: #F3E5F5; color: #4A148C; }
+  .type-carta       { background: #FCE4EC; color: #880E4F; }
+  .doc-card-title { font-size: 1rem; font-weight: 600; color: var(--t-text, #1a1a2e); margin: 0; line-height: 1.35; }
+  .doc-card-recipient { font-size: .82rem; color: var(--t-text-mid, #6b7280); }
+  .doc-card-date { font-size: .78rem; color: var(--t-text-light, #9ca3af); margin-top: auto; }
+  .doc-card-actions { display: flex; gap: .5rem; flex-wrap: wrap; }
+  .doc-btn {
+    display: inline-flex; align-items: center; gap: .3rem;
+    font-size: .78rem; font-weight: 500; padding: .3rem .75rem;
+    border-radius: 6px; text-decoration: none; border: none; cursor: pointer;
+    transition: opacity .15s;
+  }
+  .doc-btn:hover { opacity: .82; }
+  .doc-btn-preview  { background: #E8F5E9; color: #1B5E20; }
+  .doc-btn-download { background: #1B5E20; color: #fff; }
+  .doc-btn-delete   { background: #FEE2E2; color: #991B1B; }
+  .empty-state {
+    text-align: center; padding: 4rem 2rem; color: var(--t-text-mid, #6b7280);
+  }
+  .empty-state i { font-size: 3.5rem; color: var(--t-border, #d1d5db); margin-bottom: 1rem; }
+  .empty-state h3 { font-size: 1.15rem; font-weight: 600; margin-bottom: .5rem; }
+
+  /* ── Dark mode ── */
+  body.teacher-dark .doc-card {
+    background: var(--t-surface, #111D2E);
+    border-color: var(--t-border, rgba(255,255,255,.08));
+  }
+  body.teacher-dark .doc-card:hover { box-shadow: 0 4px 18px rgba(0,0,0,.35); }
+  body.teacher-dark .doc-card-title   { color: var(--t-text, #E2E8F0); }
+  body.teacher-dark .doc-card-recipient { color: var(--t-text-mid, #94A3B8); }
+  body.teacher-dark .doc-card-date    { color: var(--t-text-muted, #64748B); }
+  body.teacher-dark .type-circular    { background: rgba(27,94,32,.28);   color: #86EFAC; }
+  body.teacher-dark .type-comunicado  { background: rgba(29,78,216,.22);  color: #93C5FD; }
+  body.teacher-dark .type-informe     { background: rgba(180,83,9,.22);   color: #FCD34D; }
+  body.teacher-dark .type-citacion    { background: rgba(99,102,241,.22); color: #A5B4FC; }
+  body.teacher-dark .type-carta       { background: rgba(225,29,72,.18);  color: #FCA5A5; }
+  body.teacher-dark .doc-btn-preview  { background: rgba(27,94,32,.25);   color: #86EFAC; }
+  body.teacher-dark .doc-btn-delete   { background: rgba(225,29,72,.15);  color: #FCA5A5; }
+  body.teacher-dark .empty-state      { color: var(--t-text-mid, #94A3B8); }
+  body.teacher-dark .empty-state i    { color: var(--t-text-muted, #64748B); }
+</style>
+{% endblock %}
+
+{% block body_content %}
+<div class="teacher-layout">
+  {% include 'teacher/_sidebar.html' %}
+
+  <main class="teacher-main">
+    <div class="teacher-topbar">
+      <div style="display:flex;align-items:center;gap:.85rem;">
+        <button id="sidebar-toggle"
+          style="display:none;background:none;border:none;cursor:pointer;font-size:1.2rem;color:var(--t-text-mid);padding:.25rem;"
+          onclick="document.querySelector('.sidebar').classList.toggle('open')">
+          <i class="bi bi-list"></i>
+        </button>
+        <div class="teacher-topbar-title">Documentos Institucionales</div>
+      </div>
+      <div class="topbar-actions">
+        <a href="{% url 'generate_document' %}" class="btn btn-primary" style="display:inline-flex;align-items:center;gap:.4rem;">
+          <i class="bi bi-plus-lg"></i> Nuevo documento
+        </a>
+      </div>
+    </div>
+
+    <div style="padding:1.5rem 2rem;">
+
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
+        <div>
+          <h2 style="font-size:1.3rem;font-weight:700;margin:0;">Mis documentos</h2>
+          <p style="margin:.25rem 0 0;color:var(--t-text-mid,#6b7280);font-size:.88rem;">
+            Comunicados, circulares e informes generados con IA
+          </p>
+        </div>
+        <span style="background:var(--t-border,#e5e7eb);padding:.3rem .9rem;border-radius:20px;font-size:.82rem;font-weight:600;">
+          {{ documents.count }} documento{{ documents.count|pluralize:"s" }}
+        </span>
+      </div>
+
+      {% if documents %}
+        <div class="docs-grid">
+          {% for doc in documents %}
+          <div class="doc-card">
+            <span class="doc-card-type type-{{ doc.doc_type }}">
+              <i class="bi bi-file-earmark-text"></i>
+              {{ doc.get_doc_type_display }}
+              {% if doc.doc_number %} {{ doc.doc_number }}{% endif %}
+            </span>
+            <p class="doc-card-title">{{ doc.title }}</p>
+            {% if doc.recipient %}
+              <p class="doc-card-recipient"><i class="bi bi-person"></i> {{ doc.recipient }}</p>
+            {% endif %}
+            <p class="doc-card-date"><i class="bi bi-calendar3"></i> {{ doc.created_at|date:"d/m/Y H:i" }}</p>
+            <div class="doc-card-actions">
+              <a href="{% url 'preview_document' doc.pk %}" target="_blank" class="doc-btn doc-btn-preview">
+                <i class="bi bi-eye"></i> Ver PDF
+              </a>
+              <a href="{% url 'download_document' doc.pk %}" class="doc-btn doc-btn-download">
+                <i class="bi bi-download"></i> Descargar
+              </a>
+              <form method="post" action="{% url 'delete_document' doc.pk %}" style="margin:0;"
+                    onsubmit="return confirm('¿Eliminar este documento?');">
+                {% csrf_token %}
+                <button type="submit" class="doc-btn doc-btn-delete">
+                  <i class="bi bi-trash3"></i>
+                </button>
+              </form>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <i class="bi bi-file-earmark-plus"></i>
+          <h3>Aún no tienes documentos</h3>
+          <p style="font-size:.9rem;max-width:360px;margin:.5rem auto 1.5rem;">
+            Genera circulares, comunicados e informes con ayuda de la IA en segundos.
+          </p>
+          <a href="{% url 'generate_document' %}" class="btn btn-primary">
+            <i class="bi bi-magic"></i> Crear mi primer documento
+          </a>
+        </div>
+      {% endif %}
+
+    </div>
+  </main>
+</div>
+{% endblock %}

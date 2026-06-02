@@ -24,6 +24,7 @@
     </header>
 
     <div class="student-scroll">
+      {% include 'student/games/_activity_banner.html' %}
       <div style="max-width:820px;margin:0 auto;">
 
         <div class="game-page-header" style="background:linear-gradient(135deg,#0D9488,#0F766E);">
@@ -165,7 +166,7 @@ function saveDrawing() {
   fetch('{% url "save_game_score" %}', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
-    body: JSON.stringify({ game_type: 'drawing', score: 100, stars_earned: 3 }),
+    body: JSON.stringify({ game_type: 'drawing', score: 100, stars_earned: 3, activity_id: {{ activity_id|default:'null' }}, drawing_data: canvas.toDataURL('image/png') }),
   })
   .then(r => r.json())
   .then(() => {

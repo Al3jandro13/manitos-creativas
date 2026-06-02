@@ -24,6 +24,7 @@
     </header>
 
     <div class="student-scroll">
+      {% include 'student/games/_activity_banner.html' %}
       <div style="max-width:860px;margin:0 auto;">
 
         <div class="game-page-header" style="background:linear-gradient(135deg,#16A34A,#15803D);">
@@ -205,7 +206,7 @@ function saveArtwork() {
   fetch('{% url "save_game_score" %}', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
-    body: JSON.stringify({ game_type: 'puntillismo', score: dotCount, stars_earned: 4 }),
+    body: JSON.stringify({ game_type: 'puntillismo', score: dotCount, stars_earned: 4, activity_id: {{ activity_id|default:'null' }}, drawing_data: canvas.toDataURL('image/png') }),
   })
   .then(r => r.json())
   .then(data => {

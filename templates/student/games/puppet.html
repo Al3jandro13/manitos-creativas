@@ -1,0 +1,651 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Marioneta Mágica — Manitos Creativas{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/student.css' %}">
+<style>
+  .pp-wrap { max-width: 860px; margin: 0 auto; padding-bottom: 2rem; }
+
+  .game-page-header {
+    background: linear-gradient(135deg,#06B6D4,#7C3AED);
+    border-radius: 24px; padding: 1.5rem 1rem 1.25rem;
+    text-align: center; margin-bottom: 1.25rem; color: #fff;
+    box-shadow: 0 6px 24px rgba(124,58,237,.35);
+  }
+  .game-page-title { font-family: var(--font-display); font-size: 1.9rem; line-height: 1.1; }
+  .game-page-sub   { font-family: var(--font-accent); font-size: .85rem; opacity:.88; margin-top:.25rem; }
+
+  /* Layout: controls | stage | palette */
+  .pp-layout {
+    display: grid;
+    grid-template-columns: 200px 1fr 200px;
+    gap: 1rem; align-items: start;
+  }
+  @media(max-width:700px){
+    .pp-layout { grid-template-columns: 1fr; }
+    .pp-controls-panel, .pp-palette-panel { display:flex; flex-wrap:wrap; gap:.5rem; }
+  }
+
+  /* Panels */
+  .pp-panel {
+    background: #fff; border: 2px solid #E2E8F0; border-radius: 20px;
+    padding: 1rem; box-shadow: 0 4px 16px rgba(0,0,0,.06);
+  }
+  .pp-panel-title {
+    font-family: var(--font-accent); font-size: .75rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .07em; color: #7C3AED;
+    margin-bottom: .75rem;
+  }
+
+  /* Stage */
+  .pp-stage {
+    background: linear-gradient(180deg,#EDE9FE 0%,#CFFAFE 100%);
+    border: 2px solid #DDD6FE; border-radius: 20px;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 1.5rem 1rem; min-height: 360px;
+    box-shadow: 0 4px 16px rgba(0,0,0,.06); position: relative;
+    overflow: hidden;
+  }
+  .pp-stage::before {
+    content: '🎭';
+    position: absolute; top: .5rem; left: .75rem; font-size: 1.2rem; opacity: .4;
+  }
+  .pp-stage::after {
+    content: '✨';
+    position: absolute; top: .5rem; right: .75rem; font-size: 1.2rem; opacity: .4;
+  }
+
+  /* SVG puppet */
+  #puppetSvg { overflow: visible; }
+
+  /* Sliders */
+  .pp-control { margin-bottom: .85rem; }
+  .pp-control label {
+    display: block; font-family: var(--font-accent); font-size: .72rem;
+    font-weight: 700; color: #6B7280; margin-bottom: .25rem;
+  }
+  .pp-control-row { display: flex; align-items: center; gap: .4rem; }
+  .pp-control input[type=range] {
+    flex: 1; accent-color: #7C3AED; cursor: pointer;
+  }
+  .pp-val {
+    font-family: var(--font-display); font-size: .72rem; color: #7C3AED;
+    min-width: 28px; text-align: right;
+  }
+
+  /* Color swatches */
+  .pp-swatches { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: .75rem; }
+  .pp-swatch {
+    width: 28px; height: 28px; border-radius: 50%; cursor: pointer;
+    border: 3px solid transparent; transition: transform .15s, border-color .15s;
+    box-shadow: 0 2px 6px rgba(0,0,0,.15);
+  }
+  .pp-swatch:hover { transform: scale(1.15); }
+  .pp-swatch.active { border-color: #1E293B; transform: scale(1.2); }
+
+  /* Buttons */
+  .pp-btn-dance {
+    background: linear-gradient(135deg,#06B6D4,#7C3AED);
+    color: #fff; border: none; border-radius: 20px;
+    padding: .6rem 1.4rem; font-family: var(--font-accent);
+    font-size: .88rem; font-weight: 700; cursor: pointer;
+    display: inline-flex; align-items: center; gap: .45rem;
+    transition: opacity .15s; box-shadow: 0 4px 14px rgba(124,58,237,.35);
+    margin-top: .5rem; width: 100%;
+    justify-content: center;
+  }
+  .pp-btn-dance:hover { opacity: .88; }
+
+  /* Dance creator */
+  .pp-creator-hint {
+    font-family: var(--font-accent); font-size: .68rem; color: #9CA3AF;
+    margin-bottom: .4rem; line-height: 1.35;
+  }
+  .pp-btn-add {
+    width: 100%; background: #fff; border: 2px dashed #A78BFA; color: #7C3AED;
+    border-radius: 14px; padding: .5rem; cursor: pointer;
+    font-family: var(--font-accent); font-weight: 700; font-size: .78rem;
+    display: flex; align-items: center; justify-content: center; gap: .35rem;
+    transition: background .15s, border-color .15s;
+  }
+  .pp-btn-add:hover { background: #F5F3FF; border-color: #7C3AED; }
+  .pp-poses { display: flex; flex-wrap: wrap; gap: .3rem; margin-top: .5rem; }
+  .pp-pose-chip {
+    width: 26px; height: 26px; border-radius: 8px; cursor: pointer;
+    background: linear-gradient(135deg,#06B6D4,#7C3AED); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display); font-size: .8rem;
+    box-shadow: 0 2px 6px rgba(124,58,237,.3); animation: ppPop .25s ease;
+  }
+  .pp-pose-chip:hover { opacity: .8; }
+  @keyframes ppPop { from { transform: scale(0); } to { transform: scale(1); } }
+  .pp-btn-mydance {
+    width: 100%; margin-top: .5rem; border: none; border-radius: 14px;
+    padding: .55rem; cursor: pointer;
+    background: linear-gradient(135deg,#10B981,#06B6D4); color: #fff;
+    font-family: var(--font-accent); font-weight: 700; font-size: .82rem;
+    display: flex; align-items: center; justify-content: center; gap: .35rem;
+    box-shadow: 0 4px 14px rgba(16,185,129,.3); transition: opacity .15s;
+  }
+  .pp-btn-mydance:hover { opacity: .88; }
+  .pp-btn-clear {
+    width: 100%; margin-top: .35rem; background: none; border: none;
+    color: #9CA3AF; font-family: var(--font-accent); font-weight: 700;
+    font-size: .72rem; cursor: pointer; transition: color .15s;
+  }
+  .pp-btn-clear:hover { color: #DC2626; }
+  body.student-dark .pp-creator-hint { color: #64748B; }
+  body.student-dark .pp-btn-add { background: #0A1726; border-color: #6D28D9; color: #C4B5FD; }
+  body.student-dark .pp-btn-add:hover { background: #1E1235; }
+
+  .pp-actions {
+    display: flex; justify-content: center; gap: 1rem;
+    margin-top: 1rem; flex-wrap: wrap;
+  }
+
+  /* Timer / counter display */
+  .pp-time-info {
+    text-align: center; font-family: var(--font-accent); font-size: .8rem;
+    font-weight: 700; color: #9CA3AF; margin-top: .5rem;
+  }
+  .pp-time-info span { color: #7C3AED; }
+
+  /* Floor strip */
+  .pp-floor {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 30px;
+    background: linear-gradient(135deg,#7C3AED33,#06B6D433);
+    border-top: 2px solid #DDD6FE;
+  }
+
+  /* Dark */
+  body.student-dark .pp-panel  { background:#0E1E30; border-color:rgba(255,255,255,.07); }
+  body.student-dark .pp-stage  { background:linear-gradient(180deg,#1E0A3C,#0A1E2A); border-color:rgba(124,58,237,.3); }
+  body.student-dark .pp-control label { color:#94A3B8; }
+  body.student-dark .pp-val    { color:#C4B5FD; }
+  body.student-dark .pp-panel-title { color:#C4B5FD; }
+  body.student-dark .pp-floor  { background:rgba(124,58,237,.15); border-color:rgba(124,58,237,.25); }
+  body.student-dark .pp-time-info { color:#64748B; }
+  body.student-dark .pp-time-info span { color:#C4B5FD; }
+</style>
+{% endblock %}
+
+{% block body_content %}
+<div class="student-layout">
+  {% include 'student/_sidebar.html' with active_page='games' %}
+  <div class="student-main">
+    <header class="student-topbar">
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Abrir menú"><i class="bi bi-list"></i></button>
+      <div class="topbar-breadcrumb">
+        <a href="{% url 'games_home' %}" class="breadcrumb-link">Mis Juegos</a>
+        <i class="bi bi-chevron-right" style="font-size:.7rem;color:#9CA3AF;"></i>
+        <span class="bc-current">Marioneta Mágica</span>
+      </div>
+      <div class="topbar-actions">
+        <div class="topbar-date"><i class="bi bi-calendar3"></i><span id="topbarDate"></span></div>
+        <div class="topbar-stars-chip"><i class="bi bi-star-fill"></i><span>{{ profile.total_stars|default:"0" }} estrellas</span></div>
+        <button class="dark-mode-toggle" id="darkModeToggle" aria-label="Cambiar modo"><i class="bi bi-moon-fill" id="darkModeIcon"></i></button>
+      </div>
+    </header>
+
+    <div class="student-scroll">
+      {% include 'student/games/_activity_banner.html' %}
+      <div class="pp-wrap">
+
+        <div class="game-page-header">
+          <div style="font-size:3.5rem;margin-bottom:.4rem;">🎭</div>
+          <div class="game-page-title">Marioneta Mágica</div>
+          <div class="game-page-sub">Personaliza y anima tu propia marioneta</div>
+        </div>
+
+        <div class="pp-layout">
+
+          <!-- LEFT: Movement controls -->
+          <div class="pp-panel pp-controls-panel">
+            <div class="pp-panel-title"><i class="bi bi-sliders"></i> Movimientos</div>
+
+            <div class="pp-control">
+              <label>💪 Brazo izquierdo</label>
+              <div class="pp-control-row">
+                <input type="range" id="sl-arm-l" min="-90" max="90" value="0" oninput="updatePuppet()">
+                <span class="pp-val" id="val-arm-l">0°</span>
+              </div>
+            </div>
+            <div class="pp-control">
+              <label>💪 Brazo derecho</label>
+              <div class="pp-control-row">
+                <input type="range" id="sl-arm-r" min="-90" max="90" value="0" oninput="updatePuppet()">
+                <span class="pp-val" id="val-arm-r">0°</span>
+              </div>
+            </div>
+            <div class="pp-control">
+              <label>🦵 Pierna izquierda</label>
+              <div class="pp-control-row">
+                <input type="range" id="sl-leg-l" min="-30" max="60" value="0" oninput="updatePuppet()">
+                <span class="pp-val" id="val-leg-l">0°</span>
+              </div>
+            </div>
+            <div class="pp-control">
+              <label>🦵 Pierna derecha</label>
+              <div class="pp-control-row">
+                <input type="range" id="sl-leg-r" min="-30" max="60" value="0" oninput="updatePuppet()">
+                <span class="pp-val" id="val-leg-r">0°</span>
+              </div>
+            </div>
+            <div class="pp-control">
+              <label>🤔 Cabeza</label>
+              <div class="pp-control-row">
+                <input type="range" id="sl-head" min="-25" max="25" value="0" oninput="updatePuppet()">
+                <span class="pp-val" id="val-head">0°</span>
+              </div>
+            </div>
+
+            <button class="pp-btn-dance" id="ppDanceBtn" onclick="startDance()">
+              <i class="bi bi-dice-5-fill"></i> Baile sorpresa
+            </button>
+
+            <div class="pp-creator">
+              <div class="pp-panel-title" style="margin-top:1rem;"><i class="bi bi-stars"></i> Crea tu baile</div>
+              <div class="pp-creator-hint">Mueve la marioneta como quieras y guarda cada pose. Luego ¡reprodúcelas!</div>
+              <button class="pp-btn-add" id="ppAddPose" onclick="addPose()">
+                <i class="bi bi-plus-circle-fill"></i> Guardar esta pose
+              </button>
+              <div class="pp-poses" id="ppPoses"></div>
+              <button class="pp-btn-mydance" id="ppMyDanceBtn" onclick="playMyDance()" style="display:none">
+                <i class="bi bi-play-fill"></i> ¡Bailar mi baile!
+              </button>
+              <button class="pp-btn-clear" id="ppClearBtn" onclick="clearMyDance()" style="display:none">
+                <i class="bi bi-trash"></i> Borrar y empezar de nuevo
+              </button>
+            </div>
+          </div>
+
+          <!-- CENTER: Stage -->
+          <div class="pp-stage" id="ppStage">
+            <svg id="puppetSvg" width="180" height="300" viewBox="0 0 180 300">
+              <!-- Shadow -->
+              <ellipse cx="90" cy="288" rx="35" ry="8" fill="rgba(0,0,0,.12)" id="ppShadow"/>
+
+              <!-- Legs group -->
+              <g id="leg-l-group">
+                <rect id="leg-l" x="73" y="198" width="22" height="60" rx="10"
+                      fill="#7C3AED" stroke="#5B21B6" stroke-width="2"/>
+                <rect x="68" y="252" width="26" height="16" rx="8"
+                      fill="#1C1917" id="shoe-l"/>
+              </g>
+              <g id="leg-r-group">
+                <rect id="leg-r" x="85" y="198" width="22" height="60" rx="10"
+                      fill="#7C3AED" stroke="#5B21B6" stroke-width="2"/>
+                <rect x="86" y="252" width="26" height="16" rx="8"
+                      fill="#1C1917" id="shoe-r"/>
+              </g>
+
+              <!-- Torso -->
+              <rect id="torso" x="58" y="130" width="64" height="72" rx="18"
+                    fill="#7C3AED" stroke="#5B21B6" stroke-width="2"/>
+              <!-- Shirt detail -->
+              <line x1="90" y1="135" x2="90" y2="198" stroke="#5B21B6" stroke-width="2" stroke-dasharray="4,4"/>
+
+              <!-- Arms -->
+              <g id="arm-l-group">
+                <rect id="arm-l" x="26" y="132" width="36" height="18" rx="9"
+                      fill="#7C3AED" stroke="#5B21B6" stroke-width="2"/>
+                <!-- hand -->
+                <circle id="hand-l" cx="22" cy="141" r="10" fill="#FDDBB4" stroke="#E5B98B" stroke-width="2"/>
+              </g>
+              <g id="arm-r-group">
+                <rect id="arm-r" x="118" y="132" width="36" height="18" rx="9"
+                      fill="#7C3AED" stroke="#5B21B6" stroke-width="2"/>
+                <circle id="hand-r" cx="158" cy="141" r="10" fill="#FDDBB4" stroke="#E5B98B" stroke-width="2"/>
+              </g>
+
+              <!-- Neck -->
+              <rect id="neck" x="82" y="116" width="16" height="18" rx="6" fill="#FDDBB4" stroke="#E5B98B" stroke-width="1.5"/>
+
+              <!-- Head group -->
+              <g id="head-group">
+                <!-- Hair -->
+                <ellipse id="hair" cx="90" cy="88" rx="34" ry="34" fill="#1C1917"/>
+                <!-- Face -->
+                <circle id="face" cx="90" cy="92" r="30" fill="#FDDBB4" stroke="#E5B98B" stroke-width="2"/>
+                <!-- Eyes -->
+                <circle cx="80" cy="88" r="5" fill="#1C1917"/>
+                <circle cx="100" cy="88" r="5" fill="#1C1917"/>
+                <!-- Eye shine -->
+                <circle cx="82" cy="86" r="2" fill="#fff"/>
+                <circle cx="102" cy="86" r="2" fill="#fff"/>
+                <!-- Smile -->
+                <path d="M80 100 Q90 110 100 100" stroke="#C68642" stroke-width="2.5"
+                      fill="none" stroke-linecap="round"/>
+                <!-- Cheeks -->
+                <ellipse cx="72" cy="98" rx="7" ry="5" fill="#EC4899" opacity=".4"/>
+                <ellipse cx="108" cy="98" rx="7" ry="5" fill="#EC4899" opacity=".4"/>
+                <!-- Nose -->
+                <ellipse cx="90" cy="96" rx="3" ry="2" fill="#E5B98B"/>
+              </g>
+
+              <!-- Puppet strings (decorative) -->
+              <line x1="70" y1="0" x2="90" y2="60" stroke="#94A3B8" stroke-width="1.5" stroke-dasharray="3,3" opacity=".5"/>
+              <line x1="110" y1="0" x2="90" y2="60" stroke="#94A3B8" stroke-width="1.5" stroke-dasharray="3,3" opacity=".5"/>
+              <line x1="30" y1="80" x2="55" y2="141" stroke="#94A3B8" stroke-width="1.5" stroke-dasharray="3,3" opacity=".5"/>
+              <line x1="150" y1="80" x2="125" y2="141" stroke="#94A3B8" stroke-width="1.5" stroke-dasharray="3,3" opacity=".5"/>
+            </svg>
+
+            <div class="pp-floor"></div>
+          </div>
+
+          <!-- RIGHT: Color palette -->
+          <div class="pp-panel pp-palette-panel">
+            <div class="pp-panel-title"><i class="bi bi-palette-fill"></i> Colores</div>
+
+            <div style="font-family:var(--font-accent);font-size:.72rem;font-weight:700;color:#9CA3AF;margin-bottom:.35rem;">Ropa</div>
+            <div class="pp-swatches" id="swOutfit"></div>
+
+            <div style="font-family:var(--font-accent);font-size:.72rem;font-weight:700;color:#9CA3AF;margin:.5rem 0 .35rem;">Cabello</div>
+            <div class="pp-swatches" id="swHair"></div>
+
+            <div style="font-family:var(--font-accent);font-size:.72rem;font-weight:700;color:#9CA3AF;margin:.5rem 0 .35rem;">Piel</div>
+            <div class="pp-swatches" id="swSkin"></div>
+          </div>
+        </div>
+
+        <!-- Timer info -->
+        <div class="pp-time-info" id="ppTimeInfo">
+          Tiempo personalizando: <span id="ppTimer">0</span>s &nbsp;|&nbsp;
+          Necesitas al menos <span>20s</span> para guardar
+        </div>
+
+        <div class="pp-actions">
+          <button class="btn btn-secondary" id="ppSaveBtn" style="display:none">
+            <i class="bi bi-floppy-fill"></i> Guardar mi marioneta (+4 ⭐)
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<script>
+// ── Color palettes ──────────────────────────────────────────────
+const OUTFIT_COLORS = ['#7C3AED','#EC4899','#EF4444','#F97316','#FBBF24','#10B981','#3B82F6'];
+const HAIR_COLORS   = ['#1C1917','#78350F','#FCD34D','#DC2626','#7C3AED','#F9A8D4'];
+const SKIN_TONES    = ['#FDDBB4','#F0B97C','#C68642','#8D5524'];
+
+let outfitColor = OUTFIT_COLORS[0];
+let hairColor   = HAIR_COLORS[0];
+let skinColor   = SKIN_TONES[0];
+
+// ── Puppet state ─────────────────────────────────────────────────
+const state = { armL:0, armR:0, legL:0, legR:0, head:0 };
+
+// Anchor points for transforms (SVG 1.1: rotate(angle, cx, cy))
+const ANCHORS = {
+  armL: { el:'arm-l-group', cx:58,  cy:141 },  // left shoulder
+  armR: { el:'arm-r-group', cx:122, cy:141 },  // right shoulder
+  legL: { el:'leg-l-group', cx:84,  cy:200 },  // left hip
+  legR: { el:'leg-r-group', cx:96,  cy:200 },  // right hip
+  head: { el:'head-group',  cx:90,  cy:118 },  // neck top
+};
+
+function applyTransform(key, angle) {
+  const a = ANCHORS[key];
+  document.getElementById(a.el).setAttribute('transform', `rotate(${angle},${a.cx},${a.cy})`);
+}
+
+function updatePuppet() {
+  const keys = ['armL','armR','legL','legR','head'];
+  const ids  = ['sl-arm-l','sl-arm-r','sl-leg-l','sl-leg-r','sl-head'];
+  const vals = ['val-arm-l','val-arm-r','val-leg-l','val-leg-r','val-head'];
+  keys.forEach((k, i) => {
+    const v = parseInt(document.getElementById(ids[i]).value);
+    state[k] = v;
+    document.getElementById(vals[i]).textContent = v + '°';
+    applyTransform(k, v);
+  });
+}
+
+// ── Colour application ──────────────────────────────────────────
+function applyColors() {
+  const outfit = ['torso','arm-l','arm-r','leg-l','leg-r'];
+  outfit.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.setAttribute('fill', outfitColor);
+  });
+  // Strokes slightly darker
+  const darker = outfitColor + 'CC';
+  ['torso','arm-l','arm-r','leg-l','leg-r'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.setAttribute('stroke', darken(outfitColor));
+  });
+
+  document.getElementById('hair').setAttribute('fill', hairColor);
+
+  const skinEls = ['face','hand-l','hand-r','neck'];
+  skinEls.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.setAttribute('fill', skinColor);
+  });
+  document.getElementById('shoe-l').setAttribute('fill', '#1C1917');
+  document.getElementById('shoe-r').setAttribute('fill', '#1C1917');
+}
+
+function darken(hex) {
+  const r = Math.max(0, parseInt(hex.slice(1,3),16) - 40);
+  const g = Math.max(0, parseInt(hex.slice(3,5),16) - 40);
+  const b = Math.max(0, parseInt(hex.slice(5,7),16) - 40);
+  return '#' + [r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+
+function buildSwatches(containerId, colors, current, onSelect) {
+  const wrap = document.getElementById(containerId);
+  wrap.innerHTML = '';
+  colors.forEach(c => {
+    const s = document.createElement('div');
+    s.className = 'pp-swatch' + (c === current ? ' active' : '');
+    s.style.background = c;
+    s.title = c;
+    s.addEventListener('click', () => {
+      wrap.querySelectorAll('.pp-swatch').forEach(x => x.classList.remove('active'));
+      s.classList.add('active');
+      onSelect(c);
+      applyColors();
+    });
+    wrap.appendChild(s);
+  });
+}
+
+function buildAllSwatches() {
+  buildSwatches('swOutfit', OUTFIT_COLORS, outfitColor, c => { outfitColor = c; });
+  buildSwatches('swHair',   HAIR_COLORS,   hairColor,   c => { hairColor   = c; });
+  buildSwatches('swSkin',   SKIN_TONES,    skinColor,   c => { skinColor   = c; });
+}
+
+// ── Dance ────────────────────────────────────────────────────────
+const DANCE_POSES = [
+  [45,  -45,  20, -20,  0],
+  [-30,  60, -20,  30, 15],
+  [80,  -80,  30, -30,-10],
+  [  0,   0,   0,  0,  0],
+  [-45,  45,  20, -20,  0],
+  [ 30, -30, -10,  20,-15],
+];
+
+let dancing = false, danceInterval = null;
+let activeDanceBtn = null, activeDanceLabel = '';
+let myDance = [];               // poses creadas por el niño
+const MAX_POSES = 8;
+
+function applyPose(pose) {
+  const ids  = ['sl-arm-l','sl-arm-r','sl-leg-l','sl-leg-r','sl-head'];
+  const vals = ['val-arm-l','val-arm-r','val-leg-l','val-leg-r','val-head'];
+  const keys = ['armL','armR','legL','legR','head'];
+  pose.forEach((v, i) => {
+    document.getElementById(ids[i]).value = v;
+    document.getElementById(vals[i]).textContent = v + '°';
+    state[keys[i]] = v;
+    applyTransform(keys[i], v);
+  });
+}
+
+// Motor de baile compartido (preset y baile propio)
+function playPoses(poses, btnEl, label, loops) {
+  // Si ya está bailando: detener. Si es el mismo botón, solo detener.
+  if (dancing) {
+    const wasSame = (activeDanceBtn === btnEl);
+    stopDance();
+    if (wasSame) return;
+  }
+  if (!poses.length) return;
+  dancing = true;
+  activeDanceBtn = btnEl;
+  activeDanceLabel = label;
+  btnEl.innerHTML = '<i class="bi bi-stop-fill"></i> Detener';
+  let i = 0;
+  const total = poses.length * (loops || 2);
+  danceInterval = setInterval(() => {
+    applyPose(poses[i % poses.length]);
+    i++;
+    if (i >= total) stopDance();
+  }, 480);
+  if (window.speechSynthesis) {
+    const utt = new SpeechSynthesisUtterance('¡A bailar!');
+    utt.lang = 'es-CO'; utt.rate = 0.9;
+    window.speechSynthesis.speak(utt);
+  }
+}
+
+function stopDance() {
+  dancing = false;
+  clearInterval(danceInterval);
+  if (activeDanceBtn) activeDanceBtn.innerHTML = activeDanceLabel;
+  activeDanceBtn = null;
+  applyPose([0,0,0,0,0]);
+}
+
+// Baile sorpresa (poses predefinidas)
+function startDance() {
+  playPoses(DANCE_POSES,
+    document.getElementById('ppDanceBtn'),
+    '<i class="bi bi-dice-5-fill"></i> Baile sorpresa', 2);
+}
+
+// ── El niño crea su propio baile ─────────────────────────────────
+function addPose() {
+  if (dancing) stopDance();
+  if (myDance.length >= MAX_POSES) {
+    if (window.Toast) Toast.show('¡Ya tienes muchas poses! Toca ¡Bailar mi baile! 💃', 'warning');
+    return;
+  }
+  myDance.push([state.armL, state.armR, state.legL, state.legR, state.head]);
+  renderPoses();
+  if (window.Toast) Toast.show('Pose ' + myDance.length + ' guardada ✨', 'success');
+}
+
+function renderPoses() {
+  const c = document.getElementById('ppPoses');
+  c.innerHTML = '';
+  myDance.forEach((p, i) => {
+    const chip = document.createElement('div');
+    chip.className = 'pp-pose-chip';
+    chip.textContent = i + 1;
+    chip.title = 'Pose ' + (i + 1) + ' — toca para quitarla';
+    chip.addEventListener('click', () => { myDance.splice(i, 1); renderPoses(); });
+    c.appendChild(chip);
+  });
+  const has = myDance.length > 0;
+  document.getElementById('ppMyDanceBtn').style.display = has ? '' : 'none';
+  document.getElementById('ppClearBtn').style.display   = has ? '' : 'none';
+}
+
+function playMyDance() {
+  playPoses(myDance,
+    document.getElementById('ppMyDanceBtn'),
+    '<i class="bi bi-play-fill"></i> ¡Bailar mi baile!', 3);
+}
+
+function clearMyDance() {
+  if (dancing) stopDance();
+  myDance = [];
+  renderPoses();
+  applyPose([0,0,0,0,0]);
+}
+
+// ── Timer ────────────────────────────────────────────────────────
+let elapsed = 0, saved = false;
+const timerInterval = setInterval(() => {
+  elapsed++;
+  document.getElementById('ppTimer').textContent = elapsed;
+  if (elapsed >= 20 && !saved) {
+    document.getElementById('ppSaveBtn').style.display = '';
+    document.getElementById('ppTimeInfo').style.color = '#7C3AED';
+  }
+}, 1000);
+
+// ── Snapshot helpers ─────────────────────────────────────────────
+function getSvgData() {
+  const svg = document.getElementById('puppetSvg');
+  const s = new XMLSerializer().serializeToString(svg);
+  return btoa(unescape(encodeURIComponent(s)));
+}
+
+// ── Save ────────────────────────────────────────────────────────
+function getCookie(name) {
+  for (let c of document.cookie.split(';')) {
+    const [k, v] = c.trim().split('=');
+    if (k === name) return decodeURIComponent(v);
+  }
+  return '';
+}
+
+document.getElementById('ppSaveBtn').addEventListener('click', function () {
+  if (saved) return; saved = true;
+  clearInterval(timerInterval);
+  const drawing = getSvgData();
+
+  if (window.Confetti) Confetti.fire();
+  if (window.speechSynthesis) {
+    const utt = new SpeechSynthesisUtterance('¡Felicitaciones! Tu marioneta es hermosa.');
+    utt.lang = 'es-CO'; utt.rate = 0.85;
+    window.speechSynthesis.speak(utt);
+  }
+
+  fetch('{% url "save_game_score" %}', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+    body: JSON.stringify({
+      game_type: 'puppet',
+      score: elapsed,
+      stars_earned: 4,
+      activity_id: {{ activity_id|default:'null' }},
+      drawing_data: drawing
+    })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (window.Toast) Toast.show('¡Marioneta guardada! +4 estrellas ⭐', 'success');
+    this.disabled = true;
+    this.innerHTML = '<i class="bi bi-check-circle-fill"></i> ¡Guardada!';
+  })
+  .catch(() => { if (window.Toast) Toast.show('Error al guardar.', 'error'); saved = false; });
+});
+
+// ── Init ─────────────────────────────────────────────────────────
+buildAllSwatches();
+applyColors();
+updatePuppet();
+
+// Layout init
+(function(){
+  var d=document.getElementById('topbarDate');
+  if(d) d.textContent=new Date().toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long'});
+  var pb=document.getElementById('sidebarProfileBtn'),pd=document.getElementById('profileDropdown'),pc=document.getElementById('profileChevron');
+  if(pb&&pd){pb.addEventListener('click',function(e){e.stopPropagation();var o=pd.classList.toggle('open');if(pc)pc.style.transform=o?'rotate(180deg)':'';});document.addEventListener('click',function(){pd.classList.remove('open');if(pc)pc.style.transform='';});}
+  var t=document.getElementById('sidebarToggle'),s=document.getElementById('studentSidebar'),ov=document.getElementById('sidebarOverlay');
+  if(t&&s&&ov){t.addEventListener('click',function(){s.classList.toggle('open');ov.classList.toggle('open');});ov.addEventListener('click',function(){s.classList.remove('open');ov.classList.remove('open');});}
+  var dt=document.getElementById('darkModeToggle'),di=document.getElementById('darkModeIcon');
+  function sd(on){document.body.classList.toggle('student-dark',on);if(di)di.className=on?'bi bi-sun-fill':'bi bi-moon-fill';}
+  sd(localStorage.getItem('student_dark')==='1');
+  if(dt)dt.addEventListener('click',function(){var on=!document.body.classList.contains('student-dark');sd(on);localStorage.setItem('student_dark',on?'1':'0');});
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,445 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Unidades, Decenas y Centenas — Manitos Creativas{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/student.css' %}">
+<style>
+  .pv-page { max-width: 680px; margin: 0 auto; padding-bottom: 2rem; }
+
+  .pv-title {
+    font-family: var(--font-display); font-size: 2rem;
+    color: #1E3A5F; margin: 0 0 1.25rem;
+  }
+
+  /* Stats */
+  .pv-stats { display: flex; gap: .75rem; margin-bottom: 1.25rem; }
+  .pv-stat {
+    flex: 1; background: #fff; border: 2px solid #E2E8F0;
+    border-radius: 14px; padding: .65rem .75rem; text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,.04);
+  }
+  .pv-stat-val {
+    display: block; font-family: var(--font-display);
+    font-size: 1.6rem; line-height: 1.1; color: #4F46E5;
+  }
+  .pv-stat-lbl {
+    display: block; font-family: var(--font-accent);
+    font-size: .7rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .07em; color: #94A3B8; margin-top: .1rem;
+  }
+
+  /* Tip */
+  .pv-tip {
+    background: #FFFBEB; border: 2px solid #FDE68A; border-radius: 14px;
+    padding: .75rem 1rem; margin-bottom: 1rem;
+    font-family: var(--font-accent); font-size: .85rem;
+    color: #92400E; font-weight: 600; display: none;
+  }
+
+  /* Question card */
+  .pv-card {
+    background: #fff; border: 2px solid #E2E8F0; border-radius: 24px;
+    padding: 1.75rem 1.5rem 1.25rem; text-align: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,.07); margin-bottom: 1.25rem;
+    transition: background .3s;
+  }
+  .pv-card.flash-ok  { animation: pvFlashOk  .45s ease; }
+  .pv-card.flash-err { animation: pvFlashErr .45s ease; }
+  @keyframes pvFlashOk  { 0%,100%{background:#fff}    50%{background:#DCFCE7} }
+  @keyframes pvFlashErr { 0%,100%{background:#fff}    20%,60%{background:#FEF2F2} 40%,80%{background:#fff} }
+  body.student-dark .pv-card.flash-ok  { animation: pvFlashOkDark  .45s ease; }
+  body.student-dark .pv-card.flash-err { animation: pvFlashErrDark .45s ease; }
+  @keyframes pvFlashOkDark  { 0%,100%{background:#0E1E30} 50%{background:#14532D} }
+  @keyframes pvFlashErrDark { 0%,100%{background:#0E1E30} 20%,60%{background:#450A0A} 40%,80%{background:#0E1E30} }
+
+  .pv-q-label {
+    font-family: var(--font-accent); font-size: .85rem; font-weight: 700;
+    color: #94A3B8; text-transform: uppercase; letter-spacing: .06em;
+    margin-bottom: .75rem;
+  }
+
+  /* Big number */
+  .pv-number {
+    font-family: var(--font-display); font-size: 5.5rem; line-height: 1;
+    color: #1E3A5F; margin-bottom: 1.25rem; letter-spacing: .02em;
+    transition: color .2s;
+  }
+
+  /* Place-value table */
+  .pv-table {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 0; border: 2px solid #E2E8F0; border-radius: 14px;
+    overflow: hidden; margin: 0 auto 1rem; max-width: 420px;
+  }
+  .pv-col-header {
+    padding: .45rem .25rem; font-family: var(--font-accent);
+    font-size: .72rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .05em; border-bottom: 2px solid #E2E8F0;
+  }
+  .pv-col-header.h { background: #FFF7ED; color: #C2410C; }
+  .pv-col-header.d { background: #EFF6FF; color: #1D4ED8; }
+  .pv-col-header.u { background: #FEFCE8; color: #A16207; }
+  .pv-col-body {
+    min-height: 72px; padding: .5rem .35rem;
+    display: flex; flex-wrap: wrap; align-items: flex-start;
+    justify-content: center; gap: .2rem;
+  }
+  .pv-col-body.h { background: #FFF7ED; border-right: 1.5px solid #E2E8F0; }
+  .pv-col-body.d { background: #EFF6FF; border-right: 1.5px solid #E2E8F0; }
+  .pv-col-body.u { background: #FEFCE8; }
+
+  /* Blocks */
+  .pv-blk-h {
+    width: 36px; height: 36px; background: #FB923C;
+    border: 2px solid #EA580C; border-radius: 4px;
+    animation: pvPop .22s ease backwards;
+  }
+  .pv-blk-d {
+    width: 13px; height: 36px; background: #60A5FA;
+    border: 2px solid #3B82F6; border-radius: 3px;
+    animation: pvPop .22s ease backwards;
+  }
+  .pv-blk-u {
+    width: 13px; height: 13px; background: #FBBF24;
+    border: 2px solid #D97706; border-radius: 50%;
+    animation: pvPop .22s ease backwards;
+  }
+  @keyframes pvPop { from{transform:scale(0);opacity:0} to{transform:scale(1);opacity:1} }
+
+  /* Feedback */
+  .pv-feedback {
+    font-family: var(--font-accent); font-size: .88rem;
+    font-weight: 700; min-height: 1.3rem; margin-top: .5rem;
+  }
+  .pv-feedback.ok  { color: #15803D; }
+  .pv-feedback.err { color: #DC2626; }
+
+  /* Answer buttons */
+  .pv-choices {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: .65rem; margin-bottom: 1rem;
+  }
+  .pv-btn {
+    background: #fff; border: 3px solid #E2E8F0; border-radius: 18px;
+    padding: 1.1rem .5rem; cursor: pointer; transition: all .15s;
+    display: flex; flex-direction: column; align-items: center; gap: .35rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,.06); position: relative; overflow: hidden;
+  }
+  .pv-btn:hover:not(:disabled) {
+    transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,.1);
+  }
+  .pv-btn:active:not(:disabled) { transform: translateY(0); }
+  .pv-btn:disabled { cursor: not-allowed; }
+
+  .pv-btn-icon { font-size: 2.2rem; line-height: 1; }
+  .pv-btn-name { font-family: var(--font-display); font-size: 1rem; color: #1E3A5F; }
+  .pv-btn-range { font-family: var(--font-accent); font-size: .7rem; font-weight: 700; color: #94A3B8; }
+
+  .pv-btn-u { border-color: #FDE68A; }
+  .pv-btn-u:hover:not(:disabled) { border-color: #FBBF24; background: #FFFBEB; }
+  .pv-btn-d { border-color: #BFDBFE; }
+  .pv-btn-d:hover:not(:disabled) { border-color: #60A5FA; background: #EFF6FF; }
+  .pv-btn-c { border-color: #FED7AA; }
+  .pv-btn-c:hover:not(:disabled) { border-color: #FB923C; background: #FFF7ED; }
+
+  .pv-btn.correct { border-color: #86EFAC !important; background: #F0FDF4 !important; }
+  .pv-btn.wrong   { border-color: #FCA5A5 !important; background: #FEF2F2 !important; }
+  .pv-btn.correct .pv-btn-name,
+  .pv-btn.correct .pv-btn-range { color: #166534; }
+  .pv-btn.wrong .pv-btn-name,
+  .pv-btn.wrong .pv-btn-range   { color: #991B1B; }
+
+  /* Save */
+  .pv-save-row { display: flex; justify-content: center; }
+
+  /* Dark */
+  body.student-dark .pv-title   { color: #93C5FD; }
+  body.student-dark .pv-stat    { background: #0E1E30; border-color: rgba(255,255,255,.07); }
+  body.student-dark .pv-card    { background: #0E1E30; border-color: rgba(255,255,255,.07); }
+  body.student-dark .pv-number  { color: #93C5FD; }
+  body.student-dark .pv-table   { border-color: rgba(255,255,255,.08); }
+  body.student-dark .pv-col-header.h { background: #2A1A0A; color: #FDBA74; border-color: rgba(255,255,255,.08); }
+  body.student-dark .pv-col-header.d { background: #0A1E33; color: #93C5FD; border-color: rgba(255,255,255,.08); }
+  body.student-dark .pv-col-header.u { background: #201A00; color: #FCD34D; border-color: rgba(255,255,255,.08); }
+  body.student-dark .pv-col-body.h   { background: #2A1A0A; border-color: rgba(255,255,255,.06); }
+  body.student-dark .pv-col-body.d   { background: #0A1E33; border-color: rgba(255,255,255,.06); }
+  body.student-dark .pv-col-body.u   { background: #201A00; }
+  body.student-dark .pv-btn          { background: #0A1726; border-color: rgba(255,255,255,.08); }
+  body.student-dark .pv-btn-name     { color: #CBD5E1; }
+  body.student-dark .pv-tip          { background: #1A1500; border-color: #92400E; color: #FCD34D; }
+</style>
+{% endblock %}
+
+{% block body_content %}
+<div class="student-layout">
+  {% include 'student/_sidebar.html' with active_page='games' %}
+  <div class="student-main">
+    <header class="student-topbar">
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Abrir menú"><i class="bi bi-list"></i></button>
+      <div class="topbar-breadcrumb">
+        <a href="{% url 'games_home' %}" class="breadcrumb-link">Mis Juegos</a>
+        <i class="bi bi-chevron-right" style="font-size:.7rem;color:#9CA3AF;"></i>
+        <span class="bc-current">Unidades, Decenas y Centenas</span>
+      </div>
+      <div class="topbar-actions">
+        <div class="topbar-date"><i class="bi bi-calendar3"></i><span id="topbarDate"></span></div>
+        <div class="topbar-stars-chip"><i class="bi bi-star-fill"></i><span>{{ profile.total_stars|default:"0" }} estrellas</span></div>
+        <button class="dark-mode-toggle" id="darkModeToggle" aria-label="Cambiar modo"><i class="bi bi-moon-fill" id="darkModeIcon"></i></button>
+      </div>
+    </header>
+
+    <div class="student-scroll">
+      {% include 'student/games/_activity_banner.html' %}
+      <div class="pv-page">
+
+        <h1 class="pv-title">🏠 Unidades, Decenas y Centenas</h1>
+
+        <!-- Stats -->
+        <div class="pv-stats">
+          <div class="pv-stat">
+            <span class="pv-stat-val" id="pvCorrect">0</span>
+            <span class="pv-stat-lbl">Correctas</span>
+          </div>
+          <div class="pv-stat">
+            <span class="pv-stat-val" id="pvWrong">0</span>
+            <span class="pv-stat-lbl">Errores</span>
+          </div>
+          <div class="pv-stat">
+            <span class="pv-stat-val" id="pvStars">⭐ 0</span>
+            <span class="pv-stat-lbl">Estrellas</span>
+          </div>
+        </div>
+
+        <!-- Tip (aparece tras 2 errores seguidos) -->
+        <div class="pv-tip" id="pvTip">
+          💡 <strong>Pista:</strong> Cuenta los dígitos del número: 1 dígito = Unidades · 2 dígitos = Decenas · 3 dígitos = Centenas
+        </div>
+
+        <!-- Tarjeta de pregunta -->
+        <div class="pv-card" id="pvCard">
+          <div class="pv-q-label">¿Dónde vive este número?</div>
+          <div class="pv-number" id="pvNumber">—</div>
+
+          <!-- Tabla de valor posicional con bloques -->
+          <div class="pv-table">
+            <div class="pv-col-header h">🟠 Centenas</div>
+            <div class="pv-col-header d">🔵 Decenas</div>
+            <div class="pv-col-header u">🟡 Unidades</div>
+            <div class="pv-col-body h" id="colH"></div>
+            <div class="pv-col-body d" id="colD"></div>
+            <div class="pv-col-body u" id="colU"></div>
+          </div>
+
+          <div class="pv-feedback" id="pvFeedback"></div>
+        </div>
+
+        <!-- Botones de respuesta -->
+        <div class="pv-choices">
+          <button class="pv-btn pv-btn-u" id="btnU">
+            <span class="pv-btn-icon">🟡</span>
+            <span class="pv-btn-name">Unidades</span>
+            <span class="pv-btn-range">del 1 al 9</span>
+          </button>
+          <button class="pv-btn pv-btn-d" id="btnD">
+            <span class="pv-btn-icon">🔵</span>
+            <span class="pv-btn-name">Decenas</span>
+            <span class="pv-btn-range">del 10 al 99</span>
+          </button>
+          <button class="pv-btn pv-btn-c" id="btnC">
+            <span class="pv-btn-icon">🟠</span>
+            <span class="pv-btn-name">Centenas</span>
+            <span class="pv-btn-range">del 100 al 999</span>
+          </button>
+        </div>
+
+        <div class="pv-save-row">
+          <button class="btn btn-secondary" id="pvSaveBtn" style="display:none">
+            <i class="bi bi-floppy-fill"></i> Guardar estrellas
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<script>
+// Banco de números balanceado
+const POOL = {
+  u: [1, 2, 3, 4, 5, 6, 7, 8, 9],
+  d: [10, 12, 15, 20, 24, 30, 38, 40, 50, 56, 60, 72, 80, 91, 99],
+  c: [100, 115, 120, 150, 200, 234, 300, 345, 400, 456, 500, 523, 600, 700, 750, 800, 999],
+};
+const ALL = [...POOL.u, ...POOL.d, ...POOL.c];
+
+const OK_MSGS = [
+  '¡Súper! 🎉 — ',
+  '¡Excelente! 🌟 — ',
+  '¡Perfecto! 🎈 — ',
+  '¡Muy bien! 👏 — ',
+  '¡Genial! 🚀 — ',
+];
+const ERR_MSGS = [
+  '¡Casi! Fíjate bien en el número 🔍',
+  '¡Uy! Cuenta los dígitos del número 💪',
+  '¡No te rindas! Vuelve a intentarlo 😊',
+];
+
+let current = null, qCorrect = 0, qWrong = 0, wrongStreak = 0, saved = false;
+
+function category(n) {
+  if (n <= 9)  return 'u';
+  if (n <= 99) return 'd';
+  return 'c';
+}
+
+function breakdown(n) {
+  const h = Math.floor(n / 100);
+  const d = Math.floor((n % 100) / 10);
+  const u = n % 10;
+  const parts = [];
+  if (h) parts.push(h + (h === 1 ? ' centena' : ' centenas'));
+  if (d) parts.push(d + (d === 1 ? ' decena'  : ' decenas'));
+  if (u) parts.push(u + (u === 1 ? ' unidad'  : ' unidades'));
+  return parts.join(' + ');
+}
+
+function buildBlocks(n) {
+  const h = Math.floor(n / 100);
+  const d = Math.floor((n % 100) / 10);
+  const u = n % 10;
+
+  function fill(colId, count, cls) {
+    const col = document.getElementById(colId);
+    col.innerHTML = '';
+    for (let i = 0; i < count; i++) {
+      const b = document.createElement('div');
+      b.className = cls;
+      b.style.animationDelay = (i * 0.07) + 's';
+      col.appendChild(b);
+    }
+  }
+
+  fill('colH', h, 'pv-blk-h');
+  fill('colD', d, 'pv-blk-d');
+  fill('colU', u, 'pv-blk-u');
+}
+
+function newQuestion() {
+  // Favorece el tipo menos acertado para aprendizaje progresivo
+  const n = ALL[Math.floor(Math.random() * ALL.length)];
+  current = n;
+  document.getElementById('pvNumber').textContent = n;
+  document.getElementById('pvFeedback').textContent = '';
+  document.getElementById('pvFeedback').className = 'pv-feedback';
+  document.querySelectorAll('.pv-btn').forEach(b => {
+    b.disabled = false;
+    b.classList.remove('correct', 'wrong');
+  });
+  buildBlocks(n);
+}
+
+function calcStars() {
+  const total = qCorrect + qWrong;
+  if (total < 5) return 0;
+  const r = qCorrect / total;
+  if (r >= .9) return 5;
+  if (r >= .75) return 4;
+  if (r >= .6)  return 3;
+  if (r >= .4)  return 2;
+  return 1;
+}
+
+function updateHUD() {
+  document.getElementById('pvCorrect').textContent = qCorrect;
+  document.getElementById('pvWrong').textContent   = qWrong;
+  document.getElementById('pvStars').textContent   = '⭐ ' + calcStars();
+  if ((qCorrect + qWrong) >= 5) document.getElementById('pvSaveBtn').style.display = '';
+}
+
+function answer(btn, type) {
+  if (!current) return;
+  document.querySelectorAll('.pv-btn').forEach(b => b.disabled = true);
+  const card = document.getElementById('pvCard');
+  const fb   = document.getElementById('pvFeedback');
+  const correct = category(current) === type;
+
+  if (correct) {
+    btn.classList.add('correct');
+    qCorrect++; wrongStreak = 0;
+    const msg = OK_MSGS[Math.floor(Math.random() * OK_MSGS.length)];
+    fb.textContent = msg + breakdown(current);
+    fb.className = 'pv-feedback ok';
+    card.classList.add('flash-ok');
+    if (qCorrect % 5 === 0 && window.Confetti) Confetti.fire();
+    setTimeout(() => { card.classList.remove('flash-ok'); newQuestion(); }, 1500);
+  } else {
+    btn.classList.add('wrong');
+    qWrong++; wrongStreak++;
+    // Marca la respuesta correcta
+    const map = { u: 'btnU', d: 'btnD', c: 'btnC' };
+    document.getElementById(map[category(current)]).classList.add('correct');
+    fb.textContent = ERR_MSGS[Math.floor(Math.random() * ERR_MSGS.length)];
+    fb.className = 'pv-feedback err';
+    card.classList.add('flash-err');
+    if (wrongStreak >= 2) document.getElementById('pvTip').style.display = 'block';
+    setTimeout(() => { card.classList.remove('flash-err'); newQuestion(); }, 2000);
+  }
+  updateHUD();
+}
+
+document.getElementById('btnU').addEventListener('click', function () { answer(this, 'u'); });
+document.getElementById('btnD').addEventListener('click', function () { answer(this, 'd'); });
+document.getElementById('btnC').addEventListener('click', function () { answer(this, 'c'); });
+
+// Guardar
+function getCookie(n) {
+  for (let c of document.cookie.split(';')) {
+    const [k, v] = c.trim().split('=');
+    if (k === n) return decodeURIComponent(v);
+  }
+  return '';
+}
+document.getElementById('pvSaveBtn').addEventListener('click', function () {
+  if (saved) return; saved = true;
+  const stars = calcStars();
+  fetch('{% url "save_game_score" %}', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+    body: JSON.stringify({ game_type: 'place_value', score: qCorrect, stars_earned: stars, activity_id: {{ activity_id|default:'null' }} }),
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (window.Toast) Toast.show('¡Guardado! +' + (data.stars_earned || stars) + ' estrellas ⭐', 'success');
+    this.disabled = true; this.innerHTML = '<i class="bi bi-check-circle-fill"></i> Guardado';
+  })
+  .catch(() => { if (window.Toast) Toast.show('Error al guardar.', 'error'); });
+});
+
+newQuestion();
+
+// Topbar / sidebar init
+(function () {
+  var d = document.getElementById('topbarDate');
+  if (d) d.textContent = new Date().toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' });
+  var pb = document.getElementById('sidebarProfileBtn'), pd = document.getElementById('profileDropdown'), pc = document.getElementById('profileChevron');
+  if (pb && pd) {
+    pb.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var o = pd.classList.toggle('open');
+      if (pc) pc.style.transform = o ? 'rotate(180deg)' : '';
+    });
+    document.addEventListener('click', function () { pd.classList.remove('open'); if (pc) pc.style.transform = ''; });
+  }
+  var t = document.getElementById('sidebarToggle'), s = document.getElementById('studentSidebar'), ov = document.getElementById('sidebarOverlay');
+  if (t && s && ov) {
+    t.addEventListener('click', function () { s.classList.toggle('open'); ov.classList.toggle('open'); });
+    ov.addEventListener('click', function () { s.classList.remove('open'); ov.classList.remove('open'); });
+  }
+  var dt = document.getElementById('darkModeToggle'), di = document.getElementById('darkModeIcon');
+  function sd(on) { document.body.classList.toggle('student-dark', on); if (di) di.className = on ? 'bi bi-sun-fill' : 'bi bi-moon-fill'; }
+  sd(localStorage.getItem('student_dark') === '1');
+  if (dt) dt.addEventListener('click', function () { var on = !document.body.classList.contains('student-dark'); sd(on); localStorage.setItem('student_dark', on ? '1' : '0'); });
+})();
+</script>
+{% endblock %}

@@ -128,8 +128,9 @@
     touch-action:none;
     background:white;
   }
-  #coloring-canvas.tool-fill   { cursor:cell; }
-  #coloring-canvas.tool-eraser { cursor:cell; }
+  #coloring-canvas.tool-fill         { cursor:cell; }
+  #coloring-canvas.tool-eraser       { cursor:cell; }
+  #coloring-canvas.tool-eraser-fill  { cursor:cell; }
 
   /* Win overlay */
   .win-overlay {
@@ -208,6 +209,7 @@
 
     <!-- ══ PHASE 1 — Image selection ══ -->
     <div class="student-scroll" id="phase-select">
+      {% include 'student/games/_activity_banner.html' %}
       <div style="max-width:960px;margin:0 auto;">
 
         <div class="game-page-header" style="background:linear-gradient(135deg,#EC4899,#BE185D);">
@@ -261,10 +263,13 @@
             <span class="ti">✏️</span>Pincel
           </button>
           <button id="btn-fill"   class="tool-btn-col" onclick="setTool('fill')">
-            <span class="ti">🪣</span>Balde
+            <span class="ti">🎨</span>Balde
           </button>
           <button id="btn-eraser" class="tool-btn-col" onclick="setTool('eraser')">
             <span class="ti">🧹</span>Borrar
+          </button>
+          <button id="btn-eraser-fill" class="tool-btn-col" onclick="setTool('eraser-fill')">
+            <span class="ti">🧽</span>Balde borrador
           </button>
         </div>
 
@@ -371,11 +376,15 @@ function pickCustomColor(hex) {
 // ─────────────────────────────────────────────────────
 function setTool(tool) {
   currentTool = tool;
-  ['brush','fill','eraser'].forEach(t => {
+  ['brush','fill','eraser','eraser-fill'].forEach(t => {
     document.getElementById('btn-' + t).classList.toggle('active', t === tool);
   });
-  canvas.className = tool === 'fill' ? 'tool-fill' : tool === 'eraser' ? 'tool-eraser' : '';
-  document.getElementById('size-group').style.display = (tool === 'fill') ? 'none' : 'flex';
+  if (tool === 'fill')         canvas.className = 'tool-fill';
+  else if (tool === 'eraser')  canvas.className = 'tool-eraser';
+  else if (tool === 'eraser-fill') canvas.className = 'tool-eraser-fill';
+  else                         canvas.className = '';
+  document.getElementById('size-group').style.display =
+    (tool === 'fill' || tool === 'eraser-fill') ? 'none' : 'flex';
 }
 
 document.getElementById('brush-size').addEventListener('input', e => {
@@ -446,7 +455,7 @@ function hexToRGB(hex) {
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
 
-function floodFill(startX, startY) {
+function floodFillColor(startX, startY, fillHex) {
   const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const data    = imgData.data;
   const w = canvas.width, h = canvas.height;
@@ -457,7 +466,7 @@ function floodFill(startX, startY) {
   const si  = (startY * w + startX) * 4;
   const tR  = data[si], tG = data[si + 1], tB = data[si + 2];
 
-  const [fR, fG, fB] = hexToRGB(currentColor);
+  const [fR, fG, fB] = hexToRGB(fillHex);
 
   if (tR === fR && tG === fG && tB === fB) return;
   if (tR < 75 && tG < 75 && tB < 75) return;
@@ -493,6 +502,9 @@ function floodFill(startX, startY) {
   ctx.putImageData(imgData, 0, 0);
 }
 
+function floodFill(startX, startY)  { floodFillColor(startX, startY, currentColor); }
+function floodErase(startX, startY) { floodFillColor(startX, startY, '#FFFFFF'); }
+
 // ─────────────────────────────────────────────────────
 //  Canvas events
 // ─────────────────────────────────────────────────────
@@ -502,6 +514,9 @@ canvas.addEventListener('mousedown', e => {
   if (currentTool === 'fill') {
     saveState();
     floodFill(pos.x, pos.y);
+  } else if (currentTool === 'eraser-fill') {
+    saveState();
+    floodErase(pos.x, pos.y);
   } else {
     saveState();
     painting = true;
@@ -522,6 +537,9 @@ canvas.addEventListener('touchstart', e => {
   if (currentTool === 'fill') {
     saveState();
     floodFill(pos.x, pos.y);
+  } else if (currentTool === 'eraser-fill') {
+    saveState();
+    floodErase(pos.x, pos.y);
   } else {
     saveState();
     painting = true;
@@ -595,7 +613,7 @@ function openSave() {
   fetch('{% url "save_game_score" %}', {
     method : 'POST',
     headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
-    body   : JSON.stringify({ game_type: 'coloring', score: 1, stars_earned: 4 }),
+    body   : JSON.stringify({ game_type: 'coloring', score: 1, stars_earned: 4, activity_id: {{ activity_id|default:'null' }}, drawing_data: canvas.toDataURL('image/png') }),
   })
   .then(r => r.json())
   .then(data => {

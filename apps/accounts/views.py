@@ -138,17 +138,27 @@ def register_student_view(request):
     if request.user.is_authenticated:
         return redirect('dashboard')
 
+    from apps.classroom.models import Course
+    courses = Course.objects.filter(is_active=True).select_related('teacher').order_by('name')
+
     form = StudentRegisterForm(request.POST or None)
     if request.method == 'POST':
         if form.is_valid():
             user = form.save()
+            course_id = request.POST.get('course_id')
+            if course_id:
+                try:
+                    course = Course.objects.get(pk=course_id, is_active=True)
+                    course.students.add(user)
+                except Course.DoesNotExist:
+                    pass
             login(request, user)
             messages.success(request, f'¡Cuenta creada! Bienvenido/a {user.first_name} 🎉')
             return redirect('student_dashboard')
         else:
             messages.error(request, 'Por favor corrige los errores.')
 
-    return render(request, 'accounts/register_student.html', {'form': form})
+    return render(request, 'accounts/register_student.html', {'form': form, 'courses': courses})
 
 
 
@@ -286,6 +296,127 @@ def disconnect_google_view(request):
         UserSocialAuth.objects.filter(user=request.user, provider='google-oauth2').delete()
         messages.success(request, 'Cuenta de Google desvinculada correctamente.')
     return redirect('teacher_profile')
+
+
+@login_required
+def teacher_students_list(request):
+    if not request.user.is_teacher:
+        return redirect('student_dashboard')
+    from django.db.models import Q
+    from apps.accounts.models import StudentProfile
+
+    students = CustomUser.objects.filter(role='student').select_related('student_profile').order_by('first_name', 'last_name')
+
+    q = request.GET.get('q', '').strip()
+    if q:
+        students = students.filter(
+            Q(first_name__icontains=q) | Q(last_name__icontains=q) | Q(username__icontains=q)
+        )
+
+    level = request.GET.get('level', '')
+    if level in ('A', 'B'):
+        students = students.filter(student_profile__level=level)
+
+    return render(request, 'teacher/students/list.html', {
+        'students': students,
+        'q': q,
+        'level': level,
+        'total': students.count(),
+    })
+
+
+@login_required
+def teacher_student_detail(request, pk):
+    if not request.user.is_teacher:
+        return redirect('student_dashboard')
+    from django.shortcuts import get_object_or_404
+    from apps.accounts.models import StudentProfile
+    from apps.activities.models import ActivitySubmission
+    from apps.games.models import GameSession
+    from apps.classroom.models import Course
+
+    student = get_object_or_404(CustomUser, pk=pk, role='student')
+    profile, _ = StudentProfile.objects.get_or_create(user=student)
+    courses = Course.objects.filter(students=student)
+    recent_submissions = ActivitySubmission.objects.filter(
+        student=student
+    ).select_related('activity').order_by('-submitted_at')[:6]
+    games_played = GameSession.objects.filter(student=student).count()
+    activities_done = ActivitySubmission.objects.filter(
+        student=student, status__in=['submitted', 'reviewed', 'approved']
+    ).count()
+
+    return render(request, 'teacher/students/detail.html', {
+        'student': student,
+        'profile': profile,
+        'courses': courses,
+        'recent_submissions': recent_submissions,
+        'games_played': games_played,
+        'activities_done': activities_done,
+    })
+
+
+@login_required
+def teacher_student_edit(request, pk):
+    if not request.user.is_teacher:
+        return redirect('student_dashboard')
+    from django.shortcuts import get_object_or_404
+    from apps.accounts.models import StudentProfile
+
+    student = get_object_or_404(CustomUser, pk=pk, role='student')
+    profile, _ = StudentProfile.objects.get_or_create(user=student)
+
+    errors = {}
+    if request.method == 'POST':
+        student.first_name = request.POST.get('first_name', student.first_name).strip()
+        student.last_name = request.POST.get('last_name', student.last_name).strip()
+        new_username = request.POST.get('username', student.username).strip()
+        if new_username != student.username and CustomUser.objects.filter(username=new_username).exclude(pk=student.pk).exists():
+            errors['username'] = 'Ese nombre de usuario ya está en uso.'
+        else:
+            student.username = new_username
+        student.email = request.POST.get('email', student.email).strip()
+        if not errors:
+            student.save()
+        profile.level = request.POST.get('level', profile.level)
+        try:
+            profile.age = int(request.POST.get('age') or profile.age)
+        except (ValueError, TypeError):
+            pass
+        profile.parent_name = request.POST.get('parent_name', profile.parent_name).strip()
+        profile.parent_email = request.POST.get('parent_email', profile.parent_email).strip()
+        profile.parent_phone = request.POST.get('parent_phone', '').strip()
+        profile.selected_avatar = request.POST.get('selected_avatar', profile.selected_avatar)
+        profile.save()
+        new_password = request.POST.get('new_password', '').strip()
+        if new_password:
+            student.set_password(new_password)
+            student.save()
+        if not errors:
+            messages.success(request, f'Información de {student.get_full_name()} actualizada correctamente.')
+            return redirect('teacher_student_detail', pk=student.pk)
+
+    return render(request, 'teacher/students/edit.html', {
+        'student': student,
+        'profile': profile,
+        'level_choices': StudentProfile.LEVEL_CHOICES,
+        'avatar_choices': StudentProfile.AVATAR_CHOICES,
+        'errors': errors,
+    })
+
+
+@login_required
+def teacher_student_delete(request, pk):
+    if not request.user.is_teacher:
+        return redirect('student_dashboard')
+    from django.shortcuts import get_object_or_404
+
+    student = get_object_or_404(CustomUser, pk=pk, role='student')
+    if request.method == 'POST':
+        name = student.get_full_name() or student.username
+        student.delete()
+        messages.success(request, f'Estudiante {name} eliminado correctamente.')
+    return redirect('teacher_students')
 
 
 @login_required

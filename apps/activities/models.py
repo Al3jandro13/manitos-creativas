@@ -11,12 +11,19 @@ class ActivityCategory(models.Model):
         ('cuento', '📚 Cuento Interactivo'),
         ('dibujo_libre', '✍️ Dibujo Libre'),
         ('consonantes', '🔤 Consonantes'),
-        ('numeros', '🔢 Números 1-100'),
+        ('numeros', '🔢 Números'),
         ('sumas', '➕ Sumas'),
         ('restas', '➖ Restas'),
-        ('lenguaje_senas', '🤟 Lenguaje de Señas'),
-        ('exploracion', '🔭 Exploración'),
-        ('actividad_libre', '⭐ Actividad Libre'),
+        ('serpiente', '🐍 Serpiente'),
+        ('sopa_letras', '🔠 Sopa de Letras'),
+        # Juegos individuales nuevos
+        ('memoria', '🃏 Memoria Visual'),
+        ('contar_objetos', '🔢 Contar Objetos'),
+        ('figuras', '🔷 Figuras Geométricas'),
+        # Actividades en pareja nuevas
+        ('sopa_letras_coop', '🔠 Sopa de Letras en Pareja'),
+        ('cuento_coop', '📖 Cuento en Pareja'),
+        ('mural_coop', '🖼️ Mural Colaborativo'),
     ]
 
     name = models.CharField(max_length=50, choices=CATEGORY_CHOICES, unique=True)
@@ -33,13 +40,6 @@ class ActivityCategory(models.Model):
 
 
 class Activity(models.Model):
-    DIFFICULTY_CHOICES = [
-        (1, '⭐ Muy Fácil'),
-        (2, '⭐⭐ Fácil'),
-        (3, '⭐⭐⭐ Medio'),
-        (4, '⭐⭐⭐⭐ Difícil'),
-        (5, '⭐⭐⭐⭐⭐ Muy Difícil'),
-    ]
     STATUS_CHOICES = [
         ('draft', 'Borrador'),
         ('published', 'Publicada'),
@@ -53,9 +53,6 @@ class Activity(models.Model):
     )
     teacher = models.ForeignKey(
         CustomUser, on_delete=models.CASCADE, related_name='created_activities'
-    )
-    difficulty = models.PositiveSmallIntegerField(
-        choices=DIFFICULTY_CHOICES, default=1, verbose_name='Dificultad'
     )
     status = models.CharField(
         max_length=20, choices=STATUS_CHOICES, default='draft'
@@ -134,3 +131,84 @@ class ActivitySubmission(models.Model):
 
     def __str__(self):
         return f"{self.student.get_full_name()} → {self.activity.title}"
+
+
+class CoopActivity(models.Model):
+    STATUS_CHOICES = [
+        ('draft', 'Borrador'),
+        ('published', 'Publicada'),
+        ('archived', 'Archivada'),
+    ]
+
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    category = models.ForeignKey(ActivityCategory, on_delete=models.CASCADE)
+    teacher = models.ForeignKey(
+        CustomUser, on_delete=models.CASCADE, related_name='coop_activities'
+    )
+    student1 = models.ForeignKey(
+        CustomUser, on_delete=models.CASCADE, related_name='coop_as_student1'
+    )
+    student2 = models.ForeignKey(
+        CustomUser, on_delete=models.CASCADE, related_name='coop_as_student2'
+    )
+    instructions = models.TextField(blank=True)
+    reward_stars = models.PositiveIntegerField(default=5)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='published')
+    coloring_image = models.ForeignKey(
+        'games.ColoringImage',
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='coop_activities',
+    )
+    puzzle_image = models.ForeignKey(
+        'games.PuzzleImage',
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='coop_activities',
+    )
+    puzzle_rows = models.PositiveSmallIntegerField(default=2)
+    puzzle_cols = models.PositiveSmallIntegerField(default=4)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Actividad en Pareja'
+        verbose_name_plural = 'Actividades en Parejas'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return self.title
+
+
+class CoopSubmission(models.Model):
+    STEP_CHOICES = [(1, 'Parte 1'), (2, 'Parte 2')]
+    STATUS_CHOICES = [
+        ('waiting', 'Esperando'),
+        ('in_progress', 'En progreso'),
+        ('submitted', 'Enviado'),
+        ('reviewed', 'Revisado'),
+        ('approved', 'Aprobado'),
+    ]
+
+    coop_activity = models.ForeignKey(
+        CoopActivity, on_delete=models.CASCADE, related_name='submissions'
+    )
+    student = models.ForeignKey(
+        CustomUser, on_delete=models.CASCADE, related_name='coop_submissions'
+    )
+    step = models.PositiveSmallIntegerField(choices=STEP_CHOICES)
+    drawing_data = models.TextField(blank=True)
+    content = models.TextField(blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='waiting')
+    submitted_at = models.DateTimeField(null=True, blank=True)
+    teacher_feedback = models.TextField(blank=True)
+    stars_awarded = models.PositiveIntegerField(default=0)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'Envío Colaborativo'
+        verbose_name_plural = 'Envíos Colaborativos'
+        unique_together = [['coop_activity', 'student']]
+
+    def __str__(self):
+        return f"Paso {self.step} — {self.student.get_full_name()} → {self.coop_activity.title}"

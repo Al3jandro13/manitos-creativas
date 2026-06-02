@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Entregas de Estudiantes — Manitos Creativas{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/teacher.css' %}">{% endblock %}
+
+{% block body_content %}
+<div class="teacher-layout">
+  {% include 'teacher/_sidebar.html' %}
+  <main class="teacher-main">
+    <div class="teacher-topbar">
+      <div style="display:flex;align-items:center;gap:.85rem;">
+        <button id="sidebar-toggle"
+          style="display:none;background:none;border:none;cursor:pointer;font-size:1.2rem;color:var(--t-text-mid);padding:.25rem;"
+          onclick="document.querySelector('.sidebar').classList.toggle('open')">
+          <i class="bi bi-list"></i>
+        </button>
+        <div class="teacher-topbar-title"><i class="bi bi-inbox-fill"></i> Entregas de Estudiantes</div>
+      </div>
+    </div>
+
+    <div class="teacher-content">
+
+      <!-- Filtros -->
+      <form method="get" style="display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:1.5rem;align-items:flex-end;">
+        <div class="form-group" style="margin:0;min-width:200px;">
+          <label class="form-label" style="margin-bottom:.35rem;">Actividad</label>
+          <select name="activity" class="form-select" onchange="this.form.submit()">
+            <option value="">Todas las actividades</option>
+            {% for act in activities %}
+            <option value="{{ act.id }}" {% if activity_filter == act.id|stringformat:"s" %}selected{% endif %}>
+              {{ act.title|truncatechars:40 }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group" style="margin:0;min-width:160px;">
+          <label class="form-label" style="margin-bottom:.35rem;">Estado</label>
+          <select name="status" class="form-select" onchange="this.form.submit()">
+            <option value="">Todos</option>
+            <option value="submitted" {% if status_filter == 'submitted' %}selected{% endif %}>Entregado</option>
+            <option value="reviewed" {% if status_filter == 'reviewed' %}selected{% endif %}>Revisado</option>
+            <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>Aprobado</option>
+          </select>
+        </div>
+        {% if activity_filter or status_filter %}
+        <a href="{% url 'submissions_overview' %}" class="btn btn-outline" style="align-self:flex-end;">
+          <i class="bi bi-x-circle"></i> Limpiar filtros
+        </a>
+        {% endif %}
+      </form>
+
+      <!-- Contador -->
+      <div style="font-size:.8rem;color:var(--t-text-muted);margin-bottom:1rem;">
+        {{ submissions|length }} entrega{{ submissions|length|pluralize:"s" }} encontrada{{ submissions|length|pluralize:"s" }}
+      </div>
+
+      {% if submissions %}
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1.1rem;">
+        {% for sub in submissions %}
+        <div class="panel-card" style="display:flex;flex-direction:column;gap:0;">
+
+          <!-- Miniatura del trabajo -->
+          {% if sub.drawing_data and sub.drawing_data != 'null' %}
+          <div style="background:var(--t-surface-alt);border-radius:var(--t-radius-md) var(--t-radius-md) 0 0;overflow:hidden;height:160px;display:flex;align-items:center;justify-content:center;">
+            <img src="{{ sub.drawing_data }}" alt="Dibujo"
+              style="width:100%;height:100%;object-fit:cover;">
+          </div>
+          {% else %}
+          <div style="background:var(--t-surface-alt);border-radius:var(--t-radius-md) var(--t-radius-md) 0 0;height:80px;display:flex;align-items:center;justify-content:center;color:var(--t-text-muted);font-size:2rem;">
+            {% if sub.content %}
+            <i class="bi bi-chat-text-fill" style="font-size:1.5rem;opacity:.4;"></i>
+            {% else %}
+            <i class="bi bi-image" style="font-size:1.5rem;opacity:.3;"></i>
+            {% endif %}
+          </div>
+          {% endif %}
+
+          <div style="padding:.85rem 1rem;flex:1;display:flex;flex-direction:column;gap:.4rem;">
+            <!-- Estudiante -->
+            <div style="font-weight:600;font-size:.9rem;color:var(--t-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+              {{ sub.student.get_full_name|default:sub.student.username }}
+            </div>
+            <!-- Actividad -->
+            <div style="font-size:.78rem;color:var(--t-text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+              <i class="bi bi-tag" style="font-size:.7rem;"></i> {{ sub.activity.title|truncatechars:35 }}
+            </div>
+
+            {% if sub.content %}
+            <div style="font-size:.78rem;color:var(--t-text-mid);background:var(--t-indigo-light);border-radius:var(--t-radius);padding:.4rem .6rem;line-height:1.45;margin-top:.2rem;">
+              {{ sub.content|truncatechars:80 }}
+            </div>
+            {% endif %}
+
+            <!-- Estado + estrellas -->
+            <div style="display:flex;align-items:center;gap:.5rem;margin-top:.3rem;">
+              {% if sub.status == 'approved' %}
+              <span class="badge badge-green">Aprobado</span>
+              {% elif sub.status == 'reviewed' %}
+              <span class="badge badge-blue">Revisado</span>
+              {% else %}
+              <span class="badge" style="background:rgba(251,191,36,.15);color:#D97706;border:1px solid rgba(251,191,36,.3);">Entregado</span>
+              {% endif %}
+              {% if sub.stars_awarded %}
+              <span style="font-size:.75rem;color:var(--t-amber);"><i class="bi bi-star-fill"></i> {{ sub.stars_awarded }}</span>
+              {% endif %}
+              {% if sub.id in featured_ids %}
+              <span title="En el Tablero de Fama" style="font-size:.8rem;color:var(--t-amber);margin-left:auto;"><i class="bi bi-trophy-fill"></i></span>
+              {% endif %}
+            </div>
+
+            <!-- Fecha -->
+            <div style="font-size:.68rem;color:var(--t-text-muted);">
+              {{ sub.submitted_at|date:"d M Y, H:i" }}
+            </div>
+
+            <!-- Acciones -->
+            <div style="display:flex;gap:.5rem;margin-top:.5rem;">
+              <a href="{% url 'review_submission' sub.id %}?back=overview"
+                class="btn btn-primary" style="flex:1;font-size:.78rem;padding:.38rem .6rem;text-align:center;">
+                <i class="bi bi-pencil-fill"></i> Revisar
+              </a>
+              {% if sub.id not in featured_ids %}
+              <form method="post" action="{% url 'quick_feature_submission' sub.id %}" style="flex:1;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline"
+                  style="width:100%;font-size:.78rem;padding:.38rem .6rem;"
+                  title="Destacar en Tablero de Fama">
+                  <i class="bi bi-trophy"></i> Destacar
+                </button>
+              </form>
+              {% else %}
+              <form method="post" action="{% url 'quick_feature_submission' sub.id %}" style="flex:1;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline"
+                  style="width:100%;font-size:.78rem;padding:.38rem .6rem;border-color:var(--t-amber);color:var(--t-amber);"
+                  title="Quitar del Tablero de Fama">
+                  <i class="bi bi-trophy-fill"></i> Quitar
+                </button>
+              </form>
+              {% endif %}
+            </div>
+          </div>
+
+        </div>
+        {% endfor %}
+      </div>
+
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-state-icon"><i class="bi bi-inbox"></i></div>
+        <div class="empty-state-title">No hay entregas aún</div>
+        <p style="font-size:.82rem;color:var(--t-text-muted);margin-top:.25rem;">
+          Cuando los estudiantes entreguen actividades, aparecerán aquí.
+        </p>
+      </div>
+      {% endif %}
+
+    </div>
+  </main>
+</div>
+<script>
+if (window.innerWidth <= 768) document.getElementById('sidebar-toggle').style.display = 'block';
+window.addEventListener('resize', () => {
+  const tog = document.getElementById('sidebar-toggle');
+  if (tog) tog.style.display = window.innerWidth <= 768 ? 'block' : 'none';
+});
+</script>
+{% endblock %}

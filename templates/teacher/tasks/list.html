@@ -22,7 +22,6 @@
     </div>
     <div class="teacher-content">
 
-      <!-- Filters -->
       <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.5rem;align-items:center;">
         <a href="?status=all" class="filter-chip {% if not request.GET.status or request.GET.status == 'all' %}active{% endif %}">Todas</a>
         <a href="?status=published" class="filter-chip {% if request.GET.status == 'published' %}active{% endif %}">Publicadas</a>
@@ -43,8 +42,6 @@
             {% elif activity.category.name == 'numeros' %}<i class="bi bi-123"></i>
             {% elif activity.category.name == 'sumas' %}<i class="bi bi-plus-lg"></i>
             {% elif activity.category.name == 'restas' %}<i class="bi bi-dash-lg"></i>
-            {% elif activity.category.name == 'lenguaje_senas' %}<i class="bi bi-hand-index-thumb"></i>
-            {% elif activity.category.name == 'exploracion' %}<i class="bi bi-binoculars"></i>
             {% else %}<i class="bi bi-star"></i>{% endif %}
           </div>
           <div class="activity-list-info">
@@ -63,8 +60,22 @@
               {% endif %}
             </div>
           </div>
-          <div>
+          <div style="display:flex;gap:.45rem;align-items:center;">
             <a href="{% url 'activity_detail' activity.pk %}" class="btn btn-outline" style="padding:.38rem .85rem;font-size:.8rem;">Ver →</a>
+            <button type="button"
+              class="btn btn-outline"
+              style="padding:.38rem .7rem;font-size:.8rem;"
+              onclick="openEdit({{ activity.pk }}, '{{ activity.title|escapejs }}', '{{ activity.description|escapejs }}', {{ activity.category.pk }}, '{{ activity.status }}', {{ activity.reward_stars }}, '{{ activity.due_date|date:'Y-m-d'|default:'' }}')"
+              title="Editar">
+              <i class="bi bi-pencil"></i>
+            </button>
+            <button type="button"
+              class="btn btn-outline"
+              style="padding:.38rem .7rem;font-size:.8rem;border-color:var(--t-rose);color:var(--t-rose);"
+              onclick="openDelete({{ activity.pk }}, '{{ activity.title|escapejs }}')"
+              title="Eliminar">
+              <i class="bi bi-trash"></i>
+            </button>
           </div>
         </div>
         {% endfor %}
@@ -78,13 +89,167 @@
       {% endif %}
 
     </div>
+
+    <!-- Modal Editar -->
+    <div id="modalEdit" style="display:none;position:fixed;inset:0;z-index:1000;align-items:center;justify-content:center;">
+      <div class="modal-backdrop" onclick="closeEdit()"></div>
+      <div class="modal-box" style="max-width:580px;">
+        <div class="modal-header">
+          <div class="modal-title"><i class="bi bi-pencil" style="color:var(--t-indigo);margin-right:.4rem;"></i> Editar Actividad</div>
+          <button onclick="closeEdit()" class="modal-close"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <form id="editForm" method="post" enctype="multipart/form-data" style="padding:1.35rem;">
+          {% csrf_token %}
+          <div class="form-group">
+            <label class="form-label"><i class="bi bi-pin"></i> Título *</label>
+            <input type="text" name="title" id="editTitle" class="form-input" required>
+          </div>
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label"><i class="bi bi-tag"></i> Categoría *</label>
+              <select name="category" id="editCategory" class="form-select" required>
+                {% for cat in categories %}
+                <option value="{{ cat.id }}">{{ cat }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label"><i class="bi bi-toggles"></i> Estado</label>
+              <select name="status" id="editStatus" class="form-select">
+                <option value="draft">Borrador</option>
+                <option value="published">Publicada</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label"><i class="bi bi-text-paragraph"></i> Descripción</label>
+            <textarea name="description" id="editDescription" class="form-textarea" rows="3"></textarea>
+          </div>
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label"><i class="bi bi-star"></i> Estrellas</label>
+              <input type="number" name="reward_stars" id="editStars" class="form-input" min="0" max="20">
+            </div>
+            <div class="form-group">
+              <label class="form-label"><i class="bi bi-calendar"></i> Fecha límite</label>
+              <input type="date" name="due_date" id="editDueDate" class="form-input">
+            </div>
+          </div>
+          <div class="form-actions" style="margin-top:1.1rem;">
+            <button type="button" onclick="closeEdit()" class="btn btn-outline">Cancelar</button>
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle"></i> Guardar cambios</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal Eliminar -->
+    <div id="modalDelete" style="display:none;position:fixed;inset:0;z-index:1000;align-items:center;justify-content:center;">
+      <div class="modal-backdrop" onclick="closeDelete()"></div>
+      <div class="modal-box" style="max-width:420px;">
+        <div class="modal-header">
+          <div class="modal-title"><i class="bi bi-trash" style="color:var(--t-rose);margin-right:.4rem;"></i> Eliminar Actividad</div>
+          <button onclick="closeDelete()" class="modal-close"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <div style="padding:1.35rem;">
+          <p style="font-size:.9rem;color:var(--t-text-mid);line-height:1.6;margin-bottom:1.25rem;">
+            ¿Eliminar <strong id="deleteTitle" style="color:var(--t-text);"></strong>? Esta acción no se puede deshacer y borrará todas las entregas asociadas.
+          </p>
+          <form id="deleteForm" method="post">
+            {% csrf_token %}
+            <div class="form-actions">
+              <button type="button" onclick="closeDelete()" class="btn btn-outline">Cancelar</button>
+              <button type="submit" class="btn btn-primary" style="background:var(--t-rose);border-color:var(--t-rose);">
+                <i class="bi bi-trash"></i> Sí, eliminar
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
   </main>
 </div>
+
+<style>
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,.5);
+  backdrop-filter: blur(3px);
+}
+.modal-box {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  margin: 1rem;
+  background: var(--t-surface);
+  border-radius: var(--t-radius-lg);
+  box-shadow: 0 24px 48px rgba(0,0,0,.25);
+  border: 1px solid var(--t-border);
+  overflow: hidden;
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.1rem 1.35rem;
+  border-bottom: 1px solid var(--t-border);
+}
+.modal-title {
+  font-family: var(--t-font-serif);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--t-text);
+  letter-spacing: -.01em;
+}
+.modal-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.1rem;
+  color: var(--t-text-muted);
+  line-height: 1;
+  padding: .2rem;
+}
+</style>
+
 <script>
 if (window.innerWidth <= 768) document.getElementById('sidebar-toggle').style.display = 'block';
 window.addEventListener('resize', () => {
   const tog = document.getElementById('sidebar-toggle');
   if (tog) tog.style.display = window.innerWidth <= 768 ? 'block' : 'none';
+});
+
+function openEdit(pk, title, description, categoryId, status, stars, dueDate) {
+  document.getElementById('editForm').action = '/actividades/' + pk + '/editar/';
+  document.getElementById('editTitle').value = title;
+  document.getElementById('editDescription').value = description;
+  document.getElementById('editCategory').value = categoryId;
+  document.getElementById('editStatus').value = status;
+  document.getElementById('editStars').value = stars;
+  document.getElementById('editDueDate').value = dueDate;
+  document.getElementById('modalEdit').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+function closeEdit() {
+  document.getElementById('modalEdit').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function openDelete(pk, title) {
+  document.getElementById('deleteForm').action = '/actividades/' + pk + '/eliminar/';
+  document.getElementById('deleteTitle').textContent = title;
+  document.getElementById('modalDelete').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+function closeDelete() {
+  document.getElementById('modalDelete').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeEdit(); closeDelete(); }
 });
 </script>
 {% endblock %}
