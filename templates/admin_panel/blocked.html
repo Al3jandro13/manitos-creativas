@@ -282,22 +282,41 @@ h1 {
 .support-item:last-child { border-bottom: none; }
 
 .support-avatar {
-  width: 42px;
-  height: 42px;
+  width: 46px;
+  height: 46px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #7c3aed, #4f46e5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1rem;
+  overflow: hidden;
   flex-shrink: 0;
-  font-weight: 700;
+  border: 2px solid rgba(124,58,237,.5);
+}
+
+.support-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .support-name {
   font-size: .9rem;
   font-weight: 600;
   margin-bottom: .2rem;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  flex-wrap: wrap;
+}
+
+.verifier-badge {
+  font-size: .68rem;
+  font-weight: 600;
+  background: rgba(16,185,129,.15);
+  border: 1px solid rgba(16,185,129,.3);
+  color: #34d399;
+  border-radius: 20px;
+  padding: .15rem .55rem;
+  letter-spacing: .2px;
+  white-space: nowrap;
 }
 
 .support-contacts { display: flex; flex-direction: column; gap: .15rem; }
@@ -389,9 +408,11 @@ h1 {
 
   <div class="support-card">
     <div class="support-item">
-      <div class="support-avatar">A</div>
+      <div class="support-avatar">
+        <img src="/static/img/alejandro.jpeg" alt="Alejandro">
+      </div>
       <div>
-        <div class="support-name">Soporte 1</div>
+        <div class="support-name">Alejandro <span class="verifier-badge">Verifica pagos</span></div>
         <div class="support-contacts">
           <div class="support-contact">
             <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
@@ -405,9 +426,11 @@ h1 {
       </div>
     </div>
     <div class="support-item">
-      <div class="support-avatar">J</div>
+      <div class="support-avatar">
+        <img src="/static/img/juanse.jpeg" alt="Juanse">
+      </div>
       <div>
-        <div class="support-name">Soporte 2</div>
+        <div class="support-name">Juanse <span class="verifier-badge">Verifica pagos</span></div>
         <div class="support-contacts">
           <div class="support-contact">
             <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
