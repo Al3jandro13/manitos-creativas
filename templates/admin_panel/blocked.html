@@ -11,120 +11,310 @@
 
 body {
   min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   background: #08091A;
   font-family: 'Outfit', sans-serif;
-  padding: 2rem 1rem;
+  padding: 2.5rem 1rem;
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden;
+  color: #fff;
 }
 
 body::before {
   content: '';
   position: absolute;
   inset: 0;
-  background:
-    radial-gradient(ellipse 70% 60% at 50% 40%, #3b0a0a44 0%, transparent 60%);
+  background: radial-gradient(ellipse 70% 60% at 50% 20%, #3b0a0a44 0%, transparent 60%);
+  pointer-events: none;
 }
 
-.card {
+.container {
   position: relative;
   z-index: 1;
+  max-width: 560px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+/* ── CABECERA ── */
+.header-card {
   background: rgba(255,255,255,.04);
-  border: 1px solid rgba(239,68,68,.2);
-  border-radius: 24px;
-  padding: 3rem 2.5rem;
-  width: 100%;
-  max-width: 460px;
+  border: 1px solid rgba(239,68,68,.25);
+  border-radius: 22px;
+  padding: 2.5rem 2rem;
   text-align: center;
-  backdrop-filter: blur(16px);
 }
 
 .icon-wrap {
-  width: 80px;
-  height: 80px;
+  width: 76px;
+  height: 76px;
   border-radius: 50%;
   background: linear-gradient(135deg, #ef4444, #b91c1c);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 1.5rem;
+  margin: 0 auto 1.2rem;
   box-shadow: 0 0 50px #ef444455;
   animation: pulse 2.5s ease-in-out infinite;
 }
 
 @keyframes pulse {
-  0%, 100% { box-shadow: 0 0 50px #ef444455; }
-  50% { box-shadow: 0 0 70px #ef444488; }
+  0%,100% { box-shadow: 0 0 50px #ef444455; }
+  50%      { box-shadow: 0 0 70px #ef444488; }
 }
 
-.icon-wrap svg {
-  width: 38px;
-  height: 38px;
-  fill: #fff;
-}
+.icon-wrap svg { width: 36px; height: 36px; fill: #fff; }
 
 h1 {
-  color: #fff;
-  font-size: 1.6rem;
+  font-size: 1.55rem;
   font-weight: 700;
-  margin-bottom: .6rem;
-  letter-spacing: -.4px;
+  margin-bottom: .5rem;
+  letter-spacing: -.3px;
 }
 
 .subtitle {
   color: rgba(255,255,255,.5);
-  font-size: .95rem;
-  line-height: 1.6;
-  margin-bottom: 2.2rem;
+  font-size: .93rem;
+  line-height: 1.65;
+  margin-bottom: 1.2rem;
 }
 
-.contact-box {
+.reactivation-note {
+  background: rgba(16,185,129,.08);
+  border: 1px solid rgba(16,185,129,.25);
+  border-radius: 12px;
+  padding: .9rem 1.1rem;
+  color: #6ee7b7;
+  font-size: .87rem;
+  line-height: 1.55;
+  display: flex;
+  align-items: flex-start;
+  gap: .6rem;
+  text-align: left;
+}
+
+.reactivation-note svg { flex-shrink: 0; width: 18px; height: 18px; fill: #10b981; margin-top: 1px; }
+
+/* ── MÉTODOS DE PAGO ── */
+.section-title {
+  color: rgba(255,255,255,.4);
+  font-size: .75rem;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  padding: 0 .2rem;
+}
+
+.payment-card {
   background: rgba(255,255,255,.04);
   border: 1px solid rgba(255,255,255,.09);
-  border-radius: 14px;
-  padding: 1.2rem 1.4rem;
-  color: rgba(255,255,255,.55);
-  font-size: .87rem;
-  line-height: 1.6;
+  border-radius: 16px;
+  overflow: hidden;
 }
 
-.contact-box strong {
-  color: rgba(255,255,255,.85);
+.payment-method {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.3rem;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+
+.payment-method:last-child { border-bottom: none; }
+
+.pm-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+
+.pm-icon.nequi    { background: rgba(103,58,183,.25); }
+.pm-icon.breb     { background: rgba(59,130,246,.2); }
+.pm-icon.davivienda { background: rgba(220,38,38,.2); }
+
+.pm-info { flex: 1; }
+.pm-label { font-size: .78rem; color: rgba(255,255,255,.4); margin-bottom: .15rem; }
+.pm-value {
+  font-size: .97rem;
   font-weight: 600;
-}
-
-.divider {
-  width: 40px;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, #ef4444, transparent);
-  margin: 1.5rem auto;
-}
-
-.brand {
-  color: rgba(255,255,255,.2);
-  font-size: .78rem;
-  margin-top: 1.8rem;
+  color: #fff;
   letter-spacing: .5px;
+}
+
+/* ── QR ── */
+.qr-card {
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 16px;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.qr-card img {
+  width: 180px;
+  height: 180px;
+  border-radius: 10px;
+  background: #fff;
+  padding: 8px;
+  display: block;
+  margin: 0 auto .8rem;
+}
+
+.qr-label {
+  color: rgba(255,255,255,.45);
+  font-size: .82rem;
+}
+
+/* ── SOPORTE ── */
+.support-card {
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.support-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.3rem;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+
+.support-item:last-child { border-bottom: none; }
+
+.support-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7c3aed, #4f46e5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+  font-weight: 700;
+}
+
+.support-name {
+  font-size: .9rem;
+  font-weight: 600;
+  margin-bottom: .2rem;
+}
+
+.support-contacts { display: flex; flex-direction: column; gap: .15rem; }
+
+.support-contact {
+  font-size: .8rem;
+  color: rgba(255,255,255,.5);
+  display: flex;
+  align-items: center;
+  gap: .35rem;
+}
+
+.support-contact svg { width: 12px; height: 12px; fill: rgba(255,255,255,.3); flex-shrink: 0; }
+
+/* ── FOOTER ── */
+.brand {
+  text-align: center;
+  color: rgba(255,255,255,.18);
+  font-size: .75rem;
+  letter-spacing: .5px;
+  padding: .5rem 0;
 }
 </style>
 </head>
 <body>
-<div class="card">
-  <div class="icon-wrap">
-    <svg viewBox="0 0 24 24"><path d="M12 1C8.676 1 6 3.676 6 7v1H4v15h16V8h-2V7c0-3.324-2.676-6-6-6zm0 2c2.276 0 4 1.724 4 4v1H8V7c0-2.276 1.724-4 4-4zm0 9a2 2 0 1 1 0 4 2 2 0 0 1 0-4z"/></svg>
+<div class="container">
+
+  <!-- Cabecera -->
+  <div class="header-card">
+    <div class="icon-wrap">
+      <svg viewBox="0 0 24 24"><path d="M12 1C8.676 1 6 3.676 6 7v1H4v15h16V8h-2V7c0-3.324-2.676-6-6-6zm0 2c2.276 0 4 1.724 4 4v1H8V7c0-2.276 1.724-4 4-4zm0 9a2 2 0 1 1 0 4 2 2 0 0 1 0-4z"/></svg>
+    </div>
+    <h1>Servicio Suspendido</h1>
+    <p class="subtitle">El acceso a Manitos Creativas está temporalmente suspendido por falta de pago. Realizá tu pago para restablecer el servicio.</p>
+    <div class="reactivation-note">
+      <svg viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm-1.5 14.5l-4-4 1.414-1.414L10.5 13.672l5.586-5.586L17.5 9.5l-7 7z"/></svg>
+      Una vez confirmado tu pago, los servicios se reactivarán automáticamente. Si ya realizaste el pago, comunicate con soporte.
+    </div>
   </div>
 
-  <h1>Servicio Suspendido</h1>
-  <p class="subtitle">El acceso a Manitos Creativas está temporalmente suspendido. Por favor contáctanos para restablecer el servicio.</p>
+  <!-- Métodos de pago -->
+  <div class="section-title">Métodos de pago</div>
 
-  <div class="divider"></div>
+  <div class="payment-card">
+    <div class="payment-method">
+      <div class="pm-icon nequi">💜</div>
+      <div class="pm-info">
+        <div class="pm-label">Nequi — escanea el QR</div>
+        <div class="pm-value">Ver código más abajo</div>
+      </div>
+    </div>
+    <div class="payment-method">
+      <div class="pm-icon breb">🔑</div>
+      <div class="pm-info">
+        <div class="pm-label">Bre-B — llave de pago</div>
+        <div class="pm-value">1109671427</div>
+      </div>
+    </div>
+    <div class="payment-method">
+      <div class="pm-icon davivienda">🏦</div>
+      <div class="pm-info">
+        <div class="pm-label">Davivienda — número de cuenta</div>
+        <div class="pm-value">#0190 0007 4518</div>
+      </div>
+    </div>
+  </div>
 
-  <div class="contact-box">
-    Para reactivar tu acceso, comunícate con el administrador del sistema.<br><br>
-    <strong>Manitos Creativas</strong> — Equipo de soporte
+  <!-- QR Nequi -->
+  <div class="qr-card">
+    <img src="/static/img/codigoqr.jpeg" alt="QR Nequi">
+    <div class="qr-label">Escaneá con Nequi para pagar</div>
+  </div>
+
+  <!-- Soporte -->
+  <div class="section-title">Contacto de soporte</div>
+
+  <div class="support-card">
+    <div class="support-item">
+      <div class="support-avatar">A</div>
+      <div>
+        <div class="support-name">Soporte 1</div>
+        <div class="support-contacts">
+          <div class="support-contact">
+            <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+            alejoluna1509@gmail.com
+          </div>
+          <div class="support-contact">
+            <svg viewBox="0 0 24 24"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/></svg>
+            317 305 5541
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="support-item">
+      <div class="support-avatar">J</div>
+      <div>
+        <div class="support-name">Soporte 2</div>
+        <div class="support-contacts">
+          <div class="support-contact">
+            <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+            juselobo7@gmail.com
+          </div>
+          <div class="support-contact">
+            <svg viewBox="0 0 24 24"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/></svg>
+            318 355 3310
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="brand">MANITOS CREATIVAS &copy; 2025</div>
