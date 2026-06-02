@@ -134,9 +134,17 @@ h1 {
   flex-shrink: 0;
 }
 
-.pm-icon.nequi    { background: rgba(103,58,183,.25); }
-.pm-icon.breb     { background: rgba(59,130,246,.2); }
+.pm-icon.nequi      { background: rgba(103,58,183,.25); }
+.pm-icon.breb       { background: rgba(59,130,246,.2); }
 .pm-icon.davivienda { background: rgba(220,38,38,.2); }
+
+.pm-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 10px;
+  padding: 4px;
+}
 
 .pm-info { flex: 1; }
 .pm-label { font-size: .78rem; color: rgba(255,255,255,.4); margin-bottom: .15rem; }
@@ -251,7 +259,9 @@ h1 {
 
   <div class="payment-card">
     <div class="payment-method">
-      <div class="pm-icon nequi">💜</div>
+      <div class="pm-icon nequi">
+        <img src="/static/img/nequi.png" alt="Nequi">
+      </div>
       <div class="pm-info">
         <div class="pm-label">Nequi — escanea el QR</div>
         <div class="pm-value">Ver código más abajo</div>
@@ -265,7 +275,9 @@ h1 {
       </div>
     </div>
     <div class="payment-method">
-      <div class="pm-icon davivienda">🏦</div>
+      <div class="pm-icon davivienda">
+        <img src="/static/img/davivienda.png" alt="Davivienda">
+      </div>
       <div class="pm-info">
         <div class="pm-label">Davivienda — número de cuenta</div>
         <div class="pm-value">#0190 0007 4518</div>
