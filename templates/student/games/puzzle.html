@@ -481,6 +481,7 @@ function buildImage(cb) {
   const S = 480, cv = document.createElement('canvas');
   cv.width = cv.height = S;
   const ctx = cv.getContext('2d'), img = new Image();
+  img.crossOrigin = 'anonymous';
   img.onload = () => {
     const a = img.width/img.height;
     let sx=0,sy=0,sw=img.width,sh=img.height;
@@ -488,6 +489,7 @@ function buildImage(cb) {
     ctx.drawImage(img,sx,sy,sw,sh,0,0,S,S);
     cb(cv.toDataURL());
   };
+  img.onerror = () => alert('No se pudo cargar la imagen. Intenta seleccionarla de nuevo.');
   img.src = currentImageSrc;
 }
 function sliceImg(src, cols, rows, cb) {
